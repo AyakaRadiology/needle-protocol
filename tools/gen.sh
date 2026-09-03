@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 #
-# Regenerate everything under gen/ from schemas/, constants/ and angles/.
+# Regenerate everything under gen/ and dist/ from schemas/, constants/ and
+# angles/.
 #
 # Idempotent by construction: every generator writes a pure function of the
 # sources, with no timestamps and no host paths. CI runs this and then
-# `git diff --exit-code gen/`, so an edit made directly to a generated file is a
-# red build rather than a change that survives until the next regeneration
+# `git diff --exit-code gen/ dist/`, so an edit made directly to a generated file
+# is a red build rather than a change that survives until the next regeneration
 # quietly reverts it.
 #
 # Run from anywhere: paths are resolved against the repository root.
@@ -37,6 +38,12 @@ node tools/gen-ts.mjs
 
 echo "==> Python (models, constants, angles, __init__)"
 uv run --frozen python tools/gen-py.py
+
+echo "==> compiled dist/ (ESM + CommonJS, from gen/ts)"
+# After the TypeScript generator, never before: dist/ is the compiled form of
+# gen/ts, so building it from a stale gen/ts would publish yesterday's contract
+# to every consumer that loads this package through plain `node`.
+node tools/build-ts.mjs
 
 echo "==> C header (device schemas only)"
 # Device schemas ONLY. The firmware has no business knowing about the host-side

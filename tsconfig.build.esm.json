@@ -1,0 +1,22 @@
+{
+    // ESM half of the published `dist/` (see tools/build-ts.mjs).
+    //
+    // `module: ESNext` keeps the `./types.js` specifiers gen/ts already writes
+    // verbatim, which is what unbundled Node needs: a bare `./types` would
+    // resolve under a bundler and throw ERR_MODULE_NOT_FOUND under `node`.
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": false,
+        "declaration": true,
+        "declarationMap": false,
+        "sourceMap": false,
+        "outDir": "dist/esm",
+        "rootDir": "gen/ts",
+        // dist/ is committed and diffed byte for byte by CI, so the emit must
+        // not depend on the host: pin the line ending rather than inherit the
+        // platform's.
+        "newLine": "lf",
+        "incremental": false
+    },
+    "include": ["gen/ts/**/*.ts"]
+}
