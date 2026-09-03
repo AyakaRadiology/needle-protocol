@@ -42,6 +42,19 @@
         },
         {
             "contract": "DeviceEnvelope",
+            "name": "device-status-ready-first-of-session",
+            "from": "the same status frame once the firmware reports the envelope contract it was built against — the FIRST status event of a session, and the only one that carries the field",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "status",
+                "seq": 0,
+                "t_boot_ms": 5,
+                "payload": { "state": "ready", "envelope_schema_version": "2.0.0" }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
             "name": "device-error-data-invalid",
             "from": "scl3300-stream docs/PROTOCOL.md, Payloads > error (verbatim)",
             "frame": {
@@ -210,6 +223,19 @@
                 "seq": 1,
                 "ts": 1234,
                 "payload": { "accel_x": 0.0, "accel_y": 0.0, "accel_z": 1.0 }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-status-envelope-version-malformed",
+            "why": "`envelope_schema_version` is the number that decides whether this host can read this device, so a two-part \"2.0\" is not a lenient spelling of 2.0.0 — it is a value no comparison can be trusted on. Rejecting it here is what keeps the pattern in the schema load-bearing rather than decorative.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "status",
+                "seq": 0,
+                "t_boot_ms": 5,
+                "payload": { "state": "ready", "envelope_schema_version": "2.0" }
             }
         },
         {

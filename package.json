@@ -16,9 +16,10 @@
         "./angles": "./gen/ts/angles.ts",
         "./zod": "./gen/ts/zod.ts",
         "./schemas/*": "./schemas/*",
+        "./tests/samples.json": "./tests/samples.json",
         "./package.json": "./package.json"
     },
-    "files": ["gen/ts", "schemas", "constants/constants.json", "angles", "README.md"],
+    "files": ["gen/ts", "schemas", "constants/constants.json", "angles", "tests/samples.json", "README.md"],
     "sideEffects": false,
     "peerDependencies": {
         "zod": "^3.23.0 || ^4.0.0"

@@ -133,3 +133,32 @@ def test_c_header_carries_every_device_x_version() -> None:
             continue
         macro = "SCHEMA_" + re.sub(r"[^A-Za-z0-9]+", "_", relative[: -len(".json")]).upper() + "_XVERSION"
         assert f'#define {macro} "{load(path)["x-version"]}"' in header, macro
+
+
+def test_status_sample_reports_the_current_envelope_x_version() -> None:
+    """The sample's `envelope_schema_version` must BE the envelope's x-version.
+
+    The field exists so a host can read which envelope contract a firmware was
+    built against. A sample carrying a stale number still parses -- the schema
+    only constrains the shape -- so nothing but this would notice that the two
+    had drifted apart, and the one fixture consumers copy their expectations
+    from would be quietly wrong.
+    """
+    envelope = load(ROOT / "schemas" / "device" / "envelope.json")
+    samples = json.loads((ROOT / "tests" / "samples.json").read_text())
+    carriers = [
+        sample
+        for sample in samples["valid"]
+        if sample["contract"] == "DeviceEnvelope"
+        and "envelope_schema_version" in sample["frame"].get("payload", {})
+    ]
+    assert carriers, (
+        "no valid sample exercises envelope_schema_version, so the field ships "
+        "with no evidence that a real frame carrying it parses"
+    )
+    for sample in carriers:
+        assert sample["frame"]["payload"]["envelope_schema_version"] == envelope["x-version"], (
+            f"{sample['name']} reports envelope x-version "
+            f"{sample['frame']['payload']['envelope_schema_version']}, but "
+            f"schemas/device/envelope.json is at {envelope['x-version']}."
+        )

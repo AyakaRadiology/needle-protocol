@@ -51,6 +51,10 @@ int main(void) {
     CHECK(strcmp(KEY_MESSAGE, "message") == 0);
     CHECK(strcmp(KEY_LEVEL, "level") == 0);
 
+    /* Reported once per session, on the first status event, so the host can see
+     * which envelope contract this firmware was built against without asking. */
+    CHECK(strcmp(KEY_ENVELOPE_SCHEMA_VERSION, "envelope_schema_version") == 0);
+
     /* Enum value == index in the schema's array. A device stores these
      * integers, so a reordered array renumbers state a flashed Pico already
      * holds -- see tools/check-enum-order.py. */
@@ -74,7 +78,7 @@ int main(void) {
      * schemas rather than out of a hand-kept literal beside them. */
     CHECK(strcmp(SCHEMA_DEVICE_ENVELOPE_XVERSION, "2.0.0") == 0);
     CHECK(strcmp(SCHEMA_DEVICE_PAYLOAD_DATA_XVERSION, "1.0.0") == 0);
-    CHECK(strcmp(SCHEMA_DEVICE_PAYLOAD_STATUS_XVERSION, "1.0.0") == 0);
+    CHECK(strcmp(SCHEMA_DEVICE_PAYLOAD_STATUS_XVERSION, "1.1.0") == 0);
     CHECK(strcmp(SCHEMA_DEVICE_PAYLOAD_ERROR_XVERSION, "1.0.0") == 0);
     CHECK(strcmp(SCHEMA_DEVICE_PAYLOAD_LOG_XVERSION, "1.0.0") == 0);
 
