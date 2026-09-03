@@ -22,15 +22,19 @@ constants/       constants.json — the one place a shared literal is written
 angles/          SPEC.md (the conventions), vectors.json (shared test cases),
                  and the two reference implementations they are run against
 gen/             GENERATED and committed: TypeScript, Python, C. CI diffs it.
+dist/            GENERATED and committed: gen/ts compiled to ESM + CommonJS
+                 JavaScript with declarations, which is what `needle-protocol`
+                 resolves to. CI diffs it too.
 tools/           gen.sh and the generators behind it
-tests/           ts (vitest), py (pytest), c (gcc + g++); samples.json is shared
-                 with consumers too — it is PUBLISHED, not a private fixture
+tests/           ts (vitest), py (pytest), c (gcc + g++), consumer (packs the
+                 tarball and loads it with a stock node); samples.json is
+                 shared with consumers too — it is PUBLISHED, not a fixture
 docs/decisions.md  why this repository exists, and why in this shape
 ```
 
-**Never hand-edit anything under `gen/`.** CI runs `tools/gen.sh` and then
-`git diff --exit-code gen/`, so an edit there is a red build; and the next
-regeneration would revert it anyway.
+**Never hand-edit anything under `gen/` or `dist/`.** CI runs `tools/gen.sh` and
+then `git diff --exit-code gen/ dist/`, so an edit there is a red build; and the
+next regeneration would revert it anyway.
 
 ## What is in here
 
@@ -89,10 +93,35 @@ import type { AngleStreamEnvelope } from 'needle-protocol';
 import { AngleStreamEnvelopeSchema } from 'needle-protocol/zod';
 ```
 
-The package ships TypeScript source (`gen/ts/*.ts`) rather than compiled
-JavaScript: both consumers are bundler projects, and a committed build output
-would be one more artifact to keep honest. There is no `prepare` script, so
-installing this as a git dependency clones and stops.
+#### Bundled and unbundled consumers both work
+
+`needle-protocol` resolves to **compiled JavaScript** under `dist/`, in both
+module systems, each with its own declarations:
+
+| You load it with | You get |
+|---|---|
+| Vite, or any bundler | `dist/esm/*.js` — it compiles the ESM half like any other dependency |
+| `node` / Electron **main**, ESM | `dist/esm/*.js` |
+| Electron **preload**, CommonJS | `dist/cjs/*.js` |
+
+That is not decoration. A consumer whose TypeScript is emitted by `tsc` and then
+run unbundled — needle-guide's Electron main process is exactly that — used to
+hit `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING` the moment it imported a
+**value** rather than a type, because `exports` pointed at `gen/ts/*.ts` and
+Node will not strip types inside `node_modules`. The workaround was to keep a
+local copy of the constant, which is the drift this repository exists to remove.
+`tests/consumer/run.sh` packs the tarball and loads it with a stock `node`,
+through `import()` and `require()`, so that failure cannot come back unnoticed.
+
+`dist/` is **generated and committed**, exactly like `gen/`: a git dependency has
+no publish step and bun runs no `prepare` script for one, so an uncommitted
+`dist/` is an empty `dist/` on the consumer's disk. `tools/gen.sh` builds it and
+CI runs `git diff --exit-code gen/ dist/`. Never hand-edit a file under `dist/`.
+
+If you would rather compile the source yourself, it is still shipped and
+reachable at `needle-protocol/src/*` (`needle-protocol/src/angles` →
+`gen/ts/angles.ts`). Nothing in this repository needs that; it is there so a
+consumer with an unusual build does not have to fork the package.
 
 ### Python / uv
 
@@ -217,7 +246,7 @@ Rules that are enforced, not remembered:
 | Adding an enum value at the END of the array | minor | `tools/check-enum-order.py` allows it |
 | **Reordering an enum, or removing an element** | **MAJOR** | `tools/check-enum-order.py` fails the build |
 | Renaming or removing a required field | MAJOR | review; the samples in `tests/samples.json` will fail |
-| Editing anything under `gen/` by hand | rejected | `git diff --exit-code gen/` in CI |
+| Editing anything under `gen/` or `dist/` by hand | rejected | `git diff --exit-code gen/ dist/` in CI |
 
 Enum **order** is load-bearing because `tools/gen_schema_header.py` gives each C
 enum constant the value of its index in the JSON array, and a flashed Pico
@@ -227,22 +256,27 @@ device already in the field.
 
 ## Working on it
 
-Toolchain: **bun** (installs the generators, runs the TypeScript suite),
-**Node 24** (runs the generators — `gen/` is diffed byte for byte in CI, so the
-runtime that produces it is part of the contract), **uv** (Python), and
-**gcc/g++** (the firmware header).
+Toolchain: **bun** (installs the generators, runs the TypeScript suite, packs
+the consumer tarball), **Node 24** (runs the generators and the `dist/` build —
+both are diffed byte for byte in CI, so the runtime that produces them is part
+of the contract), **uv** (Python), and **gcc/g++** (the firmware header).
 
 ```bash
 bun install
 uv sync --all-groups
 
-tools/gen.sh          # regenerate gen/ — commit the result
+tools/gen.sh          # regenerate gen/ AND dist/ — commit the result
 bunx tsc --noEmit
 bunx vitest run
 uv run pytest tests/py -q
 tests/c/run.sh
+tests/consumer/run.sh
 uv run python tools/check-enum-order.py
 ```
+
+`tools/gen.sh` compiles `dist/` with the TypeScript pinned in `package.json`,
+resolved from `node_modules` rather than `PATH` — the compiler version shows up
+in the emitted bytes, and CI diffs those.
 
 Adding a shared angle case means one line in `angles/vectors.json`; it runs
 against both reference implementations automatically. Adding a frame means one

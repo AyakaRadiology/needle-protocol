@@ -64,20 +64,24 @@ jobs:
             - name: Install Python dependencies
               run: uv sync --all-groups --frozen
 
-            - name: Regenerate everything under gen/
+            - name: Regenerate everything under gen/ and dist/
               run: tools/gen.sh
 
+            # dist/ is diffed on exactly the same terms as gen/, and for the
+            # same reason: it is a committed build output that consumers get
+            # straight from a git tag (no publish step, no `prepare` script), so
+            # a dist/ that lags gen/ ships a contract nobody wrote.
             - name: Fail if the committed artifacts drifted from their sources
               run: |
                   set -euo pipefail
-                  if ! git diff --exit-code -- gen/; then
-                    echo "::error::gen/ is out of date with schemas/, constants/ or angles/. Run tools/gen.sh and commit the result. Never hand-edit a file under gen/ — the next regeneration reverts it." >&2
+                  if ! git diff --exit-code -- gen/ dist/; then
+                    echo "::error::gen/ or dist/ is out of date with schemas/, constants/ or angles/. Run tools/gen.sh and commit the result. Never hand-edit a file under gen/ or dist/ — the next regeneration reverts it." >&2
                     exit 1
                   fi
-                  # An untracked file under gen/ is a generator that started
-                  # emitting something nobody committed, which `git diff` cannot
-                  # see.
-                  UNTRACKED="$(git ls-files --others --exclude-standard -- gen/)"
+                  # An untracked file under gen/ or dist/ is a generator that
+                  # started emitting something nobody committed, which
+                  # `git diff` cannot see.
+                  UNTRACKED="$(git ls-files --others --exclude-standard -- gen/ dist/)"
                   if [ -n "$UNTRACKED" ]; then
                     echo "::error::tools/gen.sh produced files that are not committed:" >&2
                     echo "$UNTRACKED" >&2
@@ -88,8 +92,8 @@ jobs:
               run: |
                   set -euo pipefail
                   tools/gen.sh
-                  if ! git diff --exit-code -- gen/; then
-                    echo "::error::A second tools/gen.sh run changed gen/. A generator whose output is not a pure function of its sources (a timestamp, a host path, an unordered set) makes every consumer's diff unreadable." >&2
+                  if ! git diff --exit-code -- gen/ dist/; then
+                    echo "::error::A second tools/gen.sh run changed gen/ or dist/. A generator whose output is not a pure function of its sources (a timestamp, a host path, an unordered set) makes every consumer's diff unreadable." >&2
                     exit 1
                   fi
 
@@ -104,6 +108,13 @@ jobs:
 
             - name: C header compiles and runs
               run: tests/c/run.sh
+
+            # Every suite above runs against the SOURCE, so none of them can see
+            # a broken `exports` map or a dist/ left out of `files`. This one
+            # packs the tarball a consumer installs and loads it with a stock
+            # `node`, which is how needle-guide's Electron main process runs.
+            - name: Unbundled Node consumer can import the package
+              run: tests/consumer/run.sh
 
             - name: Enum ordering unchanged since the last release
               run: uv run --frozen python tools/check-enum-order.py

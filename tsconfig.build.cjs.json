@@ -1,0 +1,30 @@
+{
+    // CommonJS half of the published `dist/` (see tools/build-ts.mjs).
+    //
+    // Three options have to move together with `module: CommonJS` and none of
+    // them is cosmetic:
+    //   * `moduleResolution: node10` — `bundler` is only legal alongside an
+    //     ESM `module`, and tsc refuses the pair outright.
+    //   * `verbatimModuleSyntax: false` — with it on, tsc rejects `export` in a
+    //     file it is about to emit as CommonJS (TS1286) rather than
+    //     down-levelling it, which is exactly what this pass exists to do.
+    //   * `dist/cjs/package.json` carries `"type": "commonjs"` (written by
+    //     tools/build-ts.mjs) — the root package is `"type": "module"`, so
+    //     without that marker Node parses these `.js` files as ESM and every
+    //     `require()` dies on `exports is not defined`.
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": false,
+        "declaration": true,
+        "declarationMap": false,
+        "sourceMap": false,
+        "outDir": "dist/cjs",
+        "rootDir": "gen/ts",
+        "module": "CommonJS",
+        "moduleResolution": "node10",
+        "verbatimModuleSyntax": false,
+        "newLine": "lf",
+        "incremental": false
+    },
+    "include": ["gen/ts/**/*.ts"]
+}
