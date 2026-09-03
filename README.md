@@ -199,6 +199,11 @@ device already in the field.
 
 ## Working on it
 
+Toolchain: **bun** (installs the generators, runs the TypeScript suite),
+**Node 24** (runs the generators — `gen/` is diffed byte for byte in CI, so the
+runtime that produces it is part of the contract), **uv** (Python), and
+**gcc/g++** (the firmware header).
+
 ```bash
 bun install
 uv sync --all-groups

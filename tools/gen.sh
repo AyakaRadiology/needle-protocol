@@ -14,6 +14,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Node, specifically, and not whatever JavaScript runtime happens to be around.
+# gen/ is a committed artifact that CI diffs byte for byte, so the runtime that
+# produces it is part of the contract: a generator run under a different engine
+# can format or order its output differently, and the result is a red build on
+# somebody else's pull request with no change of theirs to explain it. bun is
+# required too (it installs the generators and runs the suites); it is simply
+# not the thing that runs them.
+for prerequisite in node uv; do
+    if ! command -v "$prerequisite" >/dev/null 2>&1; then
+        echo "tools/gen.sh needs \`$prerequisite\` on PATH and cannot find it." >&2
+        echo "See README.md > Working on it for the toolchain this repository expects." >&2
+        exit 127
+    fi
+done
+
 echo "==> bundling schemas"
 node tools/bundle.mjs
 
