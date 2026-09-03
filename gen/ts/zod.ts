@@ -35,7 +35,7 @@ export const DevicePayloadErrorSchema = z.object({ "code": z.string().min(1), "m
 export const DevicePayloadLogSchema = z.object({ "level": z.enum(["trace","debug","info","warn","error","critical"]), "message": z.string() }).strict();
 
 /** `schemas/device/payload-status.json` */
-export const DevicePayloadStatusSchema = z.object({ "state": z.enum(["init","ready","running","degraded","lost","stopping","stopped"]) }).strict();
+export const DevicePayloadStatusSchema = z.object({ "state": z.enum(["init","ready","running","degraded","lost","stopping","stopped"]), "envelope_schema_version": z.string().regex(new RegExp("^\\d+\\.\\d+\\.\\d+$")).optional() }).strict();
 
 /** `schemas/tracker/hello.json` */
 export const TrackerHelloSchema = z.object({ "type": z.literal("hello"), "protocol_version": z.number().int().gte(1), "server_bind": z.string().optional(), "client_addr": z.string().optional() }).catchall(z.any());

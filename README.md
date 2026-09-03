@@ -24,6 +24,7 @@ angles/          SPEC.md (the conventions), vectors.json (shared test cases),
 gen/             GENERATED and committed: TypeScript, Python, C. CI diffs it.
 tools/           gen.sh and the generators behind it
 tests/           ts (vitest), py (pytest), c (gcc + g++); samples.json is shared
+                 with consumers too — it is PUBLISHED, not a private fixture
 docs/decisions.md  why this repository exists, and why in this shape
 ```
 
@@ -161,6 +162,33 @@ add_custom_command(
 The header exposes `KEY_*` string macros, a C enum per schema enum, and
 `SCHEMA_DEVICE_*_XVERSION` string macros so the firmware reports the contract it
 was built against instead of a hand-kept literal beside it.
+
+### Contract fixtures
+
+`tests/samples.json` is **published**, not a private fixture. It is listed in
+`files` and in `exports`, so a consumer's own parser tests can run against the
+same bytes this repository's suites do:
+
+```ts
+import samples from 'needle-protocol/tests/samples.json' with { type: 'json' };
+```
+
+Each entry carries `contract`, `name`, a provenance string and the `frame`
+itself; `invalid` entries carry `why` in place of `from`. A consumer with a
+hand-written parser — needle-guide's serial reader is one — can assert that
+every `valid` frame parses and every `invalid` one is rejected. That is what
+stops a hand-written parser from drifting away from the generated validators
+while both keep passing their own tests.
+
+The **Python** package is built from `gen/py`, whose wheel contains
+`needle_protocol` and nothing else, so a `uv` git dependency does NOT carry this
+file. Python consumers that want it read it out of a source tree pinned to the
+same tag. Said here rather than discovered at import time.
+
+Being published makes it a contract surface: an entry may be added, and its
+provenance text corrected, but **renaming or deleting one breaks a consumer's
+test at its next pin bump**. That is the intended amount of friction — a
+vanishing sample is precisely the event a consumer should be made to notice.
 
 ## Versioning
 

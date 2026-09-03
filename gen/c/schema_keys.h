@@ -15,7 +15,7 @@
 #define SCHEMA_DEVICE_PAYLOAD_DATA_XVERSION "1.0.0"
 #define SCHEMA_DEVICE_PAYLOAD_ERROR_XVERSION "1.0.0"
 #define SCHEMA_DEVICE_PAYLOAD_LOG_XVERSION "1.0.0"
-#define SCHEMA_DEVICE_PAYLOAD_STATUS_XVERSION "1.0.0"
+#define SCHEMA_DEVICE_PAYLOAD_STATUS_XVERSION "1.1.0"
 
 /* ---- Key name string macros ---- */
 #define KEY_ACCEL_X "accel_x"
@@ -23,6 +23,7 @@
 #define KEY_ACCEL_Z "accel_z"
 #define KEY_CODE "code"
 #define KEY_DETAIL "detail"
+#define KEY_ENVELOPE_SCHEMA_VERSION "envelope_schema_version"
 #define KEY_KIND "kind"
 #define KEY_LEVEL "level"
 #define KEY_MESSAGE "message"
@@ -42,6 +43,7 @@ inline constexpr std::string_view accel_y = "accel_y";
 inline constexpr std::string_view accel_z = "accel_z";
 inline constexpr std::string_view code = "code";
 inline constexpr std::string_view detail = "detail";
+inline constexpr std::string_view envelope_schema_version = "envelope_schema_version";
 inline constexpr std::string_view kind = "kind";
 inline constexpr std::string_view level = "level";
 inline constexpr std::string_view message = "message";

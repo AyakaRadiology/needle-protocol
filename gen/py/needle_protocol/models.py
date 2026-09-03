@@ -210,6 +210,10 @@ class DevicePayloadStatus(BaseModel):
         extra='forbid',
     )
     state: DevicePayloadStatusState = Field(..., title='DevicePayloadStatusState')
+    envelope_schema_version: constr(pattern=r'^\d+\.\d+\.\d+$') | None = Field(
+        None,
+        description='The device-envelope schema x-version the firmware was built against. Emitted once per session, on the FIRST status event; absent on every later status event, and absent altogether from firmware built before this field existed. Optional for that reason: a host that requires it cannot read a rig that is still in the field.',
+    )
 
 
 class TrackerHello(BaseModel):

@@ -1,13 +1,18 @@
 {
     "$id": "urn:pico:schema:payload-status",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "x-version": "1.0.0",
+    "x-version": "1.1.0",
     "type": "object",
     "additionalProperties": false,
     "properties": {
         "state": {
             "type": "string",
             "enum": ["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]
+        },
+        "envelope_schema_version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "description": "The device-envelope schema x-version the firmware was built against. Emitted once per session, on the FIRST status event; absent on every later status event, and absent altogether from firmware built before this field existed. Optional for that reason: a host that requires it cannot read a rig that is still in the field."
         }
     },
     "required": ["state"]
