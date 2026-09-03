@@ -1,0 +1,14 @@
+{
+    "$id": "urn:pico:schema:payload-status",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "x-version": "1.0.0",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "state": {
+            "type": "string",
+            "enum": ["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]
+        }
+    },
+    "required": ["state"]
+}

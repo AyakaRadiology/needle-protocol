@@ -1,0 +1,36 @@
+{
+    "$id": "urn:needle:schema:angle-stream-frame-inclination",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Angle Stream Inclination Payload",
+    "description": "The canonical angle frame: degrees from vertical, 0 = vertical, increasing as the needle lies over. This is the quantity both apps measure, store and display; see angles/SPEC.md.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "`link` is a verbatim copy of the one in frame-heartbeat.json; tests/py/test_schemas.py asserts they stay identical.",
+    "additionalProperties": true,
+    "properties": {
+        "inclination_deg": {
+            "type": ["number", "null"],
+            "description": "Degrees from vertical. Explicit null is a sample the sensor could not resolve -- legal, and it means 'no angle'. It is NOT zero, and a subscriber that renders it as zero prints a vertical needle that is not there."
+        },
+        "calibrated": { "type": "boolean" },
+        "link": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "state": {
+                    "type": "string",
+                    "description": "needle-guide's SerialPortClient link state, verbatim. Free-form on the guide side: carry it, show it, never branch on it."
+                },
+                "live": {
+                    "type": "boolean",
+                    "description": "True only for `connected`, i.e. sensor samples are actually flowing."
+                }
+            },
+            "required": [
+                "state",
+                "live"
+            ]
+        }
+    },
+    "required": ["inclination_deg", "calibrated", "link"]
+}

@@ -1,0 +1,13 @@
+{
+    "$id": "urn:pico:schema:payload-data",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "x-version": "1.0.0",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "accel_x": { "type": "number" },
+        "accel_y": { "type": "number" },
+        "accel_z": { "type": "number" }
+    },
+    "required": ["accel_x", "accel_y", "accel_z"]
+}

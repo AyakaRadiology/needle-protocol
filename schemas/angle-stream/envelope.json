@@ -1,0 +1,49 @@
+{
+    "$id": "urn:needle:schema:angle-stream-envelope",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Angle Stream Envelope",
+    "description": "Envelope for every frame on Needle Guide's output-only inclination WebSocket (needle-guide SYSTEM_SPEC.md 5.3, electron/modules/inclinationStreamServer.ts). The wrapper is the one needle-guide's backend transport already uses (server/schemas/ws-envelope.json), narrowed to the fields this stream actually emits.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "additionalProperties is true on purpose. `v` versions the WRAPPER, and the wrapper is unchanged when a new frame `type` or a new payload field is added -- that is exactly what happened when the heartbeat gained protocol_version. A subscriber that rejects unknown envelope fields would break on an additive change that is deliberately NOT a version bump, so this schema is liberal in what it accepts and strict only about what must be present.",
+    "additionalProperties": true,
+    "properties": {
+        "v": {
+            "const": 1,
+            "description": "Envelope version. Deliberately NOT bumped by adding a frame type: `type` is what selects the payload."
+        },
+        "kind": { "const": "evt" },
+        "type": {
+            "type": "string",
+            "enum": ["inclination", "theta", "heartbeat"],
+            "description": "Selects the payload. `inclination` is canonical; `theta` is the deprecated dual-emit copy; `heartbeat` carries liveness only."
+        },
+        "ts": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Host wall-clock ISO-8601 stamp taken when the frame was built. The two angle frames describing one sample carry the SAME ts."
+        },
+        "payload": { "type": "object" }
+    },
+    "required": ["v", "kind", "type", "ts", "payload"],
+    "allOf": [
+        {
+            "if": { "properties": { "type": { "const": "inclination" } }, "required": ["type"] },
+            "then": {
+                "properties": { "payload": { "$ref": "urn:needle:schema:angle-stream-frame-inclination" } }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "theta" } }, "required": ["type"] },
+            "then": {
+                "properties": { "payload": { "$ref": "urn:needle:schema:angle-stream-frame-theta" } }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "heartbeat" } }, "required": ["type"] },
+            "then": {
+                "properties": { "payload": { "$ref": "urn:needle:schema:angle-stream-frame-heartbeat" } }
+            }
+        }
+    ]
+}

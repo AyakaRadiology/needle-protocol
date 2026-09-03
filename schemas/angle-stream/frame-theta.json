@@ -1,0 +1,38 @@
+{
+    "$id": "urn:needle:schema:angle-stream-frame-theta",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Angle Stream Theta Payload (DEPRECATED)",
+    "description": "DEPRECATED dual-emit copy of the inclination frame, carrying the console's theta = 90 - inclination. Emitted on the same tick, from the same sample, with the same ts, immediately AFTER the canonical inclination frame. It exists so a subscriber built against the old convention keeps working across the one release in which the two apps cross over. A subscriber that sees a native inclination frame within DUAL_EMIT_SUPPRESS_MS must DROP the theta copy: applying both doubles the apparent sample rate.",
+    "x-version": "1.0.0",
+    "deprecated": true,
+    "x-deprecated-removed-by": "needle-guide 0.7.0 (LEGACY_THETA_FRAME_UNTIL_VERSION)",
+    "type": "object",
+    "$comment": "`link` is a verbatim copy of the one in frame-heartbeat.json; tests/py/test_schemas.py asserts they stay identical.",
+    "additionalProperties": true,
+    "properties": {
+        "theta": {
+            "type": ["number", "null"],
+            "description": "CONSOLE_THETA_VERTICAL_DEG - inclination_deg. 90 = vertical, decreasing as the needle lies over. Explicit null means 'no angle', not zero."
+        },
+        "calibrated": { "type": "boolean" },
+        "link": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "state": {
+                    "type": "string",
+                    "description": "needle-guide's SerialPortClient link state, verbatim. Free-form on the guide side: carry it, show it, never branch on it."
+                },
+                "live": {
+                    "type": "boolean",
+                    "description": "True only for `connected`, i.e. sensor samples are actually flowing."
+                }
+            },
+            "required": [
+                "state",
+                "live"
+            ]
+        }
+    },
+    "required": ["theta", "calibrated", "link"]
+}

@@ -1,0 +1,27 @@
+{
+    "$id": "urn:needle:schema:tracker-hello",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Tracker Hello",
+    "description": "First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them (apps/desktop/src-tauri/src/ws_client.rs, SUPPORTED_PROTOCOL_VERSIONS).",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "additionalProperties is true and MUST stay true: the tracker's stated rule is that additive optional fields do NOT bump protocol_version, so a strict schema here would reject a server that is, by its own contract, compatible.",
+    "additionalProperties": true,
+    "properties": {
+        "type": { "const": "hello" },
+        "protocol_version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Bumped only when the wire schema changes in a way the client must opt into (field rename, type change, new REQUIRED field). See TRACKER_SUPPORTED_PROTOCOL_VERSIONS."
+        },
+        "server_bind": {
+            "type": "string",
+            "description": "The address the tracker bound. Used by the desktop path indicator to confirm which interface is carrying the stream."
+        },
+        "client_addr": {
+            "type": "string",
+            "description": "The peer address the tracker sees for this client, or 'unknown'."
+        }
+    },
+    "required": ["type", "protocol_version"]
+}

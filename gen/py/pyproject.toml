@@ -1,0 +1,25 @@
+[project]
+name = "needle-protocol"
+version = "0.1.0"
+description = "Shared wire contracts, angle conventions and constants for Needle Guide, Needle Simulator and the SCL3300 firmware"
+readme = "README.md"
+# 3.10 is needle-simulator's floor (the Jetson image); 3.13 is needle-guide's
+# ceiling. Widening either end is a compatibility decision, not a maintenance
+# chore -- a consumer that cannot resolve this package is the signal.
+requires-python = ">=3.10,<3.14"
+# Empty on purpose. `needle_protocol.constants` and `needle_protocol.angles` are
+# standard library only, so a consumer that only needs the shared literals or
+# the angle conversions -- the Jetson appliance, for one -- pays nothing and
+# adds no wheel to the offline-boot set. pydantic is pulled in ONLY by the
+# `models` extra, which is the only thing that imports it.
+dependencies = []
+
+[project.optional-dependencies]
+models = ["pydantic>=2.7,<3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["needle_protocol"]

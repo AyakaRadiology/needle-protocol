@@ -1,0 +1,15 @@
+{
+    "$id": "urn:pico:schema:payload-log",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "x-version": "1.0.0",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "level": {
+            "type": "string",
+            "enum": ["trace", "debug", "info", "warn", "error", "critical"]
+        },
+        "message": { "type": "string" }
+    },
+    "required": ["level", "message"]
+}

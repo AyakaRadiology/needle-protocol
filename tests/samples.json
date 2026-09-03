@@ -1,0 +1,284 @@
+{
+    "$comment": "Frames as the real emitters actually produce them, kept in ONE file so the TypeScript (zod) and Python (pydantic) suites validate the same bytes. A sample that only one language checks is a sample that only proves one generator works. Provenance is on every entry; nothing here is invented shape.",
+    "valid": [
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-data",
+            "from": "scl3300-stream docs/PROTOCOL.md, Payloads > data (verbatim)",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "data",
+                "seq": 42,
+                "t_boot_ms": 1234,
+                "payload": { "accel_x": 0.01, "accel_y": -0.0, "accel_z": 0.99 }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-data-simulator",
+            "from": "needle-guide scripts/simulator.py, one packet of the inclinometer stream",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "data",
+                "seq": 137,
+                "t_boot_ms": 2192,
+                "payload": { "accel_x": 0.5, "accel_y": 0.004, "accel_z": 0.866 }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-status-ready",
+            "from": "scl3300-stream docs/PROTOCOL.md, Payloads > status (verbatim)",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "status",
+                "seq": 0,
+                "t_boot_ms": 5,
+                "payload": { "state": "ready" }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-error-data-invalid",
+            "from": "scl3300-stream docs/PROTOCOL.md, Payloads > error (verbatim)",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "error",
+                "seq": 7,
+                "t_boot_ms": 40,
+                "payload": {
+                    "code": "SCL3300_DATA_INVALID",
+                    "message": "STATUS flags a saturated/faulted sample; rejected",
+                    "detail": "status=0x0040"
+                }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-log-info",
+            "from": "scl3300-stream schemas/payload-log.json, at the default NDJSON_LOG_THRESHOLD",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "log",
+                "seq": 3,
+                "t_boot_ms": 12,
+                "payload": { "level": "info", "message": "SCL3300 initialised, mode 4" }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-inclination",
+            "from": "needle-guide electron/modules/inclinationStreamServer.ts, sendInclination() canonical frame",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "inclination",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": {
+                    "inclination_deg": 12.5,
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-inclination-null",
+            "from": "same emitter, the sample-with-no-valid-angle case that must never render as 0",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "inclination",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": {
+                    "inclination_deg": null,
+                    "calibrated": false,
+                    "link": { "state": "connecting", "live": false }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-theta-legacy",
+            "from": "same emitter, the deprecated dual-emit copy sent immediately after the frame above",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "theta",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": {
+                    "theta": 77.5,
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-heartbeat",
+            "from": "needle-guide electron/modules/inclinationStreamServer.ts, heartbeatFrame()",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "heartbeat",
+                "ts": "2026-09-04T01:02:03.504Z",
+                "payload": {
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-heartbeat-versioned",
+            "from": "the same heartbeat once the emitter reports its version on the tick (this package's addition)",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "heartbeat",
+                "ts": "2026-09-04T01:02:04.004Z",
+                "payload": {
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true },
+                    "protocol_version": 1,
+                    "protocol_package_version": "0.1.0"
+                }
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-v2",
+            "from": "needle-simulator packages/needle-jetson/.../server/websocket.py, _handler()",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "server_bind": "0.0.0.0:8765",
+                "client_addr": "10.0.0.42"
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-unknown-peer",
+            "from": "same emitter, the branch where remote_address is missing",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 1,
+                "server_bind": "unknown",
+                "client_addr": "unknown"
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-additive-field",
+            "from": "a future rig: the tracker's own rule is that additive optional fields do NOT bump protocol_version, so this MUST parse",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "server_bind": "0.0.0.0:8765",
+                "client_addr": "10.0.0.42",
+                "rig_id": "jetson-01"
+            }
+        }
+    ],
+    "invalid": [
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-payload-belongs-to-another-type",
+            "why": "A status payload under type:data. This is the case a naive allOf-if/then codegen accepts, which is why the envelopes are emitted as tagged unions.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "data",
+                "seq": 1,
+                "t_boot_ms": 1,
+                "payload": { "state": "ready" }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-legacy-ts-key",
+            "why": "The pre-x-version-2.0.0 spelling of t_boot_ms. Rejected here on purpose: a host that reads a boot clock as wall-clock time is wrong by however long the device has been powered.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "data",
+                "seq": 1,
+                "ts": 1234,
+                "payload": { "accel_x": 0.0, "accel_y": 0.0, "accel_z": 1.0 }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-theta-payload-on-inclination-frame",
+            "why": "type:inclination carrying the legacy theta field. Accepting it would let a 90-degrees-off angle through wearing the canonical label.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "inclination",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": {
+                    "theta": 77.5,
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-angle-as-string",
+            "why": "A present-but-not-a-number angle is a malformed frame, not an angle of zero.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "inclination",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": {
+                    "inclination_deg": "12.5",
+                    "calibrated": true,
+                    "link": { "state": "connected", "live": true }
+                }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-missing-link",
+            "why": "Without link the subscriber cannot tell an idle sensor from a dead cable, which is the whole reason the field is required.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "heartbeat",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": { "calibrated": true }
+            }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-unknown-frame-type",
+            "why": "An unrecognised frame type has no payload contract, so nothing can be said about it.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "velocity",
+                "ts": "2026-09-04T01:02:03.004Z",
+                "payload": { "calibrated": true, "link": { "state": "connected", "live": true } }
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-no-version",
+            "why": "Without protocol_version the client cannot decide whether it can read the stream, and connecting anyway is how a v1 rig gets driven as a v2 one.",
+            "frame": { "type": "hello", "server_bind": "0.0.0.0:8765" }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-version-as-string",
+            "why": "A string version compares unequal to every supported integer, which would look like a protocol mismatch rather than a malformed hello.",
+            "frame": { "type": "hello", "protocol_version": "2" }
+        }
+    ]
+}

@@ -1,0 +1,71 @@
+{
+    "$id": "urn:pico:schema:device-envelope",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Device Envelope",
+    "description": "Common envelope for device NDJSON events. Fields: v=version, kind='evt', type in {status,data,error,log}, seq=monotonic sequence, t_boot_ms=ms since device boot (monotonic).",
+    "x-version": "2.0.0",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "v": { "const": 1 },
+        "kind": { "const": "evt" },
+        "type": {
+            "type": "string",
+            "enum": ["status", "data", "error", "log"]
+        },
+        "seq": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Monotonic sequence number per boot/session (uint32_t on device)."
+        },
+        "t_boot_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "ms since device boot, monotonic (uint64_t on device). NOT wall-clock; the host correlates to absolute time on receipt. Named for its clock so no host mistakes it for a timestamp."
+        },
+        "payload": {}
+    },
+    "required": ["v", "kind", "type", "seq", "t_boot_ms", "payload"],
+    "allOf": [
+        {
+            "if": { "properties": { "type": { "const": "status" } } },
+            "then": {
+                "properties": {
+                    "payload": {
+                        "$ref": "urn:pico:schema:payload-status"
+                    }
+                }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "data" } } },
+            "then": {
+                "properties": {
+                    "payload": {
+                        "$ref": "urn:pico:schema:payload-data"
+                    }
+                }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "error" } } },
+            "then": {
+                "properties": {
+                    "payload": {
+                        "$ref": "urn:pico:schema:payload-error"
+                    }
+                }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "log" } } },
+            "then": {
+                "properties": {
+                    "payload": {
+                        "$ref": "urn:pico:schema:payload-log"
+                    }
+                }
+            }
+        }
+    ]
+}

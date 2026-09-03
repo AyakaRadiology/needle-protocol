@@ -1,0 +1,30 @@
+# Development environment for this repository only. NOT the published package —
+# that is gen/py, which this workspace builds against so the suites exercise
+# exactly what a consumer installs.
+[project]
+name = "needle-protocol-dev"
+version = "0.0.0"
+requires-python = ">=3.10,<3.14"
+dependencies = ["needle-protocol[models]"]
+
+[dependency-groups]
+dev = [
+    # Pinned exactly, not floated: this generates a COMMITTED artifact that CI
+    # diffs, so a floating version turns an unrelated dependency release into a
+    # red build on someone else's PR.
+    "datamodel-code-generator==0.76.1",
+    "jsonschema>=4.23",
+    "pytest>=8.3",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+needle-protocol = { workspace = true }
+
+[tool.uv.workspace]
+members = ["gen/py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/py"]

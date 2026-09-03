@@ -1,0 +1,44 @@
+{
+    "name": "needle-protocol",
+    "version": "0.1.0",
+    "type": "module",
+    "private": false,
+    "description": "Shared wire contracts, angle conventions and constants for Needle Guide, Needle Simulator and the SCL3300 firmware",
+    "license": "UNLICENSED",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/AyakaRadiology/needle-protocol.git"
+    },
+    "exports": {
+        ".": "./gen/ts/index.ts",
+        "./types": "./gen/ts/types.ts",
+        "./constants": "./gen/ts/constants.ts",
+        "./angles": "./gen/ts/angles.ts",
+        "./zod": "./gen/ts/zod.ts",
+        "./schemas/*": "./schemas/*",
+        "./package.json": "./package.json"
+    },
+    "files": ["gen/ts", "schemas", "constants/constants.json", "angles", "README.md"],
+    "sideEffects": false,
+    "peerDependencies": {
+        "zod": "^3.23.0 || ^4.0.0"
+    },
+    "peerDependenciesMeta": {
+        "zod": {
+            "optional": true
+        }
+    },
+    "scripts": {
+        "gen": "tools/gen.sh",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@types/node": "24.9.2",
+        "json-schema-to-typescript": "15.0.4",
+        "json-schema-to-zod": "2.8.1",
+        "typescript": "5.9.3",
+        "vitest": "3.2.4",
+        "zod": "3.25.76"
+    }
+}

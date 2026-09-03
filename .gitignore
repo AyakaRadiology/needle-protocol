@@ -1,0 +1,10 @@
+# Bundled schemas and generator scratch. gen/ is the committed artifact; this is
+# the intermediate the generators read, and committing it would give a reviewer
+# two diffs to read for every schema change.
+/build/
+
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

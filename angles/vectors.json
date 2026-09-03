@@ -1,0 +1,774 @@
+{
+    "$comment": "Shared test vectors for the canonical angle conversions. Run against BOTH reference implementations (angles/ts/src/index.ts and angles/py/needle_protocol/angles.py) by tests/ts/angles.test.ts and tests/py/test_angles.py, so the two cannot drift apart in silence. Adding a case here adds it to both suites at once, which is the point: a convention that is only tested on one side is a convention that is only right on one side.",
+    "x-version": "1.0.0",
+    "encoding": {
+        "$comment": "JSON has no NaN or Infinity literal, so the strings below stand in for them and each harness decodes them before the call. A case that expects a rejection of the literal STRING \"NaN\" would be indistinguishable, so no case does that; string rejection is covered by theta-from-inclination-string with \"45\".",
+        "NaN": "the IEEE-754 quiet NaN",
+        "Infinity": "positive infinity",
+        "-Infinity": "negative infinity"
+    },
+    "parameters": {
+        "$comment": "Constants both reference implementations must agree on. The suites assert the impls' own constants equal these, so a value cannot be changed on one side only.",
+        "CONSOLE_THETA_VERTICAL_DEG": 90,
+        "HORIZONTAL_INCLINATION_DEG": 90,
+        "MIN_NEEDLE_LENGTH_MM": 20,
+        "TOLERANCE_DEG": 1e-09
+    },
+    "cases": [
+        {
+            "id": "theta-from-inclination-vertical",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                0
+            ],
+            "expect": 90,
+            "note": "0 deg from vertical is the console's 90."
+        },
+        {
+            "id": "theta-from-inclination-horizontal",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                90
+            ],
+            "expect": 0
+        },
+        {
+            "id": "theta-from-inclination-45",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                45
+            ],
+            "expect": 45,
+            "note": "The one input where the two scales read the same number. A conversion bug is invisible here, which is why it is never the only case."
+        },
+        {
+            "id": "theta-from-inclination-fraction",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                30.5
+            ],
+            "expect": 59.5
+        },
+        {
+            "id": "theta-from-inclination-negative",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                -90
+            ],
+            "expect": 180,
+            "note": "Not a pose an insertion produces; the arithmetic is still defined and must not clamp."
+        },
+        {
+            "id": "theta-from-inclination-points-up",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                180
+            ],
+            "expect": -90,
+            "note": "Needle pointing straight up. The console has no room for a negative theta; the caller checks pointsUp, the conversion does not lie about it."
+        },
+        {
+            "id": "theta-from-inclination-null",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                null
+            ],
+            "expect": null
+        },
+        {
+            "id": "theta-from-inclination-nan",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                "NaN"
+            ],
+            "expect": null,
+            "note": "NaN in must not become NaN out: a NaN angle reaches a display looking like a measurement."
+        },
+        {
+            "id": "theta-from-inclination-infinity",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                "Infinity"
+            ],
+            "expect": null
+        },
+        {
+            "id": "theta-from-inclination-string",
+            "fn": "consoleThetaFromInclination",
+            "args": [
+                "45"
+            ],
+            "expect": null,
+            "note": "A numeric string is not a measurement. Both impls reject rather than coerce."
+        },
+        {
+            "id": "inclination-from-theta-vertical",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                90
+            ],
+            "expect": 0
+        },
+        {
+            "id": "inclination-from-theta-horizontal",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                0
+            ],
+            "expect": 90
+        },
+        {
+            "id": "inclination-from-theta-45",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                45
+            ],
+            "expect": 45
+        },
+        {
+            "id": "inclination-from-theta-negative",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                -30
+            ],
+            "expect": 120
+        },
+        {
+            "id": "inclination-from-theta-180",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                180
+            ],
+            "expect": -90
+        },
+        {
+            "id": "inclination-from-theta-null",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                null
+            ],
+            "expect": null
+        },
+        {
+            "id": "inclination-from-theta-nan",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                "NaN"
+            ],
+            "expect": null
+        },
+        {
+            "id": "inclination-theta-roundtrip",
+            "fn": "inclinationFromConsoleTheta",
+            "args": [
+                59.5
+            ],
+            "expect": 30.5,
+            "note": "Inverse of theta-from-inclination-fraction; the pair pins that the conversion is its own inverse."
+        },
+        {
+            "id": "alpha-from-inclination-vertical",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                0
+            ],
+            "expect": 0,
+            "note": "Must be +0, never -0: a readout would print '-0.0' for a vertical plan."
+        },
+        {
+            "id": "alpha-from-inclination-typical",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                12.5
+            ],
+            "expect": -12.5,
+            "note": "The Alpha field is always <= 0, because the guide derives theta = Alpha + 90."
+        },
+        {
+            "id": "alpha-from-inclination-90",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                90
+            ],
+            "expect": -90
+        },
+        {
+            "id": "alpha-from-inclination-negative",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                -3
+            ],
+            "expect": 3
+        },
+        {
+            "id": "alpha-from-inclination-null",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                null
+            ],
+            "expect": null
+        },
+        {
+            "id": "alpha-from-inclination-nan",
+            "fn": "consoleAlphaInputFromInclination",
+            "args": [
+                "NaN"
+            ],
+            "expect": null
+        },
+        {
+            "id": "inclination-from-alpha-zero",
+            "fn": "inclinationFromConsoleAlpha",
+            "args": [
+                0
+            ],
+            "expect": 0
+        },
+        {
+            "id": "inclination-from-alpha-typical",
+            "fn": "inclinationFromConsoleAlpha",
+            "args": [
+                -12.5
+            ],
+            "expect": 12.5
+        },
+        {
+            "id": "inclination-from-alpha-positive",
+            "fn": "inclinationFromConsoleAlpha",
+            "args": [
+                3
+            ],
+            "expect": -3,
+            "note": "A positive Alpha is out of the guide's range; the conversion reports it rather than clamping it into range."
+        },
+        {
+            "id": "inclination-from-alpha-null",
+            "fn": "inclinationFromConsoleAlpha",
+            "args": [
+                null
+            ],
+            "expect": null
+        },
+        {
+            "id": "theta-error-more-vertical",
+            "fn": "consoleThetaError",
+            "args": [
+                80,
+                78
+            ],
+            "expect": 2,
+            "note": "Positive: the needle is MORE vertical than the plan."
+        },
+        {
+            "id": "theta-error-laid-over",
+            "fn": "consoleThetaError",
+            "args": [
+                78,
+                80
+            ],
+            "expect": -2
+        },
+        {
+            "id": "theta-error-on-plan",
+            "fn": "consoleThetaError",
+            "args": [
+                80,
+                80
+            ],
+            "expect": 0
+        },
+        {
+            "id": "theta-error-no-sensor",
+            "fn": "consoleThetaError",
+            "args": [
+                null,
+                80
+            ],
+            "expect": null,
+            "note": "Never 0. A residual against a missing half would read as 'on plan'."
+        },
+        {
+            "id": "theta-error-no-target",
+            "fn": "consoleThetaError",
+            "args": [
+                80,
+                null
+            ],
+            "expect": null
+        },
+        {
+            "id": "theta-error-nan-sensor",
+            "fn": "consoleThetaError",
+            "args": [
+                "NaN",
+                80
+            ],
+            "expect": null
+        },
+        {
+            "id": "inclination-error-laid-over",
+            "fn": "inclinationError",
+            "args": [
+                12,
+                10
+            ],
+            "expect": 2,
+            "note": "Positive: the needle is laid over FURTHER than the plan. Opposite sense to consoleThetaError on the same pose -- see the pair below."
+        },
+        {
+            "id": "inclination-error-more-vertical",
+            "fn": "inclinationError",
+            "args": [
+                10,
+                12
+            ],
+            "expect": -2
+        },
+        {
+            "id": "inclination-error-sign-pairs-with-theta",
+            "fn": "inclinationError",
+            "args": [
+                12,
+                10
+            ],
+            "expect": 2,
+            "note": "Same pose as theta-error-laid-over (theta 78 vs 80 is inclination 12 vs 10). The two residuals are exact negations; that minus sign is the whole reason both functions exist."
+        },
+        {
+            "id": "inclination-error-no-sensor",
+            "fn": "inclinationError",
+            "args": [
+                null,
+                10
+            ],
+            "expect": null
+        },
+        {
+            "id": "inclination-error-nan-plan",
+            "fn": "inclinationError",
+            "args": [
+                10,
+                "NaN"
+            ],
+            "expect": null
+        },
+        {
+            "id": "angle-parallel",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                }
+            ],
+            "expect": 0,
+            "note": "Identical unit vectors. The dot product overshoots 1 by a few ulps here; without the clamp acos returns NaN."
+        },
+        {
+            "id": "angle-parallel-unnormalised",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 5
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 2
+                }
+            ],
+            "expect": 0
+        },
+        {
+            "id": "angle-antiparallel",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": 180
+        },
+        {
+            "id": "angle-perpendicular",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 1,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 1,
+                    "z": 0
+                }
+            ],
+            "expect": 90
+        },
+        {
+            "id": "angle-45",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 1,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 1,
+                    "y": 1,
+                    "z": 0
+                }
+            ],
+            "expect": 45
+        },
+        {
+            "id": "angle-zero-vector",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                }
+            ],
+            "expect": null,
+            "note": "A zero vector has no direction. Null, not 0 -- a solved gravity vector comes back through client-side storage and a zeroed one must not read as 'vertical'."
+        },
+        {
+            "id": "angle-nan-component",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                },
+                {
+                    "x": "NaN",
+                    "y": 0,
+                    "z": 0
+                }
+            ],
+            "expect": null
+        },
+        {
+            "id": "angle-not-a-vector",
+            "fn": "angleBetweenDeg",
+            "args": [
+                null,
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                }
+            ],
+            "expect": null
+        },
+        {
+            "id": "angle-missing-component",
+            "fn": "angleBetweenDeg",
+            "args": [
+                {
+                    "x": 1,
+                    "y": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 1
+                }
+            ],
+            "expect": null
+        },
+        {
+            "id": "needle-vertical-down",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 0,
+                "consoleThetaDeg": 90,
+                "pointsUp": false
+            },
+            "note": "Entry->tip along gravity: 0 from vertical, console theta 90."
+        },
+        {
+            "id": "needle-horizontal",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 100,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 90,
+                "consoleThetaDeg": 0,
+                "pointsUp": false
+            },
+            "note": "Exactly horizontal is NOT pointsUp: the boundary is strict."
+        },
+        {
+            "id": "needle-45-down",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 100,
+                    "y": 0,
+                    "z": -100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 45,
+                "consoleThetaDeg": 45,
+                "pointsUp": false
+            }
+        },
+        {
+            "id": "needle-points-up-135",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 100,
+                    "y": 0,
+                    "z": 100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 135,
+                "consoleThetaDeg": -45,
+                "pointsUp": true
+            },
+            "note": "Past horizontal the console theta goes negative; pointsUp is what tells a readout to print a placeholder instead of the number."
+        },
+        {
+            "id": "needle-straight-up",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 180,
+                "consoleThetaDeg": -90,
+                "pointsUp": true
+            }
+        },
+        {
+            "id": "needle-exactly-min-length",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -20
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 0,
+                "consoleThetaDeg": 90,
+                "pointsUp": false
+            },
+            "note": "MIN_NEEDLE_LENGTH_MM exactly: accepted. The floor is 'shorter than', not 'at most'."
+        },
+        {
+            "id": "needle-too-short",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -19.999
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": null,
+            "note": "Just under the floor. Two nearly coincident points are detection noise, not an axis."
+        },
+        {
+            "id": "needle-zero-length",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": null
+        },
+        {
+            "id": "needle-no-gravity",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                }
+            ],
+            "expect": null,
+            "note": "Uncalibrated or storage-corrupted gravity. Null, never a silent 0."
+        },
+        {
+            "id": "needle-nan-tip",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": "NaN",
+                    "y": 0,
+                    "z": -100
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": null
+        },
+        {
+            "id": "needle-null-entry",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -100
+                },
+                null,
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": -1
+                }
+            ],
+            "expect": null
+        }
+    ]
+}

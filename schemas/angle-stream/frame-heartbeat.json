@@ -1,0 +1,42 @@
+{
+    "$id": "urn:needle:schema:angle-stream-frame-heartbeat",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Angle Stream Heartbeat Payload",
+    "description": "Liveness only, emitted every HEARTBEAT_INTERVAL_MS whether or not the sensor is streaming, and once immediately on connect. Carries no angle: the last angle is deliberately never repeated as a keepalive, because a stale angle presented as a live one is the one failure a medical readout may not have. A subscriber tells 'the sensor is idle' (heartbeats, no angle) from 'the nav app is gone' (nothing at all) with this frame and HEARTBEAT_STALE_MS.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "The `link` sub-object is repeated verbatim in frame-inclination.json and frame-theta.json rather than $ref'd, so that each payload schema stands alone for a generator and for a firmware-adjacent reader. tests/py/test_schemas.py asserts the three copies are identical, so the duplication cannot drift.",
+    "additionalProperties": true,
+    "properties": {
+        "calibrated": {
+            "type": "boolean",
+            "description": "True once needle-guide has captured a zero-reference vector. False means any angle it reports is measured from an unknown reference."
+        },
+        "link": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "state": {
+                    "type": "string",
+                    "description": "needle-guide's SerialPortClient link state, verbatim. Free-form on the guide side: carry it, show it, never branch on it."
+                },
+                "live": {
+                    "type": "boolean",
+                    "description": "True only for `connected`, i.e. sensor samples are actually flowing."
+                }
+            },
+            "required": ["state", "live"]
+        },
+        "protocol_version": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "OPTIONAL. The angle-stream wire version the emitter speaks. Rides the heartbeat so liveness and version arrive on the same tick: a subscriber that has a heartbeat has, by construction, everything it needs to decide whether it can read the angle frames. Absent from an emitter built before this field existed, which a subscriber must read as 'unknown', never as 1."
+        },
+        "protocol_package_version": {
+            "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+            "description": "OPTIONAL. Semver of the needle-protocol package the emitter was built against. Diagnostic, not a compatibility gate -- `protocol_version` is the gate. It exists so an operator staring at two disagreeing screens can tell which side is behind without opening either build."
+        }
+    },
+    "required": ["calibrated", "link"]
+}

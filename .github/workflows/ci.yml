@@ -1,0 +1,100 @@
+name: CI
+
+# One job, because every check here is fast and they share one install. The
+# order is deliberate: regenerate first and diff, so a stale gen/ fails before
+# the suites get a chance to pass against an artifact nobody committed.
+#
+# runs-on: the org self-hosted runners, matching the sibling repos. This
+# account's GitHub-hosted Actions minutes are billing-blocked.
+
+on:
+    push:
+        branches: ['main']
+        tags: ['v*']
+    pull_request:
+        branches: ['**']
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    check:
+        name: Quality Check
+        runs-on: [self-hosted, linux, x64]
+        steps:
+            # Deliberately no path filter anywhere in this workflow. "Quality
+            # Check" is the merge gate, and a filtered-out pull request never
+            # starts the workflow at all, so the context never reports and the
+            # PR stays blocked with no way to satisfy it.
+            - uses: actions/checkout@v4
+              with:
+                  # Full history AND tags: tools/check-enum-order.py compares
+                  # against the newest v* tag, and on a shallow clone with no
+                  # tags it correctly reports that it checked nothing — which
+                  # would leave the gate green while gating nothing.
+                  fetch-depth: 0
+                  fetch-tags: true
+
+            - uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: '1.3.14'
+
+            - uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: 'uv.lock'
+
+            - name: Install JavaScript dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Install Python dependencies
+              run: uv sync --all-groups --frozen
+
+            - name: Regenerate everything under gen/
+              run: tools/gen.sh
+
+            - name: Fail if the committed artifacts drifted from their sources
+              run: |
+                  set -euo pipefail
+                  if ! git diff --exit-code -- gen/; then
+                    echo "::error::gen/ is out of date with schemas/, constants/ or angles/. Run tools/gen.sh and commit the result. Never hand-edit a file under gen/ — the next regeneration reverts it." >&2
+                    exit 1
+                  fi
+                  # An untracked file under gen/ is a generator that started
+                  # emitting something nobody committed, which `git diff` cannot
+                  # see.
+                  UNTRACKED="$(git ls-files --others --exclude-standard -- gen/)"
+                  if [ -n "$UNTRACKED" ]; then
+                    echo "::error::tools/gen.sh produced files that are not committed:" >&2
+                    echo "$UNTRACKED" >&2
+                    exit 1
+                  fi
+
+            - name: Fail if tools/gen.sh is not idempotent
+              run: |
+                  set -euo pipefail
+                  tools/gen.sh
+                  if ! git diff --exit-code -- gen/; then
+                    echo "::error::A second tools/gen.sh run changed gen/. A generator whose output is not a pure function of its sources (a timestamp, a host path, an unordered set) makes every consumer's diff unreadable." >&2
+                    exit 1
+                  fi
+
+            - name: TypeScript types
+              run: bunx tsc --noEmit
+
+            - name: TypeScript tests
+              run: bunx vitest run
+
+            - name: Python tests
+              run: uv run --frozen pytest tests/py -q
+
+            - name: C header compiles and runs
+              run: tests/c/run.sh
+
+            - name: Enum ordering unchanged since the last release
+              run: uv run --frozen python tools/check-enum-order.py
