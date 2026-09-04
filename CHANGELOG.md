@@ -1,0 +1,10 @@
+# Changelog
+
+## 0.1.0 (2026-09-04)
+
+
+### Features
+
+* **pkg:** export angles/vectors.json for consumers ([#11](https://github.com/AyakaRadiology/needle-protocol/issues/11)) ([f887afe](https://github.com/AyakaRadiology/needle-protocol/commit/f887afea5d8c643dc2a994d7aa68745bec14cc3a))
+* **schemas:** status payload carries envelope_schema_version once per session ([#2](https://github.com/AyakaRadiology/needle-protocol/issues/2)) ([262a35a](https://github.com/AyakaRadiology/needle-protocol/commit/262a35a524b3f5cfbb72168556da675ca8732a1d))
+* shared wire contracts, angle conventions and constants ([19e9de9](https://github.com/AyakaRadiology/needle-protocol/commit/19e9de986722084f3cd933acc1d2074ed1a470a0))

@@ -66,7 +66,15 @@
         "./tests/samples.json": "./tests/samples.json",
         "./package.json": "./package.json"
     },
-    "files": ["dist", "gen/ts", "schemas", "constants/constants.json", "angles", "tests/samples.json", "README.md"],
+    "files": [
+        "dist",
+        "gen/ts",
+        "schemas",
+        "constants/constants.json",
+        "angles",
+        "tests/samples.json",
+        "README.md"
+    ],
     "sideEffects": false,
     "peerDependencies": {
         "zod": "^3.23.0 || ^4.0.0"
