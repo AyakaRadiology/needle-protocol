@@ -21,8 +21,8 @@ name: release-please
 # in `action_required` until a maintainer clicks "Approve and run", which is
 # friction on every single release.
 #
-# runs-on: the org self-hosted runners, matching ci.yml. This account's
-# GitHub-hosted Actions minutes are billing-blocked.
+# runs-on: GitHub-hosted ubuntu-latest, matching ci.yml. See that file for why
+# the self-hosted runners are not an option on a public repository.
 
 on:
     push:
@@ -35,7 +35,7 @@ permissions:
 jobs:
     release-please:
         name: Maintain release PR
-        runs-on: [self-hosted, linux, x64]
+        runs-on: ubuntu-latest
         outputs:
             # `releases_created` is the top-level aggregate. The release package
             # is anchored at the repo root (path `.`), so its per-package
