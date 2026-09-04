@@ -130,3 +130,10 @@ jobs:
 
             - name: Enum ordering unchanged since the last release
               run: uv run --frozen python tools/check-enum-order.py
+
+            # Guards the workflow files themselves, which no suite above reads.
+            # Two disagreeing pins for one action let a Dependabot bump run
+            # BACKWARDS over the newer of them -- see the script's docstring for
+            # the time it did.
+            - name: One ref per action across the workflows
+              run: uv run --frozen python tools/check-action-pins.py

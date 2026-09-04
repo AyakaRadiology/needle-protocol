@@ -86,3 +86,13 @@ updates:
     groups:
       gh-actions:
         patterns: ['*']
+        # Majors out of the group, matching the two ecosystems above. This one
+        # was the exception and it cost something: an action major is where a
+        # reference can move in a direction nobody wanted, and inside a grouped
+        # "Bump the gh-actions group with 3 updates" PR there is nothing to read
+        # but a lockstep-looking list. #10 carried `astral-sh/setup-uv` v10.0.1
+        # -> v7 -- a DOWNGRADE -- in exactly that shape. Ungrouped, a major
+        # arrives as its own PR with its own diff and its own CI run.
+        # tools/check-action-pins.py stops the downgrade itself; this makes the
+        # PR that would carry one legible.
+        update-types: ['minor', 'patch']
