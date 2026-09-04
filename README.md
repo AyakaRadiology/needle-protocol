@@ -249,11 +249,14 @@ release gets refused and an incompatible one gets accepted.
   here does.
 
 `.release-please-manifest.json` starts at `0.0.0`, which is the *last released*
-version — there is none. The first release PR release-please opens is therefore
-`chore(main): release 0.1.0`, and merging it creates the `v0.1.0` tag the pins
-above name. Setting the manifest to `0.1.0` instead would tell release-please
-that 0.1.0 had already shipped, and its first PR would propose 0.2.0 — leaving
-`v0.1.0` as a tag nobody ever creates.
+version — there is none. That alone does not produce a `0.1.0` first release:
+with no previous release to bump from, release-please skips its versioning
+strategy entirely and hardcodes `1.0.0`, so `bump-minor-pre-major` never gets a
+say. `"initial-version": "0.1.0"` in `release-please-config.json` is what makes
+the first release PR `chore(main): release 0.1.0`, and merging it creates the
+`v0.1.0` tag the pins above name. Setting the manifest to `0.1.0` instead would
+tell release-please that 0.1.0 had already shipped, and its first
+PR would propose 0.2.0 — leaving `v0.1.0` as a tag nobody ever creates.
 
 Rules that are enforced, not remembered:
 
