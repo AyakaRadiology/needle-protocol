@@ -19,8 +19,9 @@ cost.
 ```
 schemas/         JSON Schema 2020-12, one per contract, each with an "x-version"
 constants/       constants.json — the one place a shared literal is written
-angles/          SPEC.md (the conventions), vectors.json (shared test cases),
-                 and the two reference implementations they are run against
+angles/          SPEC.md (the conventions), vectors.json (shared test cases,
+                 PUBLISHED to consumers), and the two reference
+                 implementations they are run against
 gen/             GENERATED and committed: TypeScript, Python, C. CI diffs it.
 dist/            GENERATED and committed: gen/ts compiled to ESM + CommonJS
                  JavaScript with declarations, which is what `needle-protocol`
@@ -194,15 +195,30 @@ was built against instead of a hand-kept literal beside it.
 
 ### Contract fixtures
 
-`tests/samples.json` is **published**, not a private fixture. It is listed in
-`files` and in `exports`, so a consumer's own parser tests can run against the
-same bytes this repository's suites do:
+Two data files are **published**, not private fixtures. Both are listed in
+`files` and named in `exports`, so a consumer imports them by specifier and
+never by filesystem path:
+
+| Entry point | What it holds |
+|---|---|
+| `needle-protocol/angles/vectors.json` | The shared angle-conversion cases — `parameters` (constants both reference implementations must agree on) and `cases` (`fn`, `args`, `expect`) |
+| `needle-protocol/tests/samples.json` | Wire frames as the real emitters produce them, split into `valid` and `invalid` |
 
 ```ts
+import vectors from 'needle-protocol/angles/vectors.json' with { type: 'json' };
 import samples from 'needle-protocol/tests/samples.json' with { type: 'json' };
 ```
 
-Each entry carries `contract`, `name`, a provenance string and the `frame`
+`exports` names each file **exactly**, rather than exposing `angles/` through a
+wildcard. `angles/ts` and `angles/py` are the reference implementations' sources
+— generator input, compiled into `gen/` and `dist/` — and importing them
+directly would pin a consumer to a layout this repository reserves the right to
+move. `tests/consumer/run.sh` loads both JSON entry points out of the packed
+tarball, through `import()` and `require()`, because an `exports` map that omits
+one answers `ERR_PACKAGE_PATH_NOT_EXPORTED` and no suite reading these files
+from the working tree can see that.
+
+Each sample entry carries `contract`, `name`, a provenance string and the `frame`
 itself; `invalid` entries carry `why` in place of `from`. A consumer with a
 hand-written parser — needle-guide's serial reader is one — can assert that
 every `valid` frame parses and every `invalid` one is rejected. That is what
@@ -210,14 +226,15 @@ stops a hand-written parser from drifting away from the generated validators
 while both keep passing their own tests.
 
 The **Python** package is built from `gen/py`, whose wheel contains
-`needle_protocol` and nothing else, so a `uv` git dependency does NOT carry this
-file. Python consumers that want it read it out of a source tree pinned to the
-same tag. Said here rather than discovered at import time.
+`needle_protocol` and nothing else, so a `uv` git dependency carries NEITHER
+file. Python consumers that want them read them out of a source tree pinned to
+the same tag. Said here rather than discovered at import time.
 
-Being published makes it a contract surface: an entry may be added, and its
-provenance text corrected, but **renaming or deleting one breaks a consumer's
-test at its next pin bump**. That is the intended amount of friction — a
-vanishing sample is precisely the event a consumer should be made to notice.
+Being published makes both a contract surface: an entry may be added, and its
+provenance or note text corrected, but **renaming or deleting one breaks a
+consumer's test at its next pin bump**. That is the intended amount of friction
+— a vanishing sample or angle case is precisely the event a consumer should be
+made to notice.
 
 ## Versioning
 

@@ -62,6 +62,7 @@
         },
         "./src/*": "./gen/ts/*.ts",
         "./schemas/*": "./schemas/*",
+        "./angles/vectors.json": "./angles/vectors.json",
         "./tests/samples.json": "./tests/samples.json",
         "./package.json": "./package.json"
     },
