@@ -1,6 +1,6 @@
 [project]
 name = "needle-protocol"
-version = "0.1.0"
+version = "0.2.0"
 description = "Shared wire contracts, angle conventions and constants for Needle Guide, Needle Simulator and the SCL3300 firmware"
 readme = "README.md"
 # 3.10 is needle-simulator's floor (the Jetson image); 3.13 is needle-guide's
