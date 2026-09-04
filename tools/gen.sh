@@ -46,9 +46,11 @@ echo "==> compiled dist/ (ESM + CommonJS, from gen/ts)"
 node tools/build-ts.mjs
 
 echo "==> C header (device schemas only)"
-# Device schemas ONLY. The firmware has no business knowing about the host-side
-# angle stream or the tracker handshake, and generating KEY_* macros for them
-# would put host vocabulary into the Pico's namespace.
+# Device schemas ONLY, and the glob is the exclusion: the firmware has no
+# business knowing about the host-side angle stream, the tracker handshake or
+# the plan channel, and generating KEY_* macros for them would put host
+# vocabulary — plan_inclination_deg, pending_confirm — into the Pico's
+# namespace and its flash for a wire it never speaks.
 uv run --frozen python tools/gen_schema_header.py \
     --schemas schemas/device/*.json \
     --out gen/c/schema_keys.h

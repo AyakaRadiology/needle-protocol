@@ -66,6 +66,35 @@ def test_samples_cover_the_contracts_the_generators_get_wrong() -> None:
     assert "DeviceEnvelope" in contracts
     assert "AngleStreamEnvelope" in contracts
     assert "TrackerHello" in contracts
+    assert "PlanChannelEnvelope" in contracts
+
+
+def test_the_deferred_confirm_sequence_is_one_exchange() -> None:
+    """`pending_confirm` then `applied` must be two acks of ONE request.
+
+    That is the whole shape of the confirm semantics: needle-guide answers
+    immediately to say the frame was understood, and again -- minutes later,
+    under the SAME envelope `id` -- when the operator presses Apply. A sample
+    set where the second ack quietly carried a fresh id would document a
+    request/response channel that closes on the first answer, which is the one
+    thing a sender must not do here. Nothing else notices: both frames validate
+    perfectly well on their own.
+    """
+    by_name = {sample["name"]: sample["frame"] for sample in SAMPLES["valid"]}
+    request = by_name["plan-channel-plan-request"]
+    pending = by_name["plan-channel-plan-ack-pending-confirm"]
+    applied = by_name["plan-channel-plan-ack-applied"]
+
+    assert pending["id"] == applied["id"] == request["id"]
+    for ack in (pending, applied):
+        assert ack["payload"]["plan_id"] == request["payload"]["plan_id"]
+        assert ack["payload"]["plan_revision"] == request["payload"]["plan_revision"]
+    assert pending["payload"]["result"] == "pending_confirm"
+    assert applied["payload"]["result"] == "applied"
+    # The revision in effect only moves when the operator acts: it is the
+    # PREVIOUS one while the plan is still on screen awaiting a press.
+    assert pending["payload"]["applied_revision"] == request["payload"]["plan_revision"] - 1
+    assert applied["payload"]["applied_revision"] == request["payload"]["plan_revision"]
 
 
 def test_envelope_narrowing_reaches_the_payload(samples: dict) -> None:
@@ -87,3 +116,11 @@ def test_envelope_narrowing_reaches_the_payload(samples: dict) -> None:
     assert isinstance(parsed_heartbeat, models.AngleStreamEnvelopeHeartbeat)
     assert parsed_heartbeat.payload.protocol_package_version == "0.1.0"
     assert parsed_heartbeat.payload.link.live is True
+
+    plan = next(s for s in samples["valid"] if s["name"] == "plan-channel-plan-request")["frame"]
+    parsed_plan = parse("PlanChannelEnvelope", plan)
+    assert isinstance(parsed_plan, models.PlanChannelEnvelopePlan)
+    assert parsed_plan.payload.plan_inclination_deg == pytest.approx(22.5)
+    # The direction the schema pins per `type`, carried all the way into the
+    # model rather than left as the base's two-value enum.
+    assert parsed_plan.kind == "req"

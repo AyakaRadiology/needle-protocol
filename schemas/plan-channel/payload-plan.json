@@ -1,0 +1,70 @@
+{
+    "$id": "urn:needle:schema:plan-channel-payload-plan",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Plan Channel Plan Payload",
+    "description": "A planned needle trajectory, authored by needle-simulator from the CT plan and pushed to needle-guide. Carried by a `req` frame with `type: \"plan\"`. Every angle here is a PLAN, not a measurement: it is what the operator intends, and needle-guide compares its live inclination against it.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "The four numeric ranges MIRROR needle-guide's shared/planInputs.ts, which is the settings form the operator types the same numbers into today: MIN_INCLINATION_DEG 0 / MAX_INCLINATION_DEG 90, MIN_AZIMUTH_DEG -180 / MAX_AZIMUTH_DEG 180, and MAX_ENTRY_OFFSET_MM 1000 applied either way on both entry offsets. They are stated here rather than imported because needle-guide is a consumer of this package and not the other way round; the Stage 2 consumer pull request is where planInputs.ts stops holding its own copies. Until then the numbers are duplicated -- and, unlike a silent duplicate, a divergence announces itself: this channel refuses the frame and answers `rejected` with a reason, which is the whole point of the rule below.",
+    "additionalProperties": false,
+    "properties": {
+        "plan_inclination_deg": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 90,
+            "description": "Planned inclination FROM VERTICAL: 0 is a needle straight down, 90 is horizontal (angles/SPEC.md). Identity with needle-guide's own `plan_inclination_deg`, so the name is the same on both sides and no conversion happens on the wire. REFUSE, NEVER CLAMP: a value outside 0..90 is rejected and reported, never quietly moved inside the range -- an inclination silently pulled to 90 is a plan the operator never planned. Same rule, same wording, as needle-guide shared/planInputs.ts."
+        },
+        "azimuth_deg": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "OPTIONAL. Planned horizontal-plane angle, stated as a signed half-turn (needle-guide shared/planInputs.ts MIN_AZIMUTH_DEG/MAX_AZIMUTH_DEG). Optional because a plan that only constrains the tilt is a complete plan: needle-guide's inclination readout uses it for nothing. Absent means 'not planned', never 0 -- 0 is a real azimuth."
+        },
+        "entry_lateral_mm": {
+            "type": "number",
+            "minimum": -1000,
+            "maximum": 1000,
+            "description": "OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_OFFSET_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0."
+        },
+        "entry_longitudinal_mm": {
+            "type": "number",
+            "minimum": -1000,
+            "maximum": 1000,
+            "description": "OPTIONAL. Entry point offset, craniocaudal, millimetres. Same bound and the same 'absent is not zero' rule as entry_lateral_mm."
+        },
+        "plan_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,128}$",
+            "description": "Opaque identifier, stable for the life of one plan. Today needle-simulator fills it with the DICOM SeriesInstanceUID, but the pattern deliberately admits more than a UID does (`^[0-9.]{1,64}$` would not fit a rehearsal plan, a phantom sequence id, or anything else this channel is later asked to carry). Receivers MUST treat it as opaque: never parse it, never infer a modality from it."
+        },
+        "plan_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Monotonic revision of `plan_id`, starting at 0. Re-sending the SAME plan_id and plan_revision is IDEMPOTENT: the receiver answers with the ack it would have sent, and does not re-prompt an operator who has already confirmed that revision. A LOWER revision than the one already applied is stale -- the receiver rejects it rather than winding the plan backwards."
+        },
+        "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Who authored this plan and against which contracts. Entirely diagnostic -- no receiver branches on it -- and required for that reason: an operator staring at two disagreeing screens must be able to tell which side is behind without opening either build.",
+            "properties": {
+                "app": {
+                    "type": "string",
+                    "enum": ["needle-simulator"],
+                    "description": "The authoring application. One value today. Append-only: ORDER IS LOAD-BEARING (README > Versioning), and a second author is a minor bump, not a free-form string."
+                },
+                "app_version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The authoring app's own version string, verbatim. Deliberately NOT semver-patterned: it is diagnostic, and refusing a whole plan because a development build spelled its version unusually would be a fail-closed that costs safety instead of buying it."
+                },
+                "protocol_package_version": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+                    "description": "Semver of the needle-protocol package the sender was built against. Patterned, unlike app_version, because it names a release of THIS repository and a value no comparison can be trusted on is worse than an absent one. Same pattern as the angle stream heartbeat's field of the same name."
+                }
+            },
+            "required": ["app", "app_version", "protocol_package_version"]
+        }
+    },
+    "required": ["plan_inclination_deg", "plan_id", "plan_revision", "source"]
+}

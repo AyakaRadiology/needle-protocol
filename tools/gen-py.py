@@ -128,10 +128,19 @@ def render_unions(contracts: list[dict]) -> str:
         for branch in table["branches"]:
             variant = f"{name}{pascal(branch['value'])}"
             variants.append(variant)
+            # Properties the schema's `then` pins to a literal alongside the
+            # payload -- the plan-channel envelope binds `kind` to `type` this
+            # way. Dropping them here would leave a constraint the schema states
+            # and the model does not enforce.
+            pinned = "".join(
+                f"    {key}: Literal[{value!r}]\n"
+                for key, value in branch.get("consts", {}).items()
+            )
             blocks.append(
                 f'class {variant}({name}Base):\n'
                 f'    """`{contract["path"]}` with `{disc} == "{branch["value"]}"`."""\n\n'
                 f"    {disc}: Literal[{branch['value']!r}]\n"
+                f"{pinned}"
                 f"    payload: {pascal(branch['slug'])}\n"
             )
         union = " | ".join(variants) if len(variants) > 1 else variants[0]

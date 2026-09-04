@@ -6,7 +6,7 @@
  * Regenerate with `tools/gen.sh`; CI fails on any drift.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TRACKER_SUPPORTED_PROTOCOL_VERSIONS = exports.DEVICE_HANDSHAKE_SUPPORTED_MAJOR = exports.DEVICE_HANDSHAKE_LEGACY_NAME = exports.DEVICE_HANDSHAKE_NAME = exports.DEVICE_HANDSHAKE_REPLY_REGEX = exports.DEVICE_HANDSHAKE_CMD = exports.ON_TARGET_TOLERANCE_DEG = exports.CONSOLE_THETA_VERTICAL_DEG = exports.DUAL_EMIT_SUPPRESS_MS = exports.HEARTBEAT_STALE_MS = exports.ANGLE_STALE_MS = exports.HEARTBEAT_INTERVAL_MS = exports.TRACKER_WS_PORT = exports.ANGLE_STREAM_DEFAULT_PORT = void 0;
+exports.TRACKER_SUPPORTED_PROTOCOL_VERSIONS = exports.DEVICE_HANDSHAKE_SUPPORTED_MAJOR = exports.DEVICE_HANDSHAKE_LEGACY_NAME = exports.DEVICE_HANDSHAKE_NAME = exports.DEVICE_HANDSHAKE_REPLY_REGEX = exports.DEVICE_HANDSHAKE_CMD = exports.ON_TARGET_TOLERANCE_DEG = exports.CONSOLE_THETA_VERTICAL_DEG = exports.DUAL_EMIT_SUPPRESS_MS = exports.HEARTBEAT_STALE_MS = exports.ANGLE_STALE_MS = exports.HEARTBEAT_INTERVAL_MS = exports.PLAN_CHANNEL_PROTOCOL_VERSION = exports.PLAN_ACK_TIMEOUT_MS = exports.PLAN_CHANNEL_DEFAULT_PORT = exports.TRACKER_WS_PORT = exports.ANGLE_STREAM_DEFAULT_PORT = void 0;
 /**
  * Default listen port for needle-guide's output-only inclination WebSocket.
  * Unassigned by IANA and outside the ephemeral range. Deliberately NOT
@@ -30,6 +30,40 @@ exports.ANGLE_STREAM_DEFAULT_PORT = 8790;
  * - needle-simulator apps/desktop/src/lib/sensor/navTheta.ts (sensorUrlCollidesWithTracker)
  */
 exports.TRACKER_WS_PORT = 8765;
+/**
+ * Default listen port for needle-guide's INBOUND plan channel
+ * (schemas/plan-channel/). 127.0.0.1 by default, like every other listener
+ * these two apps run. Distinct from ANGLE_STREAM_DEFAULT_PORT (8790) and
+ * TRACKER_WS_PORT (8765) by rule, not by luck: all three servers run on the
+ * one operator machine, so a shared number means whichever binds second does
+ * not bind at all, and an operator who points one URL at another reaches a
+ * real server speaking a protocol the peer cannot read -- a healthy-looking
+ * OPEN socket that shows nothing. tests/py/test_constants.py fails on any
+ * two ports here being equal, so the constraint is checked rather than
+ * remembered. Adjacent to 8790 on purpose: the two channels are the two
+ * halves of one conversation between the same pair of apps, and a port an
+ * operator has to type is easier to get right next to the one they already
+ * know.
+ */
+exports.PLAN_CHANNEL_DEFAULT_PORT = 8791;
+/**
+ * How long the sender waits for the FIRST plan_ack before calling the
+ * exchange failed. It bounds 'was the frame understood', not 'has the
+ * operator decided': a `pending_confirm` ack stops this clock and nothing
+ * restarts it, because an operator taking a minute over a plan is the system
+ * working. Generous next to HEARTBEAT_STALE_MS because a plan is pushed once
+ * at operator pace rather than sampled continuously, and a spurious timeout
+ * here re-sends a plan into an app that is already showing it.
+ */
+exports.PLAN_ACK_TIMEOUT_MS = 5000;
+/**
+ * The plan-channel wire version, and the value of the envelope's `v` const
+ * -- tests/py/test_constants.py pins the two together, so the schema and
+ * this number cannot come to disagree. A receiver refuses a frame carrying
+ * any other `v`: the plan channel is fail-closed, and a version it does not
+ * implement is precisely the frame it must not half-understand.
+ */
+exports.PLAN_CHANNEL_PROTOCOL_VERSION = 1;
 /**
  * Gap between angle-stream heartbeats. Fast enough that HEARTBEAT_STALE_MS
  * is four consecutive misses, so an ordinary scheduling hiccup in either

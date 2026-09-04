@@ -37,6 +37,12 @@ export const DevicePayloadLogSchema = z.object({ "level": z.enum(["trace","debug
 /** `schemas/device/payload-status.json` */
 export const DevicePayloadStatusSchema = z.object({ "state": z.enum(["init","ready","running","degraded","lost","stopping","stopped"]), "envelope_schema_version": z.string().regex(new RegExp("^\\d+\\.\\d+\\.\\d+$")).optional() }).strict();
 
+/** `schemas/plan-channel/payload-plan.json` */
+export const PlanChannelPayloadPlanSchema = z.object({ "plan_inclination_deg": z.number().gte(0).lte(90), "azimuth_deg": z.number().gte(-180).lte(180).optional(), "entry_lateral_mm": z.number().gte(-1000).lte(1000).optional(), "entry_longitudinal_mm": z.number().gte(-1000).lte(1000).optional(), "plan_id": z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": z.number().int().gte(0), "source": z.object({ "app": z.literal("needle-simulator"), "app_version": z.string().min(1), "protocol_package_version": z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")) }).strict() }).strict();
+
+/** `schemas/plan-channel/payload-plan-ack.json` */
+export const PlanChannelPayloadPlanAckSchema = z.object({ "plan_id": z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": z.number().int().gte(0), "result": z.enum(["applied","pending_confirm","rejected"]), "reason": z.string().min(1).optional(), "applied_revision": z.number().int().gte(0).optional() }).strict();
+
 /** `schemas/tracker/hello.json` */
 export const TrackerHelloSchema = z.object({ "type": z.literal("hello"), "protocol_version": z.number().int().gte(1), "server_bind": z.string().optional(), "client_addr": z.string().optional() }).catchall(z.any());
 
@@ -71,5 +77,20 @@ export const DeviceEnvelopeSchema = z.discriminatedUnion('type', [
     DeviceEnvelopeBase.extend({ type: z.literal('data'), payload: DevicePayloadDataSchema }),
     DeviceEnvelopeBase.extend({ type: z.literal('error'), payload: DevicePayloadErrorSchema }),
     DeviceEnvelopeBase.extend({ type: z.literal('log'), payload: DevicePayloadLogSchema }),
+]);
+
+/** Shared fields of `schemas/plan-channel/envelope.json`, before the payload is pinned down. */
+const PlanChannelEnvelopeBase = z.object({ "v": z.literal(1), "kind": z.enum(["req","res"]), "type": z.enum(["plan","plan_ack"]), "id": z.string().regex(new RegExp("^[A-Za-z0-9._:-]{1,128}$")), "ts": z.string().datetime({ offset: true }), "payload": z.record(z.string(), z.any()) }).strict();
+
+/**
+ * `schemas/plan-channel/envelope.json`
+ *
+ * A discriminated union rather than the schema's literal `allOf`: json-schema-to-zod
+ * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
+ * payload on any `type` and reports success.
+ */
+export const PlanChannelEnvelopeSchema = z.discriminatedUnion('type', [
+    PlanChannelEnvelopeBase.extend({ type: z.literal('plan'), kind: z.literal('req'), payload: PlanChannelPayloadPlanSchema }),
+    PlanChannelEnvelopeBase.extend({ type: z.literal('plan_ack'), kind: z.literal('res'), payload: PlanChannelPayloadPlanAckSchema }),
 ]);
 

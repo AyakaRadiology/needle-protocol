@@ -16,6 +16,13 @@
  * if/then table. Same for the TypeScript side, where the plain compile gives
  * `payload: {}`.
  *
+ * A `then` branch may also pin OTHER properties to a literal — the plan-channel
+ * envelope binds `kind` to `type` that way, so a `res` cannot arrive wearing a
+ * request's `type`. Those pins are carried into both the type and the validator;
+ * anything richer than a string `const` makes `tools/bundle.mjs` throw, because
+ * a constraint the schema states and the generated validator drops is exactly
+ * the hole this file exists to close.
+ *
  * If a future schema uses a conditional shape this does not recognise, the
  * generator throws rather than emitting the weak version.
  */
@@ -81,13 +88,17 @@ async function writeTypes(bundles, idToSlug) {
         // The envelope's shared fields, then the union that actually pairs a
         // `type` with its payload.
         parts.push(await compileType(baseOf(bundled), `${name}Base`), '');
-        const members = table.branches.map(
-            ({ value, slug: payloadSlug }) =>
-                `    | (Omit<${name}Base, '${table.discriminator}' | 'payload'> & {\n` +
+        const members = table.branches.map(({ value, slug: payloadSlug, consts }) => {
+            const pinned = Object.entries(consts ?? {});
+            const omitted = [table.discriminator, 'payload', ...pinned.map(([key]) => key)];
+            return (
+                `    | (Omit<${name}Base, ${omitted.map((key) => `'${key}'`).join(' | ')}> & {\n` +
                 `          ${table.discriminator}: '${value}';\n` +
+                pinned.map(([key, pin]) => `          ${key}: '${pin}';\n`).join('') +
                 `          payload: ${pascal(payloadSlug)};\n` +
                 `      })`
-        );
+            );
+        });
         parts.push(
             `/**\n * ${schema.title ?? name}.\n *\n` +
                 ` * Discriminated on \`${table.discriminator}\`, so narrowing a frame narrows its\n` +
@@ -132,10 +143,12 @@ function writeZod(bundles, idToSlug) {
     }
     for (const { bundle, table } of deferred) {
         const name = pascal(bundle.slug);
-        const members = table.branches.map(
-            ({ value, slug }) =>
-                `    ${name}Base.extend({ ${table.discriminator}: z.literal('${value}'), payload: ${pascal(slug)}Schema }),`
-        );
+        const members = table.branches.map(({ value, slug, consts }) => {
+            const pinned = Object.entries(consts ?? {})
+                .map(([key, pin]) => `${key}: z.literal('${pin}'), `)
+                .join('');
+            return `    ${name}Base.extend({ ${table.discriminator}: z.literal('${value}'), ${pinned}payload: ${pascal(slug)}Schema }),`;
+        });
         parts.push(
             `/** Shared fields of \`${bundle.path}\`, before the payload is pinned down. */`,
             `const ${name}Base = ${zodFor(baseOf(bundle.bundled))};`,

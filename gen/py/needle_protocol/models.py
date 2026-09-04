@@ -11,7 +11,15 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, conint, constr
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    confloat,
+    conint,
+    constr,
+)
 
 
 class AngleStreamEnvelopeBaseType(Enum):
@@ -216,6 +224,137 @@ class DevicePayloadStatus(BaseModel):
     )
 
 
+class PlanChannelEnvelopeBaseKind(Enum):
+    req = 'req'
+    res = 'res'
+
+
+class PlanChannelEnvelopeBaseType(Enum):
+    plan = 'plan'
+    plan_ack = 'plan_ack'
+
+
+class PlanChannelEnvelopeBase(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    v: Literal[1] = Field(
+        ...,
+        description='Envelope version, equal to PLAN_CHANNEL_PROTOCOL_VERSION in constants/constants.json (tests/py/test_constants.py pins the two together). It is NOT bumped by adding a `type`: `type` is what selects the payload.',
+    )
+    kind: PlanChannelEnvelopeBaseKind = Field(
+        ...,
+        description="Direction. `req` is authored by the sender and expects an answer; `res` answers one. Bound to `type` by the allOf table below, so a `res` cannot arrive wearing a request's `type` -- ORDER IS LOAD-BEARING, see README > Versioning.",
+        title='PlanChannelEnvelopeBaseKind',
+    )
+    type: PlanChannelEnvelopeBaseType = Field(
+        ...,
+        description="Selects the payload. Append-only: the generated C enum's value is the element's index. ORDER IS LOAD-BEARING.",
+        title='PlanChannelEnvelopeBaseType',
+    )
+    id: constr(pattern=r'^[A-Za-z0-9._:-]{1,128}$') = Field(
+        ...,
+        description="Opaque request id, chosen by the sender of the `req`. Every `res` answering it echoes it VERBATIM, including the second `plan_ack` a deferred confirm produces, so a receiver correlates an answer to a request without guessing from timing. Constrained to printable, log-safe characters because it is written to both apps' logs.",
+    )
+    ts: AwareDatetime = Field(
+        ...,
+        description='Host wall-clock ISO-8601 stamp taken when the frame was built. Diagnostic: correlation is by `id`, never by timestamp.',
+    )
+    payload: dict[str, Any]
+
+
+class PlanChannelPayloadPlanSourceApp(Enum):
+    needle_simulator = 'needle-simulator'
+
+
+class PlanChannelPayloadPlanSource(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    app: PlanChannelPayloadPlanSourceApp = Field(
+        ...,
+        description='The authoring application. One value today. Append-only: ORDER IS LOAD-BEARING (README > Versioning), and a second author is a minor bump, not a free-form string.',
+        title='PlanChannelPayloadPlanSourceApp',
+    )
+    app_version: constr(min_length=1) = Field(
+        ...,
+        description="The authoring app's own version string, verbatim. Deliberately NOT semver-patterned: it is diagnostic, and refusing a whole plan because a development build spelled its version unusually would be a fail-closed that costs safety instead of buying it.",
+    )
+    protocol_package_version: constr(
+        pattern=r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+    ) = Field(
+        ...,
+        description="Semver of the needle-protocol package the sender was built against. Patterned, unlike app_version, because it names a release of THIS repository and a value no comparison can be trusted on is worse than an absent one. Same pattern as the angle stream heartbeat's field of the same name.",
+    )
+
+
+class PlanChannelPayloadPlan(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    plan_inclination_deg: confloat(ge=0.0, le=90.0) = Field(
+        ...,
+        description="Planned inclination FROM VERTICAL: 0 is a needle straight down, 90 is horizontal (angles/SPEC.md). Identity with needle-guide's own `plan_inclination_deg`, so the name is the same on both sides and no conversion happens on the wire. REFUSE, NEVER CLAMP: a value outside 0..90 is rejected and reported, never quietly moved inside the range -- an inclination silently pulled to 90 is a plan the operator never planned. Same rule, same wording, as needle-guide shared/planInputs.ts.",
+    )
+    azimuth_deg: confloat(ge=-180.0, le=180.0) | None = Field(
+        None,
+        description="OPTIONAL. Planned horizontal-plane angle, stated as a signed half-turn (needle-guide shared/planInputs.ts MIN_AZIMUTH_DEG/MAX_AZIMUTH_DEG). Optional because a plan that only constrains the tilt is a complete plan: needle-guide's inclination readout uses it for nothing. Absent means 'not planned', never 0 -- 0 is a real azimuth.",
+    )
+    entry_lateral_mm: confloat(ge=-1000.0, le=1000.0) | None = Field(
+        None,
+        description="OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_OFFSET_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0.",
+    )
+    entry_longitudinal_mm: confloat(ge=-1000.0, le=1000.0) | None = Field(
+        None,
+        description="OPTIONAL. Entry point offset, craniocaudal, millimetres. Same bound and the same 'absent is not zero' rule as entry_lateral_mm.",
+    )
+    plan_id: constr(pattern=r'^[A-Za-z0-9._-]{1,128}$') = Field(
+        ...,
+        description='Opaque identifier, stable for the life of one plan. Today needle-simulator fills it with the DICOM SeriesInstanceUID, but the pattern deliberately admits more than a UID does (`^[0-9.]{1,64}$` would not fit a rehearsal plan, a phantom sequence id, or anything else this channel is later asked to carry). Receivers MUST treat it as opaque: never parse it, never infer a modality from it.',
+    )
+    plan_revision: conint(ge=0) = Field(
+        ...,
+        description='Monotonic revision of `plan_id`, starting at 0. Re-sending the SAME plan_id and plan_revision is IDEMPOTENT: the receiver answers with the ack it would have sent, and does not re-prompt an operator who has already confirmed that revision. A LOWER revision than the one already applied is stale -- the receiver rejects it rather than winding the plan backwards.',
+    )
+    source: PlanChannelPayloadPlanSource = Field(
+        ...,
+        description='Who authored this plan and against which contracts. Entirely diagnostic -- no receiver branches on it -- and required for that reason: an operator staring at two disagreeing screens must be able to tell which side is behind without opening either build.',
+        title='PlanChannelPayloadPlanSource',
+    )
+
+
+class PlanChannelPayloadPlanAckResult(Enum):
+    applied = 'applied'
+    pending_confirm = 'pending_confirm'
+    rejected = 'rejected'
+
+
+class PlanChannelPayloadPlanAck(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    plan_id: constr(pattern=r'^[A-Za-z0-9._-]{1,128}$') = Field(
+        ...,
+        description='The `plan_id` this answers, echoed verbatim. Present alongside the envelope `id` on purpose: the envelope id correlates one exchange, this says which PLAN the receiver believes it was about, and a disagreement between the two is a bug worth being able to see.',
+    )
+    plan_revision: conint(ge=0) = Field(
+        ..., description='The `plan_revision` this answers, echoed verbatim.'
+    )
+    result: PlanChannelPayloadPlanAckResult = Field(
+        ...,
+        description="`applied` -- the plan is in effect and the guide's readout is measuring against it. `pending_confirm` -- the frame was understood and is waiting on the operator, who has NOT yet pressed Apply; nothing has changed on the guide's display. `rejected` -- the plan will not be applied, and `reason` says why. Append-only: ORDER IS LOAD-BEARING (README > Versioning).",
+        title='PlanChannelPayloadPlanAckResult',
+    )
+    reason: constr(min_length=1) | None = Field(
+        None,
+        description="OPTIONAL. Short operator-facing explanation. The sender SHOULD show it verbatim and MUST NOT parse it. A `rejected` ack without one is unactionable and needle-guide always sends it there -- but that is a rule the emitter keeps, not one this schema states: making `reason` conditional on `result` needs an if/then that json-schema-to-zod renders as a validator accepting anything (see tools/gen-ts.mjs), and a validator that silently does not validate is worse than a documented rule. The receiving side's own tests are where it is enforced; see docs/decisions.md ADR-0003.",
+    )
+    applied_revision: conint(ge=0) | None = Field(
+        None,
+        description='OPTIONAL. The revision the guide currently has APPLIED, which is not always the one being acked: on `pending_confirm` it is the previous revision still in effect (absent when there is none), and on `rejected` it is what the guide kept. It exists so the sender can render what the other screen is actually showing instead of what it hoped.',
+    )
+
+
 class TrackerHello(BaseModel):
     model_config = ConfigDict(
         extra='allow',
@@ -290,6 +429,22 @@ class DeviceEnvelopeLog(DeviceEnvelopeBase):
     payload: DevicePayloadLog
 
 
+class PlanChannelEnvelopePlan(PlanChannelEnvelopeBase):
+    """`schemas/plan-channel/envelope.json` with `type == "plan"`."""
+
+    type: Literal['plan']
+    kind: Literal['req']
+    payload: PlanChannelPayloadPlan
+
+
+class PlanChannelEnvelopePlanAck(PlanChannelEnvelopeBase):
+    """`schemas/plan-channel/envelope.json` with `type == "plan_ack"`."""
+
+    type: Literal['plan_ack']
+    kind: Literal['res']
+    payload: PlanChannelPayloadPlanAck
+
+
 #: `schemas/angle-stream/envelope.json`, tagged on `type` so that narrowing the frame
 #: narrows its payload. The schema's `allOf` if/then table renders as
 #: `payload: dict[str, Any]` on its own -- a model that would accept any
@@ -306,5 +461,15 @@ AngleStreamEnvelope = Annotated[
 #: payload under any `type` and report success.
 DeviceEnvelope = Annotated[
     DeviceEnvelopeStatus | DeviceEnvelopeData | DeviceEnvelopeError | DeviceEnvelopeLog,
+    Field(discriminator='type'),
+]
+
+
+#: `schemas/plan-channel/envelope.json`, tagged on `type` so that narrowing the frame
+#: narrows its payload. The schema's `allOf` if/then table renders as
+#: `payload: dict[str, Any]` on its own -- a model that would accept any
+#: payload under any `type` and report success.
+PlanChannelEnvelope = Annotated[
+    PlanChannelEnvelopePlan | PlanChannelEnvelopePlanAck,
     Field(discriminator='type'),
 ]

@@ -190,6 +190,72 @@ export declare const DevicePayloadStatusSchema: z.ZodObject<{
     state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
     envelope_schema_version?: string | undefined;
 }>;
+/** `schemas/plan-channel/payload-plan.json` */
+export declare const PlanChannelPayloadPlanSchema: z.ZodObject<{
+    plan_inclination_deg: z.ZodNumber;
+    azimuth_deg: z.ZodOptional<z.ZodNumber>;
+    entry_lateral_mm: z.ZodOptional<z.ZodNumber>;
+    entry_longitudinal_mm: z.ZodOptional<z.ZodNumber>;
+    plan_id: z.ZodString;
+    plan_revision: z.ZodNumber;
+    source: z.ZodObject<{
+        app: z.ZodLiteral<"needle-simulator">;
+        app_version: z.ZodString;
+        protocol_package_version: z.ZodString;
+    }, "strict", z.ZodTypeAny, {
+        app: "needle-simulator";
+        app_version: string;
+        protocol_package_version: string;
+    }, {
+        app: "needle-simulator";
+        app_version: string;
+        protocol_package_version: string;
+    }>;
+}, "strict", z.ZodTypeAny, {
+    plan_inclination_deg: number;
+    azimuth_deg?: number | undefined;
+    entry_lateral_mm?: number | undefined;
+    entry_longitudinal_mm?: number | undefined;
+    plan_id: string;
+    plan_revision: number;
+    source: {
+        app: "needle-simulator";
+        app_version: string;
+        protocol_package_version: string;
+    };
+}, {
+    plan_inclination_deg: number;
+    azimuth_deg?: number | undefined;
+    entry_lateral_mm?: number | undefined;
+    entry_longitudinal_mm?: number | undefined;
+    plan_id: string;
+    plan_revision: number;
+    source: {
+        app: "needle-simulator";
+        app_version: string;
+        protocol_package_version: string;
+    };
+}>;
+/** `schemas/plan-channel/payload-plan-ack.json` */
+export declare const PlanChannelPayloadPlanAckSchema: z.ZodObject<{
+    plan_id: z.ZodString;
+    plan_revision: z.ZodNumber;
+    result: z.ZodEnum<["applied", "pending_confirm", "rejected"]>;
+    reason: z.ZodOptional<z.ZodString>;
+    applied_revision: z.ZodOptional<z.ZodNumber>;
+}, "strict", z.ZodTypeAny, {
+    plan_id: string;
+    plan_revision: number;
+    result: "applied" | "pending_confirm" | "rejected";
+    reason?: string | undefined;
+    applied_revision?: number | undefined;
+}, {
+    plan_id: string;
+    plan_revision: number;
+    result: "applied" | "pending_confirm" | "rejected";
+    reason?: string | undefined;
+    applied_revision?: number | undefined;
+}>;
 /** `schemas/tracker/hello.json` */
 export declare const TrackerHelloSchema: z.ZodObject<{
     type: z.ZodLiteral<"hello">;
@@ -802,5 +868,155 @@ export declare const DeviceEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
     payload: {
         level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
         message: string;
+    };
+}>]>;
+/**
+ * `schemas/plan-channel/envelope.json`
+ *
+ * A discriminated union rather than the schema's literal `allOf`: json-schema-to-zod
+ * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
+ * payload on any `type` and reports success.
+ */
+export declare const PlanChannelEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.ZodObject<{
+    v: z.ZodLiteral<1>;
+    id: z.ZodString;
+    ts: z.ZodString;
+} & {
+    type: z.ZodLiteral<"plan">;
+    kind: z.ZodLiteral<"req">;
+    payload: z.ZodObject<{
+        plan_inclination_deg: z.ZodNumber;
+        azimuth_deg: z.ZodOptional<z.ZodNumber>;
+        entry_lateral_mm: z.ZodOptional<z.ZodNumber>;
+        entry_longitudinal_mm: z.ZodOptional<z.ZodNumber>;
+        plan_id: z.ZodString;
+        plan_revision: z.ZodNumber;
+        source: z.ZodObject<{
+            app: z.ZodLiteral<"needle-simulator">;
+            app_version: z.ZodString;
+            protocol_package_version: z.ZodString;
+        }, "strict", z.ZodTypeAny, {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        }, {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        }>;
+    }, "strict", z.ZodTypeAny, {
+        plan_inclination_deg: number;
+        azimuth_deg?: number | undefined;
+        entry_lateral_mm?: number | undefined;
+        entry_longitudinal_mm?: number | undefined;
+        plan_id: string;
+        plan_revision: number;
+        source: {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        };
+    }, {
+        plan_inclination_deg: number;
+        azimuth_deg?: number | undefined;
+        entry_lateral_mm?: number | undefined;
+        entry_longitudinal_mm?: number | undefined;
+        plan_id: string;
+        plan_revision: number;
+        source: {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        };
+    }>;
+}, "strict", z.ZodTypeAny, {
+    v: 1;
+    id: string;
+    ts: string;
+    type: "plan";
+    kind: "req";
+    payload: {
+        plan_inclination_deg: number;
+        azimuth_deg?: number | undefined;
+        entry_lateral_mm?: number | undefined;
+        entry_longitudinal_mm?: number | undefined;
+        plan_id: string;
+        plan_revision: number;
+        source: {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        };
+    };
+}, {
+    v: 1;
+    id: string;
+    ts: string;
+    type: "plan";
+    kind: "req";
+    payload: {
+        plan_inclination_deg: number;
+        azimuth_deg?: number | undefined;
+        entry_lateral_mm?: number | undefined;
+        entry_longitudinal_mm?: number | undefined;
+        plan_id: string;
+        plan_revision: number;
+        source: {
+            app: "needle-simulator";
+            app_version: string;
+            protocol_package_version: string;
+        };
+    };
+}>, z.ZodObject<{
+    v: z.ZodLiteral<1>;
+    id: z.ZodString;
+    ts: z.ZodString;
+} & {
+    type: z.ZodLiteral<"plan_ack">;
+    kind: z.ZodLiteral<"res">;
+    payload: z.ZodObject<{
+        plan_id: z.ZodString;
+        plan_revision: z.ZodNumber;
+        result: z.ZodEnum<["applied", "pending_confirm", "rejected"]>;
+        reason: z.ZodOptional<z.ZodString>;
+        applied_revision: z.ZodOptional<z.ZodNumber>;
+    }, "strict", z.ZodTypeAny, {
+        plan_id: string;
+        plan_revision: number;
+        result: "applied" | "pending_confirm" | "rejected";
+        reason?: string | undefined;
+        applied_revision?: number | undefined;
+    }, {
+        plan_id: string;
+        plan_revision: number;
+        result: "applied" | "pending_confirm" | "rejected";
+        reason?: string | undefined;
+        applied_revision?: number | undefined;
+    }>;
+}, "strict", z.ZodTypeAny, {
+    v: 1;
+    id: string;
+    ts: string;
+    type: "plan_ack";
+    kind: "res";
+    payload: {
+        plan_id: string;
+        plan_revision: number;
+        result: "applied" | "pending_confirm" | "rejected";
+        reason?: string | undefined;
+        applied_revision?: number | undefined;
+    };
+}, {
+    v: 1;
+    id: string;
+    ts: string;
+    type: "plan_ack";
+    kind: "res";
+    payload: {
+        plan_id: string;
+        plan_revision: number;
+        result: "applied" | "pending_confirm" | "rejected";
+        reason?: string | undefined;
+        applied_revision?: number | undefined;
     };
 }>]>;

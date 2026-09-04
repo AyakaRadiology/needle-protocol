@@ -261,3 +261,142 @@ say the same word.
   ending the stale-pin note in ADR-0001 has. The fix is in the consumer: surface
   it where a mismatch is *acted on*, next to the pin it has to agree with, not in
   a debug log.
+
+---
+
+## ADR-0003 — The plan channel is its own contract, inbound, strict and fail-closed
+
+**Date:** 2026-09-04
+**Status:** accepted
+
+### Context
+
+needle-simulator computes a planned trajectory from the CT plan. needle-guide
+measures the live needle against a plan an operator has typed into its settings
+form. Today those are the same four numbers, carried between two screens by a
+human: `plan_inclination_deg`, an azimuth, and two entry offsets, retyped by
+hand into `shared/planInputs.ts`'s form. Retyping is how the plan gets across
+and it is also how the plan gets wrong.
+
+One channel already runs between the two apps, and it is the wrong one to reuse.
+needle-guide's angle stream (`schemas/angle-stream/`) is **output only**, and
+that is a medical-device posture rather than a convenience — `SYSTEM_SPEC.md`
+§5.3: *"There is no code path by which a subscriber can command, configure or
+calibrate this app."* Its envelope pins `kind` to the const `evt` to say so, and
+`electron/modules/inclinationStreamServer.ts` attaches no `message` listener at
+all: an inbound frame is read off the wire by `ws` and discarded.
+
+### Decision
+
+**A new contract directory, `schemas/plan-channel/`, on its own port** —
+`PLAN_CHANNEL_DEFAULT_PORT` = 8791 — rather than a new frame type on the angle
+stream.
+
+Adding an inbound frame to the angle stream would mean attaching a `message`
+listener to the one server whose *lacking* one is a documented safety property.
+The stream's schema would have to stop pinning `kind: "evt"`, and every
+statement §5.3 makes about it would need re-testing. A second listener costs a
+port and buys back the ability to say the old sentence unchanged. The port is
+adjacent to 8790 because the two are halves of one conversation between one pair
+of apps; `tests/py/test_constants.py` fails if any two default ports here are
+equal, so the constraint that used to be a comment in two repos saying "must not
+be the other one" (ADR-0001) is now checked.
+
+**Request/response with an explicit `id`.** `kind` ∈ {`req`, `res`}, `type` ∈
+{`plan`, `plan_ack`}, and the envelope's `allOf` table **binds the two**: a
+`plan` is always a `req` and a `plan_ack` always a `res`. `tools/bundle.mjs`
+gained the ability to carry a `then`-pinned const into the generated types and
+validators for this, and throws on anything richer than a string `const` —
+because a constraint the schema states and the generated validator drops is the
+same class of defect as the `allOf` if/then rendering ADR-0001 already refused.
+
+**Two acks per request, under one `id`.** `pending_confirm` says the frame was
+understood and is now in front of an operator who has not pressed Apply;
+`applied` or `rejected` follows when they act, minutes later, echoing the same
+envelope `id`. The alternative — acking `applied` on receipt and letting the
+operator's press be invisible — would have the simulator draw a plan the guide
+is not measuring against. `PLAN_ACK_TIMEOUT_MS` (5 s) therefore bounds only the
+first ack, "was this frame understood at all". Nothing bounds an operator.
+
+**`plan_id` + monotonic `plan_revision`, and re-sends are idempotent.** The
+receiver answers a repeat of the same pair with the ack it would have sent and
+does not re-prompt a confirm that has already been given, so a sender may retry
+after a dropped connection without putting a second dialogue in front of the
+operator. `plan_id` is opaque — today a DICOM `SeriesInstanceUID`, and the
+pattern deliberately admits more than a UID does, because a rehearsal plan is
+not a DICOM series and a receiver that parsed the id would break on the first
+one that was not.
+
+**`additionalProperties: false`, alone among the host-side contracts.** The
+angle stream and the tracker hello are open because they are read-only telemetry
+whose emitters state that additive optional fields do not bump the protocol
+version, and a strict reader there would refuse a peer that is compatible by its
+own rule. This wire is not telemetry. A key the receiver does not understand is
+a part of the plan it would silently drop, and a plan half-applied is worse than
+a plan not applied: the operator sees a plan on screen and has no way to know
+which half of it arrived. Fail closed — refuse the frame, answer `rejected` with
+a reason.
+
+**Refuse, never clamp,** for every numeric bound, in the same words
+`shared/planInputs.ts` already uses for the form. A value outside its range is
+rejected and reported; an entry point silently pulled to ±1000 mm, or an
+inclination to 90°, is a plan the operator never planned.
+
+**`plan_inclination_deg` and nothing else.** The wire carries the canonical
+quantity — inclination from vertical — under the name needle-guide already uses
+for it. Not console θ, not `ALPHA`. `theta = 90 − inclination` is its own
+inverse, so a channel carrying θ is a channel where sending the wrong one is
+syntactically perfect and numerically wrong, which is the 5° mismatch ADR-0001
+was written about.
+
+### Consequences
+
+- **Rollout is ordered.** Because the schemas are closed, a receiver pinned to
+  `v0.2.0` will reject a frame from a sender that has adopted a later, additive
+  field. Bump the receiver's pin first. This is the same cost ADR-0002 placed on
+  the device wire, accepted for the same reason, and it is why the ack carries a
+  `reason` the operator can be shown rather than a silent drop.
+- **needle-guide grows an inbound listener,** which is a real change to an app
+  whose current selling point is that it has none. It is a *second* server with
+  its own port and its own posture, and §5.3's sentence about the angle stream
+  stays true verbatim; the consumer pull request is where that gets written down
+  on the guide's side, and where the listener's own default-off/loopback posture
+  is decided.
+- **The bounds are duplicated** between `payload-plan.json` and
+  `shared/planInputs.ts` until the Stage 2 consumer change lands. Unlike a
+  silent duplicate, a divergence announces itself: the channel refuses the frame
+  and answers `rejected` with a reason, so the operator sees a refusal rather
+  than a clamped plan. Named under six months below all the same.
+- **`tests/samples.json` gains a contract whose emitters do not exist yet.** Its
+  provenance strings say so; the file's `$comment` now distinguishes a frame
+  copied off a wire from a frame the first emitter must be written to.
+
+### What breaks this in six months
+
+- **The bounds drift.** needle-guide widens `MAX_ENTRY_OFFSET_MM` and its own
+  form starts accepting plans this wire refuses. Self-announcing rather than
+  silent (a `rejected` ack with a reason), so it costs an afternoon and not a
+  procedure. The durable fix is one-directional and belongs in the Stage 2
+  consumer PR: `shared/planInputs.ts` takes its bounds from this package, at
+  which point these numbers are the only ones. It is deliberately **not** done
+  here, because exporting five range constants nothing imports yet would be
+  guessing at the consumer's shape.
+- **`reason` is optional, and "required when `rejected`" is a rule no schema
+  here states.** Conditional requirement needs an `if`/`then` inside a payload,
+  which `json-schema-to-zod` renders as a validator that accepts anything — the
+  exact failure ADR-0001 refused. So it is the emitter's rule, and the place it
+  gets enforced is needle-guide's own tests. Check for it in the consumer PR; a
+  rejection an operator cannot act on is the failure this leaves open.
+- **A sender that closes the correlation on the first ack.** Then
+  `pending_confirm` reads as "done", the operator never presses Apply, and the
+  simulator draws a plan the guide is not measuring against — silently, because
+  both frames validate. The sample set pins the two-ack sequence to one envelope
+  `id` (`tests/py/test_samples.py`), which is as far as this repository can
+  reach; the sender's own test is the other half.
+- **A third listener taking 8791.** Checked, not remembered: any two default
+  ports here being equal fails `tests/py/test_constants.py`, and the check finds
+  new `*_PORT` constants by name rather than by a list somebody maintains.
+- **The channel shipping and the operator still retyping.** The wire exists and
+  nobody wires the UI to it, so the plan crosses by hand as before while a
+  second, unused code path rots. That is a product decision, not a contract one,
+  and it is Stage 2's to answer.

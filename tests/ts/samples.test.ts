@@ -30,6 +30,7 @@ describe('generated zod validators', () => {
         // a sample set that stopped covering them would stop covering the bug.
         expect(contracts).toContain('DeviceEnvelope');
         expect(contracts).toContain('AngleStreamEnvelope');
+        expect(contracts).toContain('PlanChannelEnvelope');
     });
 
     for (const sample of samples.valid as Sample[]) {

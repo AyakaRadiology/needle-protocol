@@ -174,6 +174,119 @@ export interface DevicePayloadStatus {
     envelope_schema_version?: string;
 }
 /**
+ * Envelope for the request/response plan channel: needle-simulator pushes a planned trajectory INTO needle-guide, and needle-guide answers. Deliberately NOT part of schemas/angle-stream/: that contract is needle-guide's OUTPUT-ONLY inclination stream (needle-guide SYSTEM_SPEC.md 5.3 -- 'There is no code path by which a subscriber can command, configure or calibrate this app'), and its envelope pins `kind` to the const `evt` for that reason. A plan is an inbound command, so it arrives on its own listener, on its own port (PLAN_CHANNEL_DEFAULT_PORT), under its own contract, and the two can never be confused for one another by a mis-typed URL.
+ */
+export interface PlanChannelEnvelopeBase {
+    /**
+     * Envelope version, equal to PLAN_CHANNEL_PROTOCOL_VERSION in constants/constants.json (tests/py/test_constants.py pins the two together). It is NOT bumped by adding a `type`: `type` is what selects the payload.
+     */
+    v: 1;
+    /**
+     * Direction. `req` is authored by the sender and expects an answer; `res` answers one. Bound to `type` by the allOf table below, so a `res` cannot arrive wearing a request's `type` -- ORDER IS LOAD-BEARING, see README > Versioning.
+     */
+    kind: 'req' | 'res';
+    /**
+     * Selects the payload. Append-only: the generated C enum's value is the element's index. ORDER IS LOAD-BEARING.
+     */
+    type: 'plan' | 'plan_ack';
+    /**
+     * Opaque request id, chosen by the sender of the `req`. Every `res` answering it echoes it VERBATIM, including the second `plan_ack` a deferred confirm produces, so a receiver correlates an answer to a request without guessing from timing. Constrained to printable, log-safe characters because it is written to both apps' logs.
+     */
+    id: string;
+    /**
+     * Host wall-clock ISO-8601 stamp taken when the frame was built. Diagnostic: correlation is by `id`, never by timestamp.
+     */
+    ts: string;
+    payload: {};
+}
+/**
+ * Plan Channel Envelope.
+ *
+ * Discriminated on `type`, so narrowing a frame narrows its
+ * payload with it. Reconstructed from the schema's `allOf` if/then table by
+ * tools/gen-ts.mjs, which json-schema-to-typescript renders as `payload: {}`.
+ */
+export type PlanChannelEnvelope = (Omit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
+    type: 'plan';
+    kind: 'req';
+    payload: PlanChannelPayloadPlan;
+}) | (Omit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
+    type: 'plan_ack';
+    kind: 'res';
+    payload: PlanChannelPayloadPlanAck;
+});
+/**
+ * A planned needle trajectory, authored by needle-simulator from the CT plan and pushed to needle-guide. Carried by a `req` frame with `type: "plan"`. Every angle here is a PLAN, not a measurement: it is what the operator intends, and needle-guide compares its live inclination against it.
+ */
+export interface PlanChannelPayloadPlan {
+    /**
+     * Planned inclination FROM VERTICAL: 0 is a needle straight down, 90 is horizontal (angles/SPEC.md). Identity with needle-guide's own `plan_inclination_deg`, so the name is the same on both sides and no conversion happens on the wire. REFUSE, NEVER CLAMP: a value outside 0..90 is rejected and reported, never quietly moved inside the range -- an inclination silently pulled to 90 is a plan the operator never planned. Same rule, same wording, as needle-guide shared/planInputs.ts.
+     */
+    plan_inclination_deg: number;
+    /**
+     * OPTIONAL. Planned horizontal-plane angle, stated as a signed half-turn (needle-guide shared/planInputs.ts MIN_AZIMUTH_DEG/MAX_AZIMUTH_DEG). Optional because a plan that only constrains the tilt is a complete plan: needle-guide's inclination readout uses it for nothing. Absent means 'not planned', never 0 -- 0 is a real azimuth.
+     */
+    azimuth_deg?: number;
+    /**
+     * OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_OFFSET_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0.
+     */
+    entry_lateral_mm?: number;
+    /**
+     * OPTIONAL. Entry point offset, craniocaudal, millimetres. Same bound and the same 'absent is not zero' rule as entry_lateral_mm.
+     */
+    entry_longitudinal_mm?: number;
+    /**
+     * Opaque identifier, stable for the life of one plan. Today needle-simulator fills it with the DICOM SeriesInstanceUID, but the pattern deliberately admits more than a UID does (`^[0-9.]{1,64}$` would not fit a rehearsal plan, a phantom sequence id, or anything else this channel is later asked to carry). Receivers MUST treat it as opaque: never parse it, never infer a modality from it.
+     */
+    plan_id: string;
+    /**
+     * Monotonic revision of `plan_id`, starting at 0. Re-sending the SAME plan_id and plan_revision is IDEMPOTENT: the receiver answers with the ack it would have sent, and does not re-prompt an operator who has already confirmed that revision. A LOWER revision than the one already applied is stale -- the receiver rejects it rather than winding the plan backwards.
+     */
+    plan_revision: number;
+    /**
+     * Who authored this plan and against which contracts. Entirely diagnostic -- no receiver branches on it -- and required for that reason: an operator staring at two disagreeing screens must be able to tell which side is behind without opening either build.
+     */
+    source: {
+        /**
+         * The authoring application. One value today. Append-only: ORDER IS LOAD-BEARING (README > Versioning), and a second author is a minor bump, not a free-form string.
+         */
+        app: 'needle-simulator';
+        /**
+         * The authoring app's own version string, verbatim. Deliberately NOT semver-patterned: it is diagnostic, and refusing a whole plan because a development build spelled its version unusually would be a fail-closed that costs safety instead of buying it.
+         */
+        app_version: string;
+        /**
+         * Semver of the needle-protocol package the sender was built against. Patterned, unlike app_version, because it names a release of THIS repository and a value no comparison can be trusted on is worse than an absent one. Same pattern as the angle stream heartbeat's field of the same name.
+         */
+        protocol_package_version: string;
+    };
+}
+/**
+ * needle-guide's answer to one `plan` request. Carried by a `res` frame with `type: "plan_ack"`, echoing the request's envelope `id`. ONE REQUEST CAN PRODUCE TWO ACKS: `pending_confirm` immediately, then `applied` (or `rejected`) when the operator acts, both under the same `id`. A sender must therefore keep the correlation open after the first answer rather than closing it, and must not re-send the plan because a second ack has not arrived -- PLAN_ACK_TIMEOUT_MS bounds the wait for the FIRST ack only, which is the one that says the frame was understood at all. Nothing bounds an operator.
+ */
+export interface PlanChannelPayloadPlanAck {
+    /**
+     * The `plan_id` this answers, echoed verbatim. Present alongside the envelope `id` on purpose: the envelope id correlates one exchange, this says which PLAN the receiver believes it was about, and a disagreement between the two is a bug worth being able to see.
+     */
+    plan_id: string;
+    /**
+     * The `plan_revision` this answers, echoed verbatim.
+     */
+    plan_revision: number;
+    /**
+     * `applied` -- the plan is in effect and the guide's readout is measuring against it. `pending_confirm` -- the frame was understood and is waiting on the operator, who has NOT yet pressed Apply; nothing has changed on the guide's display. `rejected` -- the plan will not be applied, and `reason` says why. Append-only: ORDER IS LOAD-BEARING (README > Versioning).
+     */
+    result: 'applied' | 'pending_confirm' | 'rejected';
+    /**
+     * OPTIONAL. Short operator-facing explanation. The sender SHOULD show it verbatim and MUST NOT parse it. A `rejected` ack without one is unactionable and needle-guide always sends it there -- but that is a rule the emitter keeps, not one this schema states: making `reason` conditional on `result` needs an if/then that json-schema-to-zod renders as a validator accepting anything (see tools/gen-ts.mjs), and a validator that silently does not validate is worse than a documented rule. The receiving side's own tests are where it is enforced; see docs/decisions.md ADR-0003.
+     */
+    reason?: string;
+    /**
+     * OPTIONAL. The revision the guide currently has APPLIED, which is not always the one being acked: on `pending_confirm` it is the previous revision still in effect (absent when there is none), and on `rejected` it is what the guide kept. It exists so the sender can render what the other screen is actually showing instead of what it hoped.
+     */
+    applied_revision?: number;
+}
+/**
  * First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them (apps/desktop/src-tauri/src/ws_client.rs, SUPPORTED_PROTOCOL_VERSIONS).
  */
 export interface TrackerHello {

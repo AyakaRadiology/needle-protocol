@@ -83,9 +83,13 @@ cat >"$CONSUMER/package.json" <<'JSON'
 }
 JSON
 
-# The two values the probes assert on: one plain constant (the whole point of
-# the package) and one function (which type stripping cannot fake).
+# The values the probes assert on: two plain constants (the whole point of the
+# package) and one function (which type stripping cannot fake). Both ports,
+# because they are the pair that must never be equal -- see
+# tests/py/test_constants.py -- and a consumer reading one of them out of a
+# stale dist/ would be the way that stops being true on somebody's disk.
 EXPECTED_PORT=8790
+EXPECTED_PLAN_PORT=8791
 # consoleThetaFromInclination(30) === 60, from angles/SPEC.md's `theta = 90 - inclination`.
 EXPECTED_THETA=60
 
@@ -99,21 +103,24 @@ EXPECTED_THETA=60
 # below: that one is an equality, and the angle-case count is expected to grow.
 export MINIMUM_ANGLE_CASES=59
 export EXPECTED_SAMPLE_NAME=device-status-ready-first-of-session
+export EXPECTED_PLAN_SAMPLE_NAME=plan-channel-plan-request
 
 cat >"$CONSUMER/esm-probe.mjs" <<'JS'
 import assert from 'node:assert/strict';
 import { env } from 'node:process';
 import {
     ANGLE_STREAM_DEFAULT_PORT,
+    PLAN_CHANNEL_DEFAULT_PORT,
     consoleThetaFromInclination,
 } from 'needle-protocol';
 import { ANGLE_STREAM_DEFAULT_PORT as fromConstants } from 'needle-protocol/constants';
 import { consoleThetaFromInclination as fromAngles } from 'needle-protocol/angles';
-import { DevicePayloadStatusSchema } from 'needle-protocol/zod';
+import { DevicePayloadStatusSchema, PlanChannelEnvelopeSchema } from 'needle-protocol/zod';
 import vectors from 'needle-protocol/angles/vectors.json' with { type: 'json' };
 import samples from 'needle-protocol/tests/samples.json' with { type: 'json' };
 
 assert.equal(typeof DevicePayloadStatusSchema.parse, 'function', 'needle-protocol/zod did not resolve to a validator');
+assert.equal(typeof PlanChannelEnvelopeSchema.parse, 'function', 'needle-protocol/zod exports no PlanChannelEnvelopeSchema');
 assert.ok(
     vectors.cases.length >= Number(env.MINIMUM_ANGLE_CASES),
     `needle-protocol/angles/vectors.json carries ${vectors.cases.length} cases, fewer than the ${env.MINIMUM_ANGLE_CASES} this test expects`,
@@ -122,25 +129,36 @@ assert.ok(
     samples.valid.some((sample) => sample.name === env.EXPECTED_SAMPLE_NAME),
     `needle-protocol/tests/samples.json has no valid sample named ${env.EXPECTED_SAMPLE_NAME}`,
 );
+assert.ok(
+    samples.valid.some((sample) => sample.name === env.EXPECTED_PLAN_SAMPLE_NAME),
+    `needle-protocol/tests/samples.json has no valid sample named ${env.EXPECTED_PLAN_SAMPLE_NAME}`,
+);
 assert.equal(typeof ANGLE_STREAM_DEFAULT_PORT, 'number');
+assert.equal(typeof PLAN_CHANNEL_DEFAULT_PORT, 'number');
+assert.notEqual(PLAN_CHANNEL_DEFAULT_PORT, ANGLE_STREAM_DEFAULT_PORT, 'the two needle-guide listeners default to one port');
 assert.equal(typeof consoleThetaFromInclination, 'function');
 assert.equal(fromConstants, ANGLE_STREAM_DEFAULT_PORT, 'needle-protocol/constants disagrees with the root entry point');
 assert.equal(fromAngles(30), consoleThetaFromInclination(30), 'needle-protocol/angles disagrees with the root entry point');
 
-console.log(`${ANGLE_STREAM_DEFAULT_PORT} ${consoleThetaFromInclination(30)}`);
+console.log(`${ANGLE_STREAM_DEFAULT_PORT} ${PLAN_CHANNEL_DEFAULT_PORT} ${consoleThetaFromInclination(30)}`);
 JS
 
 cat >"$CONSUMER/cjs-probe.cjs" <<'JS'
 const assert = require('node:assert/strict');
 const { env } = require('node:process');
-const { ANGLE_STREAM_DEFAULT_PORT, consoleThetaFromInclination } = require('needle-protocol');
+const {
+    ANGLE_STREAM_DEFAULT_PORT,
+    PLAN_CHANNEL_DEFAULT_PORT,
+    consoleThetaFromInclination,
+} = require('needle-protocol');
 const { ANGLE_STREAM_DEFAULT_PORT: fromConstants } = require('needle-protocol/constants');
 const { consoleThetaFromInclination: fromAngles } = require('needle-protocol/angles');
-const { DevicePayloadStatusSchema } = require('needle-protocol/zod');
+const { DevicePayloadStatusSchema, PlanChannelEnvelopeSchema } = require('needle-protocol/zod');
 const vectors = require('needle-protocol/angles/vectors.json');
 const samples = require('needle-protocol/tests/samples.json');
 
 assert.equal(typeof DevicePayloadStatusSchema.parse, 'function', 'needle-protocol/zod did not resolve to a validator');
+assert.equal(typeof PlanChannelEnvelopeSchema.parse, 'function', 'needle-protocol/zod exports no PlanChannelEnvelopeSchema');
 assert.ok(
     vectors.cases.length >= Number(env.MINIMUM_ANGLE_CASES),
     `needle-protocol/angles/vectors.json carries ${vectors.cases.length} cases, fewer than the ${env.MINIMUM_ANGLE_CASES} this test expects`,
@@ -149,12 +167,18 @@ assert.ok(
     samples.valid.some((sample) => sample.name === env.EXPECTED_SAMPLE_NAME),
     `needle-protocol/tests/samples.json has no valid sample named ${env.EXPECTED_SAMPLE_NAME}`,
 );
+assert.ok(
+    samples.valid.some((sample) => sample.name === env.EXPECTED_PLAN_SAMPLE_NAME),
+    `needle-protocol/tests/samples.json has no valid sample named ${env.EXPECTED_PLAN_SAMPLE_NAME}`,
+);
 assert.equal(typeof ANGLE_STREAM_DEFAULT_PORT, 'number');
+assert.equal(typeof PLAN_CHANNEL_DEFAULT_PORT, 'number');
+assert.notEqual(PLAN_CHANNEL_DEFAULT_PORT, ANGLE_STREAM_DEFAULT_PORT, 'the two needle-guide listeners default to one port');
 assert.equal(typeof consoleThetaFromInclination, 'function');
 assert.equal(fromConstants, ANGLE_STREAM_DEFAULT_PORT, 'needle-protocol/constants disagrees with the root entry point');
 assert.equal(fromAngles(30), consoleThetaFromInclination(30), 'needle-protocol/angles disagrees with the root entry point');
 
-console.log(`${ANGLE_STREAM_DEFAULT_PORT} ${consoleThetaFromInclination(30)}`);
+console.log(`${ANGLE_STREAM_DEFAULT_PORT} ${PLAN_CHANNEL_DEFAULT_PORT} ${consoleThetaFromInclination(30)}`);
 JS
 
 expect() {
@@ -164,11 +188,11 @@ expect() {
     # `--experimental-strip-types` is deliberately NOT passed: the point is that
     # a stock `node` loads this package.
     got="$(cd "$CONSUMER" && node "$probe")"
-    if [ "$got" != "$EXPECTED_PORT $EXPECTED_THETA" ]; then
-        echo "::error::$label loaded the package but read the wrong values: expected '$EXPECTED_PORT $EXPECTED_THETA', got '$got'." >&2
+    if [ "$got" != "$EXPECTED_PORT $EXPECTED_PLAN_PORT $EXPECTED_THETA" ]; then
+        echo "::error::$label loaded the package but read the wrong values: expected '$EXPECTED_PORT $EXPECTED_PLAN_PORT $EXPECTED_THETA', got '$got'." >&2
         exit 1
     fi
-    echo "    ANGLE_STREAM_DEFAULT_PORT=$EXPECTED_PORT consoleThetaFromInclination(30)=$EXPECTED_THETA"
+    echo "    ANGLE_STREAM_DEFAULT_PORT=$EXPECTED_PORT PLAN_CHANNEL_DEFAULT_PORT=$EXPECTED_PLAN_PORT consoleThetaFromInclination(30)=$EXPECTED_THETA"
 }
 
 expect "import() from an ESM consumer" ./esm-probe.mjs
