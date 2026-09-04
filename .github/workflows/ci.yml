@@ -4,8 +4,12 @@ name: CI
 # order is deliberate: regenerate first and diff, so a stale gen/ fails before
 # the suites get a chance to pass against an artifact nobody committed.
 #
-# runs-on: the org self-hosted runners, matching the sibling repos. This
-# account's GitHub-hosted Actions minutes are billing-blocked.
+# runs-on: GitHub-hosted ubuntu-latest. This repository is PUBLIC, so hosted
+# minutes are free here, and the org's self-hosted runner group refuses public
+# repositories anyway (allows_public_repositories: false) — a self-hosted job
+# would queue forever. It is also the safer half of the trade: a fork PR against
+# a public repository must never get to execute on the workstation that hosts
+# those runners.
 
 on:
     push:
@@ -25,13 +29,13 @@ concurrency:
 jobs:
     check:
         name: Quality Check
-        runs-on: [self-hosted, linux, x64]
+        runs-on: ubuntu-latest
         steps:
             # Deliberately no path filter anywhere in this workflow. "Quality
             # Check" is the merge gate, and a filtered-out pull request never
             # starts the workflow at all, so the context never reports and the
             # PR stays blocked with no way to satisfy it.
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
               with:
                   # Full history AND tags: tools/check-enum-order.py compares
                   # against the newest v* tag, and on a shallow clone with no
@@ -43,9 +47,12 @@ jobs:
             # Node AND bun, because they do different jobs here and neither
             # substitutes for the other: node runs the generators that produce
             # the committed gen/ artifact (see tools/gen.sh), bun installs those
-            # generators and runs the TypeScript suite. The self-hosted runners
-            # ship neither by default.
-            - uses: actions/setup-node@v4
+            # generators and runs the TypeScript suite. Both are pinned rather
+            # than taken from whatever the runner image happens to preinstall,
+            # because they produce the committed gen/ and dist/ artifacts this
+            # job then diffs. gcc/g++ (tests/c) and tar (tests/consumer) come
+            # with the image.
+            - uses: actions/setup-node@v7
               with:
                   node-version: '24'
 
@@ -53,8 +60,13 @@ jobs:
               with:
                   bun-version: '1.3.14'
 
-            - uses: astral-sh/setup-uv@v5
+            - uses: astral-sh/setup-uv@v10.0.1
               with:
+                  # Pinned, not inherited from the runner image: uv would
+                  # otherwise resolve against whatever Python ubuntu-latest
+                  # happens to ship that month, and this job regenerates
+                  # gen/py/ and diffs it against the commit.
+                  python-version: '3.13'
                   enable-cache: true
                   cache-dependency-glob: 'uv.lock'
 

@@ -1,0 +1,88 @@
+version: 2
+
+# `bun` is a beta ecosystem in Dependabot; the opt-in flag is required for the
+# bun.lock updates below to be picked up at all.
+enable-beta-ecosystems: true
+
+# Modelled on needle-simulator's config: weekly grouped update PRs so review
+# burden stays low on a solo-dev repo. Each group collapses the safe bumps for
+# one ecosystem into a single PR; majors are deliberately left OUT of the
+# groups, so each arrives as its own PR with its own CI run.
+#
+# Two facts about this repository shape everything below:
+#
+#   * gen/ and dist/ are COMMITTED build outputs, and CI regenerates them and
+#     fails on any diff. So a bump to a generator (json-schema-to-typescript,
+#     json-schema-to-zod, datamodel-code-generator) whose output changes will
+#     land red — Dependabot edits lockfiles, it does not run tools/gen.sh.
+#     That is the gate working: the fix is to run tools/gen.sh on the branch
+#     and commit the result, never to relax the diff check. These are not
+#     ignored here, because a generator silently frozen forever is worse than
+#     a red PR that says what to do.
+#   * The squash-merge subject becomes the release-please CHANGELOG entry, so
+#     the commit-message prefixes are pinned rather than left to Dependabot's
+#     history auto-detection.
+updates:
+  # Python — the uv workspace (root uv.lock, with gen/py as the member).
+  # `uv`, not `pip`: the pip ecosystem never reads uv.lock or resolves
+  # workspace members, and this root manifest's own dependency list is a single
+  # workspace self-reference, so pip would open zero PRs forever (the failure
+  # mode needle-simulator hit for 13 cycles).
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+    groups:
+      python-deps:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # pydantic is the `models` extra's only dependency and it is a PUBLISHED
+      # constraint (`pydantic>=2.7,<3` in gen/py/pyproject.toml), not a dev
+      # pin. Moving to v3 means widening the range every consumer resolves
+      # against — a compatibility decision for needle-guide, needle-simulator
+      # and the Jetson image, not a maintenance chore.
+      - dependency-name: 'pydantic'
+        update-types: ['version-update:semver-major']
+
+  # TypeScript side — root bun.lock.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+    groups:
+      ts-deps:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # zod is an OPTIONAL PEER dependency here (`^3.23.0 || ^4.0.0`), and the
+      # devDependency exists only to exercise `needle-protocol/zod` against one
+      # of those majors. Bumping the devDependency to 4 does not widen what
+      # consumers may install — it silently changes which half of the declared
+      # peer range is the half CI actually tests. That is a deliberate choice,
+      # so it does not ride in automatically.
+      - dependency-name: 'zod'
+        update-types: ['version-update:semver-major']
+
+  # GitHub Actions used by ci.yml and release-please.yml.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      gh-actions:
+        patterns: ['*']
