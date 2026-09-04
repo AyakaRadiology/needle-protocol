@@ -1,0 +1,37 @@
+{
+    "$id": "urn:needle:schema:plan-channel-payload-plan-ack",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Plan Channel Plan Ack Payload",
+    "description": "needle-guide's answer to one `plan` request. Carried by a `res` frame with `type: \"plan_ack\"`, echoing the request's envelope `id`. ONE REQUEST CAN PRODUCE TWO ACKS: `pending_confirm` immediately, then `applied` (or `rejected`) when the operator acts, both under the same `id`. A sender must therefore keep the correlation open after the first answer rather than closing it, and must not re-send the plan because a second ack has not arrived -- PLAN_ACK_TIMEOUT_MS bounds the wait for the FIRST ack only, which is the one that says the frame was understood at all. Nothing bounds an operator.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "plan_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,128}$",
+            "description": "The `plan_id` this answers, echoed verbatim. Present alongside the envelope `id` on purpose: the envelope id correlates one exchange, this says which PLAN the receiver believes it was about, and a disagreement between the two is a bug worth being able to see."
+        },
+        "plan_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The `plan_revision` this answers, echoed verbatim."
+        },
+        "result": {
+            "type": "string",
+            "enum": ["applied", "pending_confirm", "rejected"],
+            "description": "`applied` -- the plan is in effect and the guide's readout is measuring against it. `pending_confirm` -- the frame was understood and is waiting on the operator, who has NOT yet pressed Apply; nothing has changed on the guide's display. `rejected` -- the plan will not be applied, and `reason` says why. Append-only: ORDER IS LOAD-BEARING (README > Versioning)."
+        },
+        "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. Short operator-facing explanation. The sender SHOULD show it verbatim and MUST NOT parse it. A `rejected` ack without one is unactionable and needle-guide always sends it there -- but that is a rule the emitter keeps, not one this schema states: making `reason` conditional on `result` needs an if/then that json-schema-to-zod renders as a validator accepting anything (see tools/gen-ts.mjs), and a validator that silently does not validate is worse than a documented rule. The receiving side's own tests are where it is enforced; see docs/decisions.md ADR-0003."
+        },
+        "applied_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "OPTIONAL. The revision the guide currently has APPLIED, which is not always the one being acked: on `pending_confirm` it is the previous revision still in effect (absent when there is none), and on `rejected` it is what the guide kept. It exists so the sender can render what the other screen is actually showing instead of what it hoped."
+        }
+    },
+    "required": ["plan_id", "plan_revision", "result"]
+}

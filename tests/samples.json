@@ -1,5 +1,5 @@
 {
-    "$comment": "Frames as the real emitters actually produce them, kept in ONE file so the TypeScript (zod) and Python (pydantic) suites validate the same bytes. A sample that only one language checks is a sample that only proves one generator works. Provenance is on every entry; nothing here is invented shape.",
+    "$comment": "Frames as the real emitters actually produce them, kept in ONE file so the TypeScript (zod) and Python (pydantic) suites validate the same bytes. A sample that only one language checks is a sample that only proves one generator works. Provenance is on every entry, and it says which kind it is: most entries name the emitter and the line they were copied from, while a contract defined BEFORE its emitters exist (the plan channel) names the design instead. An entry whose `from` names no emitter is the shape the first emitter must be written to, not a shape observed on a wire -- said here so the difference is legible rather than inferred.",
     "valid": [
         {
             "contract": "DeviceEnvelope",
@@ -164,6 +164,134 @@
             }
         },
         {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-request",
+            "from": "docs/decisions.md ADR-0003 — the plan channel's contract is defined before its emitters, so this is the frame needle-simulator's Stage 2 sender must produce, with every optional field present. The four plan numbers are the ones needle-guide's operator types into shared/planInputs.ts today.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QK3W4Z9C2N5E8T6Y1XQ0M",
+                "ts": "2026-09-04T09:15:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 22.5,
+                    "azimuth_deg": -34.0,
+                    "entry_lateral_mm": 41.2,
+                    "entry_longitudinal_mm": -18.7,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-request-minimal",
+            "from": "the same sender with only the required fields: a plan that constrains the tilt and nothing else is a complete plan, and an absent entry point must not read as 0 mm",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKB5H0X4T9V2M6D8G3R7A",
+                "ts": "2026-09-04T09:20:11.000Z",
+                "payload": {
+                    "plan_inclination_deg": 0,
+                    "plan_id": "rehearsal-seq-072",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-request-at-the-limits",
+            "from": "the same sender at every bound needle-guide shared/planInputs.ts states — inclination 90 (horizontal), azimuth -180, both entry offsets at MAX_ENTRY_OFFSET_MM. Inclusive on both sides there, so inclusive here; a bound that disagreed by one endpoint would refuse a plan the operator's own form accepted.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKC9P2W6Y1N4K8H3F5T0B",
+                "ts": "2026-09-04T09:21:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 90,
+                    "azimuth_deg": -180,
+                    "entry_lateral_mm": 1000,
+                    "entry_longitudinal_mm": -1000,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10012",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-ack-pending-confirm",
+            "from": "needle-guide's first answer to plan-channel-plan-request: the frame parsed, and it is now in front of an operator who has not pressed Apply. Same envelope `id`; `applied_revision` is the revision still in effect, which is the PREVIOUS one.",
+            "frame": {
+                "v": 1,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QK3W4Z9C2N5E8T6Y1XQ0M",
+                "ts": "2026-09-04T09:15:00.031Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "result": "pending_confirm",
+                    "reason": "Waiting for the operator to press Apply.",
+                    "applied_revision": 2
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-ack-applied",
+            "from": "needle-guide's SECOND answer to the same request, minutes later, when the operator pressed Apply. Same envelope `id` as the pending_confirm above — one request, two acks — which is why a sender may not close the correlation on the first.",
+            "frame": {
+                "v": 1,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QK3W4Z9C2N5E8T6Y1XQ0M",
+                "ts": "2026-09-04T09:16:42.517Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "result": "applied",
+                    "applied_revision": 3
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-ack-rejected",
+            "from": "needle-guide dismissing a later revision: the plan is refused and the reason is the operator-facing line the sender shows verbatim. `applied_revision` says what the guide kept, so the sender renders the other screen rather than what it hoped.",
+            "frame": {
+                "v": 1,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QKF7T1M9B4C6Q2X5N8J3D",
+                "ts": "2026-09-04T09:31:07.900Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 4,
+                    "result": "rejected",
+                    "reason": "Operator dismissed the revised plan.",
+                    "applied_revision": 3
+                }
+            }
+        },
+        {
             "contract": "TrackerHello",
             "name": "tracker-hello-v2",
             "from": "needle-simulator packages/needle-jetson/.../server/websocket.py, _handler()",
@@ -292,6 +420,190 @@
                 "type": "velocity",
                 "ts": "2026-09-04T01:02:03.004Z",
                 "payload": { "calibrated": true, "link": { "state": "connected", "live": true } }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-inclination-out-of-range",
+            "why": "91 degrees from vertical is a needle pointing back out of the patient, and it is one degree outside the range needle-guide's own form accepts. REFUSE, NEVER CLAMP: silently moving it to 90 would apply a plan the operator never planned, and the operator would have no way to see that it had happened.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKG3D8V2R5Y7L1P4W6M0K",
+                "ts": "2026-09-04T09:40:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 91,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10013",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-missing-plan-id",
+            "why": "Without plan_id nothing correlates this plan to the next revision of it, so the receiver cannot tell an update from a second plan and cannot be idempotent about either.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKH6N0T3X8B2F5S9C1V4Z",
+                "ts": "2026-09-04T09:41:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 22.5,
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-unknown-payload-field",
+            "why": "The one sample that pins additionalProperties:false on this contract, and the reason the plan channel is closed where the angle stream is open. A key the receiver does not understand is a part of the plan it would silently drop; half a plan applied is worse than no plan applied, so the frame is refused whole.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKJ8Q4Y7D1G3K6R9M2N5T",
+                "ts": "2026-09-04T09:42:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 22.5,
+                    "plan_theta_deg": 67.5,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10014",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-unknown-envelope-field",
+            "why": "Same rule one level up. An envelope key nobody agreed on is a routing or priority instruction the receiver would ignore while answering as though it had honoured it.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKK1S6B9F2H4M7T0X3P8W",
+                "ts": "2026-09-04T09:43:00.000Z",
+                "priority": "high",
+                "payload": {
+                    "plan_inclination_deg": 22.5,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10015",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-angle-stream-frame-on-the-plan-port",
+            "why": "`kind: \"evt\"` is the angle stream's envelope, which pins that const because it is OUTPUT ONLY (needle-guide SYSTEM_SPEC.md 5.3). This is what an operator who typed 8791 where they meant 8790 actually sends, and the two contracts must be unable to satisfy each other — otherwise a mis-typed port reaches a real server and looks healthy.",
+            "frame": {
+                "v": 1,
+                "kind": "evt",
+                "type": "plan",
+                "id": "01JB7QKM4V9C1J5N8Q2Z6B0D3F",
+                "ts": "2026-09-04T09:44:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 22.5,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10016",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-ack-wearing-a-request-kind",
+            "why": "An ack labelled `kind: \"req\"`. The envelope binds kind to type in its allOf table for this: a receiver that dispatches on `type` alone would take an answer for a command, and a request/response channel where the two are interchangeable is not one.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan_ack",
+                "id": "01JB7QKN7X2E5G8L1R4W9T6Y0H",
+                "ts": "2026-09-04T09:45:00.000Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "result": "applied"
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-ack-payload-on-a-plan-frame",
+            "why": "An ack payload under type:plan. This is the case a naive allOf-if/then codegen accepts, which is why every envelope here is emitted as a tagged union — and a new contract that did not carry the sample would not be covering the bug.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKP0Z5H8K2M4T7B1D6F9J",
+                "ts": "2026-09-04T09:46:00.000Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "result": "applied"
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-inclination-as-string",
+            "why": "A present-but-not-a-number angle is a malformed plan, not an angle. JSON has a real number type, so a quoted \"22.5\" is a sender bug, and coercing it here would turn that bug into a plausible plan.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKQ3B8M1P4S7V0Y2G5K9N",
+                "ts": "2026-09-04T09:47:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": "22.5",
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10017",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-ack-unknown-result",
+            "why": "A result the sender has no branch for. `maybe` is not a weaker `applied`: the sender must not guess whether the plan is in effect, so an unrecognised result is refused rather than treated as one of the three.",
+            "frame": {
+                "v": 1,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QKR6D1T4W7Z0C3J5N8Q2S",
+                "ts": "2026-09-04T09:48:00.000Z",
+                "payload": {
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10011",
+                    "plan_revision": 3,
+                    "result": "maybe"
+                }
             }
         },
         {

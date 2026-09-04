@@ -113,6 +113,34 @@ export function bundleAll() {
 }
 
 /**
+ * Every non-`payload` property a `then` branch pins to a literal, as
+ * `{ key: value }` — the plan-channel envelope uses it to bind `kind` to
+ * `type`, so a `res` cannot arrive wearing a request's `type`.
+ *
+ * Anything else under `then.properties` throws. That is the point: a
+ * constraint the generators do not carry into the emitted validators is a
+ * constraint the schema states and nothing enforces, which is the exact failure
+ * this whole module exists to refuse.
+ */
+function pinnedConsts(thenProps, where) {
+    const consts = {};
+    for (const [key, value] of Object.entries(thenProps)) {
+        if (key === 'payload') continue;
+        const extra = Object.keys(value ?? {}).filter((k) => k !== 'const' && k !== 'description' && k !== '$comment');
+        if (typeof value?.const !== 'string' || extra.length > 0) {
+            throw new Error(
+                `${where}: \`then\` constrains \`${key}\` with something other than a string \`const\`` +
+                    `${extra.length > 0 ? ` (also: ${extra.join(', ')})` : ''}. The generators carry a ` +
+                    `pinned const into the emitted types and validators and nothing else, so anything ` +
+                    `richer would be stated in the schema and enforced nowhere.`
+            );
+        }
+        consts[key] = value.const;
+    }
+    return consts;
+}
+
+/**
  * The `allOf: [{if, then}]` payload table of an envelope schema, or null when
  * the schema has no conditional shape at all.
  *
@@ -142,7 +170,11 @@ export function discriminatorTable(schema, idToSlug, where) {
         }
         const slug = idToSlug.get(ref);
         if (!slug) throw new Error(`${where}: payload $ref ${ref} names no schema.`);
-        branches.push({ value: ifProps[keys[0]].const, slug });
+        const consts = pinnedConsts(thenProps, where);
+        if (discriminator in consts) {
+            throw new Error(`${where}: \`then\` re-pins the discriminator \`${discriminator}\`; the \`if\` already did.`);
+        }
+        branches.push({ value: ifProps[keys[0]].const, slug, consts });
     }
 
     const declared = schema.properties?.[discriminator]?.enum;

@@ -6,6 +6,7 @@ rule that only works because someone remembers it is a defect.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -65,23 +66,77 @@ def test_angle_stream_link_copies_are_identical() -> None:
         )
 
 
-def test_device_schemas_are_closed_and_host_schemas_are_open() -> None:
+def test_each_schema_is_closed_or_open_on_purpose() -> None:
     """Two different answers to `additionalProperties`, each on purpose.
 
-    The device schemas own both ends of their wire -- the firmware writes them
-    and the host reads them -- so an unexpected key is a bug and is rejected.
-    The host-side contracts are read by clients that are deployed on a different
-    schedule from their servers, and both of those servers state that additive
-    optional fields do NOT bump the protocol version. A strict reader there
-    would reject a peer that is, by its own contract, compatible.
+    CLOSED (`false`) is for a wire that carries an instruction:
+
+    * The **device** schemas own both ends -- the firmware writes them and the
+      host reads them -- so an unexpected key is a bug and is rejected.
+    * The **plan channel** carries a plan that moves a laser and a readout in
+      front of an operator. A key the receiver does not understand is a part of
+      the plan it would silently drop, and half a plan applied is worse than no
+      plan applied. The cost is an ordered rollout (bump the receiver's pin
+      before the sender emits a new field), which is ADR-0003's to state.
+
+    OPEN (`true`) is for read-only telemetry: the angle stream and the tracker
+    hello are read by clients deployed on a different schedule from their
+    servers, and both servers state that additive optional fields do NOT bump
+    the protocol version. A strict reader there would reject a peer that is, by
+    its own contract, compatible.
+
+    The list is by directory rather than per file, so a new schema in either
+    place inherits its neighbours' answer and a new *directory* has to come
+    here and say which it is.
     """
+    closed_dirs = ("device/", "plan-channel/")
+    seen_closed = seen_open = 0
     for path in SCHEMA_FILES:
         schema = load(path)
         relative = path.relative_to(ROOT / "schemas").as_posix()
-        if relative.startswith("device/"):
+        if relative.startswith(closed_dirs):
             assert schema.get("additionalProperties") is False, relative
+            seen_closed += 1
         else:
             assert schema.get("additionalProperties") is True, relative
+            seen_open += 1
+    # A prefix tuple that stopped matching anything would leave this test green
+    # while checking one half of its own point.
+    assert seen_closed and seen_open
+
+
+def test_envelope_then_branches_only_pin_constants() -> None:
+    """A `then` may pin a sibling of `payload`, and only to a string const.
+
+    `tools/bundle.mjs` carries exactly that into the generated types and
+    validators -- it is how the plan-channel envelope binds `kind` to `type`.
+    Anything richer would be a constraint the schema states and the generated
+    validators drop, which is the failure mode this repository refuses. Checked
+    here as well as there so the rule does not live in one language.
+    """
+    for path in SCHEMA_FILES:
+        for branch in load(path).get("allOf") or []:
+            for key, value in branch["then"]["properties"].items():
+                if key == "payload":
+                    continue
+                assert set(value) <= {"const", "description", "$comment"}, f"{path}: {key}"
+                assert isinstance(value["const"], str), f"{path}: {key}"
+
+
+def test_plan_channel_binds_direction_to_message_type() -> None:
+    """`kind` is pinned per `type`, so an answer cannot wear a request's type.
+
+    Without it a receiver dispatching on `type` alone would take a `plan_ack`
+    labelled `req` for a command, and a request/response channel whose two
+    halves are interchangeable is not one.
+    """
+    envelope = load(ROOT / "schemas" / "plan-channel" / "envelope.json")
+    pinned = {
+        branch["if"]["properties"]["type"]["const"]: branch["then"]["properties"]["kind"]["const"]
+        for branch in envelope["allOf"]
+    }
+    assert pinned == {"plan": "req", "plan_ack": "res"}
+    assert sorted(envelope["properties"]["kind"]["enum"]) == sorted(set(pinned.values()))
 
 
 def test_every_envelope_branch_has_a_payload_schema() -> None:
@@ -101,6 +156,34 @@ def test_every_envelope_branch_has_a_payload_schema() -> None:
             ref = branch["then"]["properties"]["payload"]["$ref"]
             assert ref in by_id, f"{path}: payload $ref {ref} names no schema"
         assert sorted(covered) == sorted(declared), path
+
+
+def test_the_enum_order_gate_sees_every_schema_directory() -> None:
+    """`tools/check-enum-order.py` finds schemas by glob, so this stays true.
+
+    Enum order is load-bearing (the generated C enum's value IS the array
+    index), and the gate that protects it walks `schemas/` itself rather than a
+    list. A narrowed glob, or a contract parked outside `schemas/`, would leave
+    the gate green while gating nothing -- and it already reports "nothing
+    checked" as a PASS when there is no tag to compare against, so a quiet loss
+    of coverage looks exactly like a healthy run.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "check_enum_order", ROOT / "tools" / "check-enum-order.py"
+    )
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+
+    covered = sorted(gate.SCHEMA_DIR.rglob("*.json"))
+    assert covered == SCHEMA_FILES
+
+    envelope = ROOT / "schemas" / "plan-channel" / "envelope.json"
+    found = gate.enums_of(load(envelope))
+    assert found["/properties/kind"] == ["req", "res"]
+    assert found["/properties/type"] == ["plan", "plan_ack"]
+    assert gate.enums_of(load(ROOT / "schemas" / "plan-channel" / "payload-plan-ack.json"))[
+        "/properties/result"
+    ] == ["applied", "pending_confirm", "rejected"]
 
 
 def test_generated_artifacts_exist() -> None:

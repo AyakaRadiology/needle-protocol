@@ -1,0 +1,58 @@
+{
+    "$id": "urn:needle:schema:plan-channel-envelope",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Plan Channel Envelope",
+    "description": "Envelope for the request/response plan channel: needle-simulator pushes a planned trajectory INTO needle-guide, and needle-guide answers. Deliberately NOT part of schemas/angle-stream/: that contract is needle-guide's OUTPUT-ONLY inclination stream (needle-guide SYSTEM_SPEC.md 5.3 -- 'There is no code path by which a subscriber can command, configure or calibrate this app'), and its envelope pins `kind` to the const `evt` for that reason. A plan is an inbound command, so it arrives on its own listener, on its own port (PLAN_CHANNEL_DEFAULT_PORT), under its own contract, and the two can never be confused for one another by a mis-typed URL.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "additionalProperties is FALSE here, unlike the other two host-side contracts. Those are read-only telemetry whose emitters state that additive optional fields do not bump the protocol version, so a strict reader would reject a peer that is compatible by its own rule. This one carries an instruction that moves a laser and a plan readout in front of an operator: a key the receiver does not understand is a part of the plan it would silently drop, and half a plan applied is worse than no plan applied. Fail closed -- refuse the frame, never apply the part you recognised. Rollout is therefore ordered (bump the receiver's pin before the sender emits a new field), which is stated in docs/decisions.md ADR-0003 rather than discovered.",
+    "additionalProperties": false,
+    "properties": {
+        "v": {
+            "const": 1,
+            "description": "Envelope version, equal to PLAN_CHANNEL_PROTOCOL_VERSION in constants/constants.json (tests/py/test_constants.py pins the two together). It is NOT bumped by adding a `type`: `type` is what selects the payload."
+        },
+        "kind": {
+            "type": "string",
+            "enum": ["req", "res"],
+            "description": "Direction. `req` is authored by the sender and expects an answer; `res` answers one. Bound to `type` by the allOf table below, so a `res` cannot arrive wearing a request's `type` -- ORDER IS LOAD-BEARING, see README > Versioning."
+        },
+        "type": {
+            "type": "string",
+            "enum": ["plan", "plan_ack"],
+            "description": "Selects the payload. Append-only: the generated C enum's value is the element's index. ORDER IS LOAD-BEARING."
+        },
+        "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{1,128}$",
+            "description": "Opaque request id, chosen by the sender of the `req`. Every `res` answering it echoes it VERBATIM, including the second `plan_ack` a deferred confirm produces, so a receiver correlates an answer to a request without guessing from timing. Constrained to printable, log-safe characters because it is written to both apps' logs."
+        },
+        "ts": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Host wall-clock ISO-8601 stamp taken when the frame was built. Diagnostic: correlation is by `id`, never by timestamp."
+        },
+        "payload": { "type": "object" }
+    },
+    "required": ["v", "kind", "type", "id", "ts", "payload"],
+    "allOf": [
+        {
+            "if": { "properties": { "type": { "const": "plan" } }, "required": ["type"] },
+            "then": {
+                "properties": {
+                    "kind": { "const": "req" },
+                    "payload": { "$ref": "urn:needle:schema:plan-channel-payload-plan" }
+                }
+            }
+        },
+        {
+            "if": { "properties": { "type": { "const": "plan_ack" } }, "required": ["type"] },
+            "then": {
+                "properties": {
+                    "kind": { "const": "res" },
+                    "payload": { "$ref": "urn:needle:schema:plan-channel-payload-plan-ack" }
+                }
+            }
+        }
+    ]
+}

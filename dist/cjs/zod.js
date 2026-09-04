@@ -6,7 +6,7 @@
  * Regenerate with `tools/gen.sh`; CI fails on any drift.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeviceEnvelopeSchema = exports.AngleStreamEnvelopeSchema = exports.TrackerHelloSchema = exports.DevicePayloadStatusSchema = exports.DevicePayloadLogSchema = exports.DevicePayloadErrorSchema = exports.DevicePayloadDataSchema = exports.AngleStreamFrameThetaSchema = exports.AngleStreamFrameInclinationSchema = exports.AngleStreamFrameHeartbeatSchema = void 0;
+exports.PlanChannelEnvelopeSchema = exports.DeviceEnvelopeSchema = exports.AngleStreamEnvelopeSchema = exports.TrackerHelloSchema = exports.PlanChannelPayloadPlanAckSchema = exports.PlanChannelPayloadPlanSchema = exports.DevicePayloadStatusSchema = exports.DevicePayloadLogSchema = exports.DevicePayloadErrorSchema = exports.DevicePayloadDataSchema = exports.AngleStreamFrameThetaSchema = exports.AngleStreamFrameInclinationSchema = exports.AngleStreamFrameHeartbeatSchema = void 0;
 /**
  * Runtime validators. OPTIONAL: `zod` is a peer dependency and nothing in
  * `needle-protocol`'s default entry point imports this module.
@@ -31,6 +31,10 @@ exports.DevicePayloadErrorSchema = zod_1.z.object({ "code": zod_1.z.string().min
 exports.DevicePayloadLogSchema = zod_1.z.object({ "level": zod_1.z.enum(["trace", "debug", "info", "warn", "error", "critical"]), "message": zod_1.z.string() }).strict();
 /** `schemas/device/payload-status.json` */
 exports.DevicePayloadStatusSchema = zod_1.z.object({ "state": zod_1.z.enum(["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]), "envelope_schema_version": zod_1.z.string().regex(new RegExp("^\\d+\\.\\d+\\.\\d+$")).optional() }).strict();
+/** `schemas/plan-channel/payload-plan.json` */
+exports.PlanChannelPayloadPlanSchema = zod_1.z.object({ "plan_inclination_deg": zod_1.z.number().gte(0).lte(90), "azimuth_deg": zod_1.z.number().gte(-180).lte(180).optional(), "entry_lateral_mm": zod_1.z.number().gte(-1000).lte(1000).optional(), "entry_longitudinal_mm": zod_1.z.number().gte(-1000).lte(1000).optional(), "plan_id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": zod_1.z.number().int().gte(0), "source": zod_1.z.object({ "app": zod_1.z.literal("needle-simulator"), "app_version": zod_1.z.string().min(1), "protocol_package_version": zod_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")) }).strict() }).strict();
+/** `schemas/plan-channel/payload-plan-ack.json` */
+exports.PlanChannelPayloadPlanAckSchema = zod_1.z.object({ "plan_id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": zod_1.z.number().int().gte(0), "result": zod_1.z.enum(["applied", "pending_confirm", "rejected"]), "reason": zod_1.z.string().min(1).optional(), "applied_revision": zod_1.z.number().int().gte(0).optional() }).strict();
 /** `schemas/tracker/hello.json` */
 exports.TrackerHelloSchema = zod_1.z.object({ "type": zod_1.z.literal("hello"), "protocol_version": zod_1.z.number().int().gte(1), "server_bind": zod_1.z.string().optional(), "client_addr": zod_1.z.string().optional() }).catchall(zod_1.z.any());
 /** Shared fields of `schemas/angle-stream/envelope.json`, before the payload is pinned down. */
@@ -61,4 +65,17 @@ exports.DeviceEnvelopeSchema = zod_1.z.discriminatedUnion('type', [
     DeviceEnvelopeBase.extend({ type: zod_1.z.literal('data'), payload: exports.DevicePayloadDataSchema }),
     DeviceEnvelopeBase.extend({ type: zod_1.z.literal('error'), payload: exports.DevicePayloadErrorSchema }),
     DeviceEnvelopeBase.extend({ type: zod_1.z.literal('log'), payload: exports.DevicePayloadLogSchema }),
+]);
+/** Shared fields of `schemas/plan-channel/envelope.json`, before the payload is pinned down. */
+const PlanChannelEnvelopeBase = zod_1.z.object({ "v": zod_1.z.literal(1), "kind": zod_1.z.enum(["req", "res"]), "type": zod_1.z.enum(["plan", "plan_ack"]), "id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._:-]{1,128}$")), "ts": zod_1.z.string().datetime({ offset: true }), "payload": zod_1.z.record(zod_1.z.string(), zod_1.z.any()) }).strict();
+/**
+ * `schemas/plan-channel/envelope.json`
+ *
+ * A discriminated union rather than the schema's literal `allOf`: json-schema-to-zod
+ * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
+ * payload on any `type` and reports success.
+ */
+exports.PlanChannelEnvelopeSchema = zod_1.z.discriminatedUnion('type', [
+    PlanChannelEnvelopeBase.extend({ type: zod_1.z.literal('plan'), kind: zod_1.z.literal('req'), payload: exports.PlanChannelPayloadPlanSchema }),
+    PlanChannelEnvelopeBase.extend({ type: zod_1.z.literal('plan_ack'), kind: zod_1.z.literal('res'), payload: exports.PlanChannelPayloadPlanAckSchema }),
 ]);

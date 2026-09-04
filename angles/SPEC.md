@@ -158,7 +158,46 @@ disagreement in the field as evidence about the table, not about the arithmetic.
 | `theta` | needle-guide only, as the deprecated dual-emit copy; needle-simulator only at the point of display | the CT console screen the operator is reading next door |
 | `ALPHA` / `BETA` / `CT_X` / `CT_Z` | needle-simulator's `navReadout.ts` | the operator, retyping into the CT console |
 
-There is no channel between the simulator and the guide beyond the one-way angle
-stream, and there will not be one. Anything the operator types is a *declaration*
-that they typed it, which is why the simulator tracks drift against an "armed"
-value rather than against what the other app actually holds.
+The **CT console** has no channel, and will not get one: anything the operator
+types into it is a *declaration* that they typed it, which is why the simulator
+tracks drift against an "armed" value rather than against what the console
+actually holds.
+
+Between the simulator and the guide there are now two channels, in opposite
+directions — the one-way angle stream, and the plan channel below.
+
+## Plan channel
+
+`schemas/plan-channel/` carries a **plan** from needle-simulator into
+needle-guide: the trajectory the simulator computed from the CT plan, pushed to
+a separate inbound listener on the guide (`PLAN_CHANNEL_DEFAULT_PORT`) rather
+than answered back down the angle stream. The angle stream is the guide's
+*output* and is output-only as a medical-device posture — needle-guide
+`SYSTEM_SPEC.md` §5.3: *"There is no code path by which a subscriber can
+command, configure or calibrate this app."* A plan is a command, so it does not
+travel on that wire; see README > The plan channel for the request/response
+shape, the two-ack confirm, and the idempotency rule.
+
+What matters *here* is which quantity crosses it, because this is the file
+where that has gone wrong before:
+
+| Field | Quantity | Range |
+|---|---|---|
+| `plan_inclination_deg` | **Inclination**, from vertical — the canonical quantity in the table above | 0…90 |
+| `azimuth_deg` | Horizontal-plane angle, signed half-turn | −180…180 |
+
+`plan_inclination_deg` is an **identity**, not a conversion: it is the same
+quantity, under the same name, as needle-guide's own `plan_inclination_deg` in
+`shared/planInputs.ts`. Nothing on this wire is console θ and nothing is
+`ALPHA`. That is deliberate — `theta = 90 − inclination` is its own inverse, so
+a channel that carried θ would be a channel where sending the wrong one is
+syntactically perfect and 5° to 90° wrong, which is precisely the failure this
+package exists to have removed. The operator still reads `ALPHA` off
+needle-simulator and types it into the CT console; that path is unchanged and
+still has no channel.
+
+**Refuse, never clamp** — the same rule `shared/planInputs.ts` states, on the
+wire as well as in the form. An inclination outside 0…90 is rejected and
+reported; it is never quietly moved inside the range, because an entry point
+silently pulled to ±1000 mm, or an inclination to 90°, would be a plan the
+operator never planned.

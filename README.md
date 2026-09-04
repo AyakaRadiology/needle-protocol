@@ -43,7 +43,59 @@ next regeneration would revert it anyway.
 |---|---|---|
 | Device NDJSON envelope + payloads | `schemas/device/` | scl3300-stream firmware → needle-guide's serial reader |
 | Inclination WebSocket stream | `schemas/angle-stream/` | needle-guide → needle-simulator |
+| Plan channel (request/response) | `schemas/plan-channel/` | needle-simulator → needle-guide, and its ack back |
 | Tracker hello | `schemas/tracker/hello.json` | needle-simulator's Jetson → its desktop client |
+
+### The plan channel
+
+The angle stream and the plan channel run between the same two apps and point
+in opposite directions. They are two contracts, on two ports, on purpose.
+
+**Direction.** needle-simulator authors a plan — a trajectory it computed from
+the CT plan — and pushes it to a **separate inbound listener** on needle-guide
+(`PLAN_CHANNEL_DEFAULT_PORT`, 8791, loopback). needle-guide answers. Today the
+operator carries these numbers between two screens by hand and retypes them.
+
+**Why not on the angle stream.** That stream is needle-guide's *output*, and its
+being output-only is a medical-device posture rather than an implementation
+detail — needle-guide `SYSTEM_SPEC.md` §5.3: *"There is no code path by which a
+subscriber can command, configure or calibrate this app."* Its envelope pins
+`kind` to the const `evt` to say so. A plan is a command, so it gets its own
+contract, its own listener and its own port; a subscriber to the angle stream
+gains nothing by connecting, and the two can never satisfy each other's schema.
+`tests/samples.json` carries an `evt` frame aimed at the plan channel as a
+**rejection** sample, because an operator who types 8791 for 8790 is the
+realistic way that gets tested in the field.
+
+**Request and response.** `kind` is `req` or `res`, `type` is `plan` or
+`plan_ack`, and the envelope binds the two — a `plan_ack` labelled `req` is
+refused. Every `res` echoes its `req`'s envelope `id` verbatim.
+
+**Confirm semantics.** One request can produce **two** acks. needle-guide
+answers `pending_confirm` at once — the frame was understood, and it is now in
+front of an operator who has not pressed Apply — and then, under the *same*
+`id`, `applied` when they do or `rejected` with a `reason` if they dismiss it. A
+sender therefore does not close the correlation on the first answer.
+`PLAN_ACK_TIMEOUT_MS` bounds the wait for the first ack only; nothing bounds an
+operator.
+
+**Idempotency.** A plan is identified by `plan_id` (opaque; today a DICOM
+`SeriesInstanceUID`) and a monotonic `plan_revision`. Re-sending the same pair
+is idempotent: the receiver answers with the ack it would have sent and does not
+re-prompt someone who has already confirmed that revision.
+
+**Refuse, never clamp.** Every bound in `payload-plan.json` mirrors
+needle-guide's own `shared/planInputs.ts` — inclination 0…90 from vertical,
+azimuth −180…180, entry offsets ±1000 mm — and a value outside one is
+**rejected and reported, never quietly moved inside**. So is an unknown field:
+alone among the host-side contracts these schemas are `additionalProperties:
+false`, because a key the receiver does not understand is a part of the plan it
+would silently drop, and half a plan applied is worse than no plan applied. The
+cost is an ordered rollout, and it is stated in `docs/decisions.md` ADR-0003.
+
+**Not on the Pico.** `tools/gen.sh` generates the C header from
+`schemas/device/*.json` only, so the firmware gains no `KEY_*` macro for a wire
+it never speaks.
 
 ### What is deliberately NOT in here
 
