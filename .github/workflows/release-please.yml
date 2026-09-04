@@ -111,7 +111,7 @@ jobs:
             #     detection), so the refresh has to run then too.
             - name: Resolve the release PR head branch
               id: relpr
-              uses: actions/github-script@v8
+              uses: actions/github-script@v9
               with:
                   github-token: ${{ steps.app-token.outputs.token }}
                   script: |
@@ -134,7 +134,7 @@ jobs:
 
             - name: Check out the release PR branch
               if: steps.relpr.outputs.branch != ''
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   ref: ${{ steps.relpr.outputs.branch }}
                   # Push with the App token, the same identity that authored the
@@ -144,7 +144,7 @@ jobs:
 
             - name: Install uv
               if: steps.relpr.outputs.branch != ''
-              uses: astral-sh/setup-uv@v5
+              uses: astral-sh/setup-uv@v10.0.1
               with:
                   enable-cache: true
                   cache-dependency-glob: 'uv.lock'
