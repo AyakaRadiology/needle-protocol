@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.1.0...v0.2.0) (2026-09-04)
+
+
+### Features
+
+* **plan-channel:** Simulator → Guide plan contract (req/res, strict, revisioned) ([#15](https://github.com/AyakaRadiology/needle-protocol/issues/15)) ([d6ebfc2](https://github.com/AyakaRadiology/needle-protocol/commit/d6ebfc29240fa9bb42cf0677fd3f3acf9b35c3f7))
+
 ## 0.1.0 (2026-09-04)
 
 
