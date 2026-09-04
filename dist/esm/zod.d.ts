@@ -173,21 +173,21 @@ export declare const DevicePayloadLogSchema: z.ZodObject<{
     level: z.ZodEnum<["trace", "debug", "info", "warn", "error", "critical"]>;
     message: z.ZodString;
 }, "strict", z.ZodTypeAny, {
+    level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
     message: string;
-    level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
 }, {
+    level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
     message: string;
-    level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
 }>;
 /** `schemas/device/payload-status.json` */
 export declare const DevicePayloadStatusSchema: z.ZodObject<{
     state: z.ZodEnum<["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]>;
     envelope_schema_version: z.ZodOptional<z.ZodString>;
 }, "strict", z.ZodTypeAny, {
-    state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
+    state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
     envelope_schema_version?: string | undefined;
 }, {
-    state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
+    state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
     envelope_schema_version?: string | undefined;
 }>;
 /** `schemas/tracker/hello.json` */
@@ -656,32 +656,32 @@ export declare const DeviceEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         state: z.ZodEnum<["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]>;
         envelope_schema_version: z.ZodOptional<z.ZodString>;
     }, "strict", z.ZodTypeAny, {
-        state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
+        state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
         envelope_schema_version?: string | undefined;
     }, {
-        state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
+        state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
         envelope_schema_version?: string | undefined;
     }>;
 }, "strict", z.ZodTypeAny, {
     v: 1;
     kind: "evt";
-    type: "status";
-    payload: {
-        state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
-        envelope_schema_version?: string | undefined;
-    };
     seq: number;
     t_boot_ms: number;
+    type: "status";
+    payload: {
+        state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
+        envelope_schema_version?: string | undefined;
+    };
 }, {
     v: 1;
     kind: "evt";
-    type: "status";
-    payload: {
-        state: "init" | "ready" | "running" | "degraded" | "lost" | "stopping" | "stopped";
-        envelope_schema_version?: string | undefined;
-    };
     seq: number;
     t_boot_ms: number;
+    type: "status";
+    payload: {
+        state: "degraded" | "init" | "lost" | "ready" | "running" | "stopped" | "stopping";
+        envelope_schema_version?: string | undefined;
+    };
 }>, z.ZodObject<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -705,25 +705,25 @@ export declare const DeviceEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
 }, "strict", z.ZodTypeAny, {
     v: 1;
     kind: "evt";
+    seq: number;
+    t_boot_ms: number;
     type: "data";
     payload: {
         accel_x: number;
         accel_y: number;
         accel_z: number;
     };
-    seq: number;
-    t_boot_ms: number;
 }, {
     v: 1;
     kind: "evt";
+    seq: number;
+    t_boot_ms: number;
     type: "data";
     payload: {
         accel_x: number;
         accel_y: number;
         accel_z: number;
     };
-    seq: number;
-    t_boot_ms: number;
 }>, z.ZodObject<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -747,25 +747,25 @@ export declare const DeviceEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
 }, "strict", z.ZodTypeAny, {
     v: 1;
     kind: "evt";
+    seq: number;
+    t_boot_ms: number;
     type: "error";
     payload: {
         code: string;
         message: string;
         detail?: string | undefined;
     };
-    seq: number;
-    t_boot_ms: number;
 }, {
     v: 1;
     kind: "evt";
+    seq: number;
+    t_boot_ms: number;
     type: "error";
     payload: {
         code: string;
         message: string;
         detail?: string | undefined;
     };
-    seq: number;
-    t_boot_ms: number;
 }>, z.ZodObject<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -777,30 +777,30 @@ export declare const DeviceEnvelopeSchema: z.ZodDiscriminatedUnion<"type", [z.Zo
         level: z.ZodEnum<["trace", "debug", "info", "warn", "error", "critical"]>;
         message: z.ZodString;
     }, "strict", z.ZodTypeAny, {
+        level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
         message: string;
-        level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
     }, {
+        level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
         message: string;
-        level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
     }>;
 }, "strict", z.ZodTypeAny, {
     v: 1;
     kind: "evt";
-    type: "log";
-    payload: {
-        message: string;
-        level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
-    };
     seq: number;
     t_boot_ms: number;
+    type: "log";
+    payload: {
+        level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
+        message: string;
+    };
 }, {
     v: 1;
     kind: "evt";
-    type: "log";
-    payload: {
-        message: string;
-        level: "error" | "trace" | "debug" | "info" | "warn" | "critical";
-    };
     seq: number;
     t_boot_ms: number;
+    type: "log";
+    payload: {
+        level: "critical" | "debug" | "error" | "info" | "trace" | "warn";
+        message: string;
+    };
 }>]>;
