@@ -3,8 +3,17 @@
     //
     // Three options have to move together with `module: CommonJS` and none of
     // them is cosmetic:
-    //   * `moduleResolution: node10` — `bundler` is only legal alongside an
-    //     ESM `module`, and tsc refuses the pair outright.
+    //   * `moduleResolution: bundler` — this one is pinned to the COMPILER
+    //     MAJOR, not chosen on its merits, so do not "tidy" it. TypeScript 7
+    //     removed `node10` outright (TS5108), and it refuses `node16` beside a
+    //     CommonJS `module` (TS5110, "module must be set to Node16"), which
+    //     leaves `bundler` as the only resolution mode TS 7 will pair with a
+    //     CommonJS emit. It is resolution only — `module: CommonJS` is what
+    //     decides the emit, and the `./types.js` specifiers gen/ts writes
+    //     resolve fine under it. The pairing is rejected by TS <= 6 (TS5095),
+    //     so this line and the `typescript` pin in package.json move in
+    //     lock-step; CI fails loudly on any mismatch rather than silently
+    //     emitting the wrong module system.
     //   * `verbatimModuleSyntax: false` — with it on, tsc rejects `export` in a
     //     file it is about to emit as CommonJS (TS1286) rather than
     //     down-levelling it, which is exactly what this pass exists to do.
@@ -12,6 +21,14 @@
     //     tools/build-ts.mjs) — the root package is `"type": "module"`, so
     //     without that marker Node parses these `.js` files as ESM and every
     //     `require()` dies on `exports is not defined`.
+    //
+    // Not `module: node16`, which is the obvious-looking replacement for the
+    // removed `node10`: under node16 tsc derives each file's module system from
+    // the package.json nearest the SOURCE, and gen/ts sits under this
+    // repository's `"type": "module"` root, so it emits ESM into dist/cjs/ and
+    // `require()` dies on `Unexpected token 'export'`. Writing dist/cjs/package.json
+    // before tsc runs does not help: the marker beside the OUTPUT is not what
+    // node16 reads. tests/consumer/run.sh is what catches this.
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "noEmit": false,
@@ -21,7 +38,7 @@
         "outDir": "dist/cjs",
         "rootDir": "gen/ts",
         "module": "CommonJS",
-        "moduleResolution": "node10",
+        "moduleResolution": "bundler",
         "verbatimModuleSyntax": false,
         "newLine": "lf",
         "incremental": false
