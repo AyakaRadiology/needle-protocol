@@ -86,12 +86,20 @@ re-prompt someone who has already confirmed that revision.
 
 **Refuse, never clamp.** Every bound in `payload-plan.json` mirrors
 needle-guide's own `shared/planInputs.ts` — inclination 0…90 from vertical,
-azimuth −180…180, entry offsets ±1000 mm — and a value outside one is
-**rejected and reported, never quietly moved inside**. So is an unknown field:
-alone among the host-side contracts these schemas are `additionalProperties:
-false`, because a key the receiver does not understand is a part of the plan it
-would silently drop, and half a plan applied is worse than no plan applied. The
-cost is an ordered rollout, and it is stated in `docs/decisions.md` ADR-0003.
+azimuth −180…180, entry lateral ±1000 mm, entry longitudinal ±3000 mm — and a
+value outside one is **rejected and reported, never quietly moved inside**. So
+is an unknown field: alone among the host-side contracts these schemas are
+`additionalProperties: false`, because a key the receiver does not understand is
+a part of the plan it would silently drop, and half a plan applied is worse than
+no plan applied. The cost is an ordered rollout, and it is stated in
+`docs/decisions.md` ADR-0003.
+
+The two entry offsets carry different numbers on purpose. Lateral is an offset
+*across* the patient, which the bore genuinely limits; longitudinal is a
+position *along* the CT table, whose travel runs well past a metre, so the
+bore's ruler was the wrong one for it and refused entry points real procedures
+produced. Both bounds exist to catch garbage — a stray keystroke, a value typed
+in the wrong unit — and neither states a clinical limit.
 
 **Not on the Pico.** `tools/gen.sh` generates the C header from
 `schemas/device/*.json` only, so the firmware gains no `KEY_*` macro for a wire

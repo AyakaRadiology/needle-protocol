@@ -381,6 +381,16 @@ was written about.
   which point these numbers are the only ones. It is deliberately **not** done
   here, because exporting five range constants nothing imports yet would be
   guessing at the consumer's shape.
+
+  **This happened, on 2026-09-05** — a day after it was written down, not in six
+  months. needle-guide (issue #429, PR #456) split `MAX_ENTRY_OFFSET_MM` into
+  `MAX_ENTRY_LATERAL_MM` 1000 and `MAX_ENTRY_LONGITUDINAL_MM` 3000, because a
+  rehearsal produced a stored `entry_longitudinal_mm` of 1150.1 mm that the
+  single shared bound refused. `payload-plan.json` followed at `x-version`
+  1.1.0. It cost an afternoon and it announced itself, exactly as predicted — so
+  the duplication is survivable, but its **frequency** is now measured rather
+  than guessed, and the Stage 2 one-directional fix is worth more than this
+  entry assumed.
 - **`reason` is optional, and "required when `rejected`" is a rule no schema
   here states.** Conditional requirement needs an `if`/`then` inside a payload,
   which `json-schema-to-zod` renders as a validator that accepts anything — the

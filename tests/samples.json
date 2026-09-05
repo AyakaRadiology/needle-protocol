@@ -213,7 +213,7 @@
         {
             "contract": "PlanChannelEnvelope",
             "name": "plan-channel-plan-request-at-the-limits",
-            "from": "the same sender at every bound needle-guide shared/planInputs.ts states — inclination 90 (horizontal), azimuth -180, both entry offsets at MAX_ENTRY_OFFSET_MM. Inclusive on both sides there, so inclusive here; a bound that disagreed by one endpoint would refuse a plan the operator's own form accepted.",
+            "from": "the same sender at every bound needle-guide shared/planInputs.ts states — inclination 90 (horizontal), azimuth -180, entry lateral at MAX_ENTRY_LATERAL_MM and entry longitudinal at MAX_ENTRY_LONGITUDINAL_MM, which are no longer the same number. Inclusive on both sides there, so inclusive here; a bound that disagreed by one endpoint would refuse a plan the operator's own form accepted.",
             "frame": {
                 "v": 1,
                 "kind": "req",
@@ -224,9 +224,33 @@
                     "plan_inclination_deg": 90,
                     "azimuth_deg": -180,
                     "entry_lateral_mm": 1000,
-                    "entry_longitudinal_mm": -1000,
+                    "entry_longitudinal_mm": -3000,
                     "plan_id": "1.2.826.0.1.3680043.8.498.10012",
                     "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-plan-request-longitudinal-past-the-lateral-bound",
+            "from": "needle-guide issue #429 / PR #456 \u2014 the 2026-09-05 rehearsal, where a stored `entry_longitudinal_mm` past a metre made every arriving plan unusable. Pinned as its own entry because it is the case a single shared entry-offset bound got wrong: 2500 mm along the table is an ordinary position for a scanner whose travel runs past 1000 mm, while the same number across the patient (entry_lateral_mm) is refused. A sample that only sat inside both bounds could not tell the two apart.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKD4R7X1Z8B3N6V2H9S5C",
+                "ts": "2026-09-05T09:22:30.000Z",
+                "payload": {
+                    "plan_inclination_deg": 18.0,
+                    "entry_lateral_mm": -62.4,
+                    "entry_longitudinal_mm": 2500,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10014",
+                    "plan_revision": 1,
                     "source": {
                         "app": "needle-simulator",
                         "app_version": "0.5.0",
@@ -435,6 +459,29 @@
                 "payload": {
                     "plan_inclination_deg": 91,
                     "plan_id": "1.2.826.0.1.3680043.8.498.10013",
+                    "plan_revision": 0,
+                    "source": {
+                        "app": "needle-simulator",
+                        "app_version": "0.5.0",
+                        "protocol_package_version": "0.2.0"
+                    }
+                }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-longitudinal-out-of-range",
+            "why": "3001 mm is one millimetre past MAX_ENTRY_LONGITUDINAL_MM, so the widened bound still has an edge and this pins where it is. The bound is there to catch garbage \u2014 a stray keystroke, a value typed in the wrong unit \u2014 not to encode a clinical limit, and the same REFUSE, NEVER CLAMP rule applies: an entry point quietly pulled back to 3000 would put the needle somewhere the operator never planned.",
+            "frame": {
+                "v": 1,
+                "kind": "req",
+                "type": "plan",
+                "id": "01JB7QKH6M1Y4T7Q2C9L5D3F8N",
+                "ts": "2026-09-05T09:41:00.000Z",
+                "payload": {
+                    "plan_inclination_deg": 18.0,
+                    "entry_longitudinal_mm": 3001,
+                    "plan_id": "1.2.826.0.1.3680043.8.498.10015",
                     "plan_revision": 0,
                     "source": {
                         "app": "needle-simulator",
