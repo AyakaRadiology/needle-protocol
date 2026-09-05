@@ -302,11 +302,11 @@ class PlanChannelPayloadPlan(BaseModel):
     )
     entry_lateral_mm: confloat(ge=-1000.0, le=1000.0) | None = Field(
         None,
-        description="OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_OFFSET_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0.",
+        description="OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_LATERAL_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0.",
     )
-    entry_longitudinal_mm: confloat(ge=-1000.0, le=1000.0) | None = Field(
+    entry_longitudinal_mm: confloat(ge=-3000.0, le=3000.0) | None = Field(
         None,
-        description="OPTIONAL. Entry point offset, craniocaudal, millimetres. Same bound and the same 'absent is not zero' rule as entry_lateral_mm.",
+        description="OPTIONAL. Entry point offset, craniocaudal, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_LONGITUDINAL_MM, and it is deliberately THREE TIMES the lateral one because it bounds a different quantity: lateral is an offset across the patient, which the bore genuinely limits, while longitudinal is a position along the CT table, whose travel runs past 1000 mm on a modern scanner. Sharing the bore's metre refused entry points a real procedure produced -- a stored value of 1150.1 mm made every arriving plan unusable. This bound exists to catch GARBAGE (a stray keystroke, a value typed in the wrong unit), not to encode a clinical limit, so it is looser than any real scanner rather than tuned to one. Same 'absent is not zero' rule as entry_lateral_mm.",
     )
     plan_id: constr(pattern=r'^[A-Za-z0-9._-]{1,128}$') = Field(
         ...,
