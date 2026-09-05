@@ -1,6 +1,6 @@
 {
     "name": "needle-protocol",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "type": "module",
     "private": false,
     "description": "Shared wire contracts, angle conventions and constants for Needle Guide, Needle Simulator and the SCL3300 firmware",

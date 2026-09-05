@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.2.0...v0.3.0) (2026-09-05)
+
+
+### Features
+
+* **plan-channel:** entry_longitudinal_mm accepts ±3000 mm (CT table travel) ([#17](https://github.com/AyakaRadiology/needle-protocol/issues/17)) ([6b62f29](https://github.com/AyakaRadiology/needle-protocol/commit/6b62f29c869c5157d572a5400ebe8255d87055c7))
+
 ## [0.2.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.1.0...v0.2.0) (2026-09-04)
 
 
