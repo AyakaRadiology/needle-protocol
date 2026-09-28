@@ -98,7 +98,7 @@ wheels = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.76.1"
+version = "0.83.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -110,10 +110,11 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/94/fad95512b15f4fea6c39ba1205a237049c9a0d7fe3211e34c235cd150679/datamodel_code_generator-0.76.1.tar.gz", hash = "sha256:6f9e94caa5c82be0e0c6f2cf87024920aef0a979897b668734a99d25db289b20", size = 2223271, upload-time = "2026-09-02T08:49:32.606Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cf/ad/bd0c954c4c4671e586b340059139ead38570ba916a237086e245982ab14d/datamodel_code_generator-0.83.0.tar.gz", hash = "sha256:30d841e31b82095c4ef11f3dbfc99525f559a146250b9e685e2a2e4a196ca0a1", size = 3074761, upload-time = "2026-09-24T08:56:40.622Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/14/c1c4d7e96cf7e06c6036e0967a33866fd6e97649fab1788dac415d378a89/datamodel_code_generator-0.76.1-py3-none-any.whl", hash = "sha256:9670c48ac432762f8e14641d769c37a9e1558e35dd0400727fcc1def47f6f374", size = 653802, upload-time = "2026-09-02T08:49:30.739Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/4e/4a0231a7d3d4043cd27a746a50be87bc7637463023d7db9991610cd5fe56/datamodel_code_generator-0.83.0-py3-none-any.whl", hash = "sha256:371d80be360b2a57bc48462169553af57fa30225c0264ad85ae5f0d59b9d143a", size = 751087, upload-time = "2026-09-24T08:56:38.791Z" },
 ]
 
 [[package]]
@@ -323,7 +324,7 @@ requires-dist = [{ name = "needle-protocol", extras = ["models"], editable = "ge
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "datamodel-code-generator", specifier = "==0.76.1" },
+    { name = "datamodel-code-generator", specifier = "==0.83.0" },
     { name = "jsonschema", specifier = ">=4.23" },
     { name = "pytest", specifier = ">=8.3" },
 ]
