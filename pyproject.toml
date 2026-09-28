@@ -12,7 +12,7 @@ dev = [
     # Pinned exactly, not floated: this generates a COMMITTED artifact that CI
     # diffs, so a floating version turns an unrelated dependency release into a
     # red build on someone else's PR.
-    "datamodel-code-generator==0.76.1",
+    "datamodel-code-generator==0.83.0",
     "jsonschema>=4.23",
     "pytest>=8.3",
 ]
