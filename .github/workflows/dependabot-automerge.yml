@@ -3,8 +3,11 @@
 # https://github.com/Lin214ia/workflows/blob/main/.github/workflows/dependabot-automerge.yml
 # Only `runs-on` belongs to this repo. Change behaviour there, not here.
 #
-# Direction (Harry, 2026-09-27 chat): patch/minor Dependabot PRs merge
-# themselves once CI is green; majors are left for an agent to review weekly.
+# Direction (Harry, 2026-09-28 chat): patch/minor/major Dependabot PRs all
+# merge themselves once CI is green -- majors carry the same `dependabot-major`
+# label for visibility, but are no longer held back for manual review. If CI
+# goes red on an armed PR, the pr-repair timer on harry (infra
+# hosts/harry/spine/bin/pr-repair.sh) repairs it like any other armed PR.
 # This repo's own dependabot.yml already keeps majors out of its groups (and
 # ignores a couple of specific majors entirely), so this workflow's own
 # major-vs-minor/patch classification is a second, independent check on the
@@ -32,3 +35,4 @@ jobs:
     uses: Lin214ia/workflows/.github/workflows/dependabot-automerge.yml@main
     with:
       runs-on: '"ubuntu-latest"'
+      arm-majors: true
