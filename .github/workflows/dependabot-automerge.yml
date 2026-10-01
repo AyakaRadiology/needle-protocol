@@ -36,3 +36,8 @@ jobs:
     with:
       runs-on: '"ubuntu-latest"'
       arm-majors: true
+    secrets:
+      # Merge identity: the App token that arms auto-merge so the merge fires push workflows
+      # (post-merge CI, release-please). A Dependabot-triggered run only sees DEPENDABOT secrets.
+      app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+      app-private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
