@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.3.0...v0.4.0) (2026-10-02)
+
+
+### Features
+
+* dependabot auto-merge for patch/minor updates ([#23](https://github.com/AyakaRadiology/needle-protocol/issues/23)) ([6ea806b](https://github.com/AyakaRadiology/needle-protocol/commit/6ea806bc977190b6c228707a230a7e78bc66ade9))
+
 ## [0.3.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.2.0...v0.3.0) (2026-09-05)
 
 
