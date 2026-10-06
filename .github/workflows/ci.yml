@@ -24,12 +24,16 @@ permissions:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+    # Only superseded PR pushes are cancelled; a main push or v* tag run is
+    # the record for that commit and must always finish.
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
     check:
         name: Quality Check
         runs-on: ubuntu-latest
+        # Measured: runs take 20-47 s; 10 min is a hang guard.
+        timeout-minutes: 10
         steps:
             # Deliberately no path filter anywhere in this workflow. "Quality
             # Check" is the merge gate, and a filtered-out pull request never
