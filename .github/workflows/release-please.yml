@@ -56,13 +56,13 @@ jobs:
                     exit 1
                   fi
 
-            - uses: actions/create-github-app-token@v3
+            - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
               id: app-token
               with:
                   app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
                   private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
 
-            - uses: googleapis/release-please-action@v5
+            - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
               id: rp
               with:
                   token: ${{ steps.app-token.outputs.token }}
@@ -111,7 +111,7 @@ jobs:
             #     detection), so the refresh has to run then too.
             - name: Resolve the release PR head branch
               id: relpr
-              uses: actions/github-script@v9
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
               with:
                   github-token: ${{ steps.app-token.outputs.token }}
                   script: |
@@ -134,7 +134,7 @@ jobs:
 
             - name: Check out the release PR branch
               if: steps.relpr.outputs.branch != ''
-              uses: actions/checkout@v7
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   ref: ${{ steps.relpr.outputs.branch }}
                   # Push with the App token, the same identity that authored the
@@ -144,7 +144,7 @@ jobs:
 
             - name: Install uv
               if: steps.relpr.outputs.branch != ''
-              uses: astral-sh/setup-uv@v10.2.0
+              uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
                   enable-cache: true
                   cache-dependency-glob: 'uv.lock'

@@ -39,7 +39,7 @@ jobs:
             # Check" is the merge gate, and a filtered-out pull request never
             # starts the workflow at all, so the context never reports and the
             # PR stays blocked with no way to satisfy it.
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   # Full history AND tags: tools/check-enum-order.py compares
                   # against the newest v* tag, and on a shallow clone with no
@@ -47,6 +47,8 @@ jobs:
                   # would leave the gate green while gating nothing.
                   fetch-depth: 0
                   fetch-tags: true
+            # Every `uses:` must be a full commit SHA with a version comment (Dependabot reads it).
+            - uses: Lin214ia/workflows/.github/actions/check-pins@99dfe7b57cff656c0ff42c69cbf5d4e06a2dd293 # v1.1.0
 
             # Node AND bun, because they do different jobs here and neither
             # substitutes for the other: node runs the generators that produce
@@ -56,15 +58,15 @@ jobs:
             # because they produce the committed gen/ and dist/ artifacts this
             # job then diffs. gcc/g++ (tests/c) and tar (tests/consumer) come
             # with the image.
-            - uses: actions/setup-node@v7
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
               with:
                   node-version: '24'
 
-            - uses: oven-sh/setup-bun@v2
+            - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
               with:
                   bun-version: '1.4.2'
 
-            - uses: astral-sh/setup-uv@v10.2.0
+            - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
               with:
                   # Pinned, not inherited from the runner image: uv would
                   # otherwise resolve against whatever Python ubuntu-latest
