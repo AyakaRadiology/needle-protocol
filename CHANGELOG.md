@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.0...v0.4.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* [security] high: source-map-js 1 advisories (GHSA-68fv-2mgg-jv7q) source-map-js allows event-loop denial of service through i… ([#31](https://github.com/AyakaRadiology/needle-protocol/issues/31)) ([a8a3d2e](https://github.com/AyakaRadiology/needle-protocol/commit/a8a3d2e4ce8b3a82832cb60399d1fcfc77620771)), closes [#30](https://github.com/AyakaRadiology/needle-protocol/issues/30)
+
 ## [0.4.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.3.0...v0.4.0) (2026-10-02)
 
 
