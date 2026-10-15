@@ -48,7 +48,7 @@ jobs:
                   fetch-depth: 0
                   fetch-tags: true
             # Every `uses:` must be a full commit SHA with a version comment (Dependabot reads it).
-            - uses: Lin214ia/workflows/.github/actions/check-pins@99dfe7b57cff656c0ff42c69cbf5d4e06a2dd293 # v1.1.0
+            - uses: Lin214ia/workflows/.github/actions/check-pins@d0e05eba929e46958c09a9ef7548c35367870354 # v1.1.1
 
             # Node AND bun, because they do different jobs here and neither
             # substitutes for the other: node runs the generators that produce
@@ -58,7 +58,7 @@ jobs:
             # because they produce the committed gen/ and dist/ artifacts this
             # job then diffs. gcc/g++ (tests/c) and tar (tests/consumer) come
             # with the image.
-            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+            - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version: '24'
 
@@ -66,7 +66,7 @@ jobs:
               with:
                   bun-version: '1.4.2'
 
-            - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+            - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
               with:
                   # Pinned, not inherited from the runner image: uv would
                   # otherwise resolve against whatever Python ubuntu-latest
