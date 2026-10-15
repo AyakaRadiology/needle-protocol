@@ -32,7 +32,7 @@ permissions:
 jobs:
   dependabot-automerge:
     if: github.actor == 'dependabot[bot]'
-    uses: Lin214ia/workflows/.github/workflows/dependabot-automerge.yml@99dfe7b57cff656c0ff42c69cbf5d4e06a2dd293 # v1.1.0
+    uses: Lin214ia/workflows/.github/workflows/dependabot-automerge.yml@d0e05eba929e46958c09a9ef7548c35367870354 # v1.1.1
     with:
       runs-on: '"ubuntu-latest"'
       arm-majors: true
