@@ -69,12 +69,9 @@ updates:
         patterns: ['*']
         update-types: ['minor', 'patch']
     ignore:
-      # zod is an OPTIONAL PEER dependency here (`^3.23.0 || ^4.0.0`), and the
-      # devDependency exists only to exercise `needle-protocol/zod` against one
-      # of those majors. Bumping the devDependency to 4 does not widen what
-      # consumers may install — it silently changes which half of the declared
-      # peer range is the half CI actually tests. That is a deliberate choice,
-      # so it does not ride in automatically.
+      # The generated declarations use Zod 3 APIs. Supporting a new major
+      # requires updating the generator and validating consumer declarations,
+      # so a major devDependency bump must not ride in automatically.
       - dependency-name: 'zod'
         update-types: ['version-update:semver-major']
 
