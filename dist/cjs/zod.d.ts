@@ -13,7 +13,7 @@
  * dependency in the hot path. Use these where the cost is free: tests,
  * fixtures, capture validation, and the first frame of a new connection.
  */
-import { z } from 'zod';
+import { z } from 'zod/v3';
 /** `schemas/angle-stream/frame-heartbeat.json` */
 export declare const AngleStreamFrameHeartbeatSchema: z.ZodObject<{
     calibrated: z.ZodBoolean;
