@@ -77,7 +77,7 @@
     ],
     "sideEffects": false,
     "peerDependencies": {
-        "zod": "^3.23.0 || ^4.0.0"
+        "zod": "^3.23.0"
     },
     "peerDependenciesMeta": {
         "zod": {
