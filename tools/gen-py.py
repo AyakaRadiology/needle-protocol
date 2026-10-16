@@ -189,7 +189,7 @@ def wrap(text: str, width: int) -> list[str]:
 
 def py_literal(spec: dict) -> str:
     if spec["type"] == "integer[]":
-        return "(" + ", ".join(str(v) for v in spec["value"]) + ")"
+        return repr(tuple(spec["value"]))
     return repr(spec["value"])
 
 
