@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.2](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.1...v0.4.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* [agent-found] dist/cjs/zod.d.ts:18 A TypeScript consumer installs Zod 4, which this package exp ([#41](https://github.com/AyakaRadiology/needle-protocol/issues/41)) ([df80c9b](https://github.com/AyakaRadiology/needle-protocol/commit/df80c9b8a578c7e3f7089575ee2e5d99f85e59f3)), closes [#38](https://github.com/AyakaRadiology/needle-protocol/issues/38)
+* [agent-found] dist/esm/zod.d.ts:18 A TypeScript consumer installs the advertised Zod 4 peer ver ([#44](https://github.com/AyakaRadiology/needle-protocol/issues/44)) ([bb5aadd](https://github.com/AyakaRadiology/needle-protocol/commit/bb5aaddce4994aec45c62037244411b551243213)), closes [#39](https://github.com/AyakaRadiology/needle-protocol/issues/39)
+* [agent-found] tools/gen-py.py:192 When the shared tracker constant is reduced to the single su ([#46](https://github.com/AyakaRadiology/needle-protocol/issues/46)) ([c974dc0](https://github.com/AyakaRadiology/needle-protocol/commit/c974dc0793d7fdd8af4804d41bd52bcee93e077c)), closes [#45](https://github.com/AyakaRadiology/needle-protocol/issues/45)
+
 ## [0.4.1](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.0...v0.4.1) (2026-10-08)
 
 
