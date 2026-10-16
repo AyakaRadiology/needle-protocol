@@ -128,7 +128,8 @@ function writeZod(bundles, idToSlug) {
         ' * dependency in the hot path. Use these where the cost is free: tests,',
         ' * fixtures, capture validation, and the first frame of a new connection.',
         ' */',
-        "import { z } from 'zod';",
+        // Pin the compatibility API so emitted declarations work with both peer majors.
+        "import { z } from 'zod/v3';",
         '',
     ];
     // Payload schemas first: an envelope's union refers to them by name.

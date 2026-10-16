@@ -13,7 +13,7 @@
         "zod": "3.25.76",
       },
       "peerDependencies": {
-        "zod": "^3.23.0",
+        "zod": "^3.25.0 || ^4.0.0",
       },
       "optionalPeers": [
         "zod",

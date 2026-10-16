@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-import re
 import shutil
 import subprocess
 
@@ -10,16 +9,11 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = json.loads((ROOT / "package.json").read_text())
-PEERS = PACKAGE["peerDependencies"]["zod"].split(" || ")
 
 
-@pytest.mark.parametrize("peer", PEERS)
-def test_zod_consumer(peer, tmp_path):
-    # Require an explicit case for each caret range rather than silently
-    # overlooking a newly advertised major or a different range syntax.
-    match = re.fullmatch(r"\^(\d+)\.\d+\.\d+", peer)
-    assert match, peer
-    version = {"3": "3.25.76", "4": "4.6.5"}[match[1]]
+@pytest.mark.parametrize("version", ["3.25.76", "4.6.5"])
+def test_zod_consumer(version, tmp_path):
+    assert PACKAGE["peerDependencies"]["zod"] == "^3.25.0 || ^4.0.0"
     (tmp_path / "package.json").write_text(json.dumps({
         "private": True, "dependencies": {"zod": version},
     }))
@@ -33,6 +27,9 @@ def test_zod_consumer(peer, tmp_path):
     shutil.copytree(ROOT / "dist", package / "dist")
     source = """
 import * as validators from 'needle-protocol/zod';
+import { AngleStreamFrameHeartbeatSchema } from 'needle-protocol/zod';
+const heartbeat = AngleStreamFrameHeartbeatSchema.parse({calibrated: true, link: {state: 'ready', live: true}});
+const calibrated: boolean = heartbeat.calibrated;
 const status = validators.DevicePayloadStatusSchema.parse({ state: 'ready' });
 const state: 'init' | 'ready' | 'running' | 'degraded' | 'lost' | 'stopping' | 'stopped' = status.state;
 """
@@ -50,3 +47,13 @@ const state: 'init' | 'ready' | 'running' | 'degraded' | 'lost' | 'stopping' | '
         capture_output=True, text=True, timeout=60,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+    for extension in ("mjs", "cjs"):
+        (tmp_path / f"runtime.{extension}").write_text(
+            "import { DevicePayloadStatusSchema as status } from 'needle-protocol/zod';\n"
+            if extension == "mjs" else
+            "const { DevicePayloadStatusSchema: status } = require('needle-protocol/zod');\n"
+        )
+        with (tmp_path / f"runtime.{extension}").open("a") as runtime:
+            runtime.write("if (!status.safeParse({state: 'ready'}).success || "
+                          "status.safeParse({state: 'invalid'}).success) throw Error('validation');\n")
+        subprocess.run(["node", f"runtime.{extension}"], cwd=tmp_path, check=True)
