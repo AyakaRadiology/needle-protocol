@@ -90,6 +90,9 @@
         "test": "vitest run",
         "typecheck": "tsc --noEmit"
     },
+    "overrides": {
+        "vite": "7.3.7"
+    },
     "devDependencies": {
         "@types/node": "26.6.5",
         "json-schema-to-typescript": "16.0.0",
