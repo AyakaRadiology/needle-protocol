@@ -48,7 +48,7 @@ jobs:
                   fetch-depth: 0
                   fetch-tags: true
             # Every `uses:` must be a full commit SHA with a version comment (Dependabot reads it).
-            - uses: Lin214ia/workflows/.github/actions/check-pins@d0e05eba929e46958c09a9ef7548c35367870354 # v1.1.1
+            - uses: Lin214ia/workflows/.github/actions/check-pins@1fb0122fa0aa8d8771d95503438f36e33e89eebd # v1.1.2
 
             # Node AND bun, because they do different jobs here and neither
             # substitutes for the other: node runs the generators that produce
