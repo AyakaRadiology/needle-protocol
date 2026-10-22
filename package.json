@@ -98,7 +98,7 @@
         "json-schema-to-typescript": "16.0.0",
         "json-schema-to-zod": "2.8.1",
         "typescript": "7.0.2",
-        "vitest": "5.0.4",
+        "vitest": "5.0.5",
         "zod": "3.25.76"
     }
 }
