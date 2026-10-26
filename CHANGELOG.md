@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.2...v0.4.3) (2026-10-22)
+
+
+### Bug Fixes
+
+* [security] high: vite 1 advisories (GHSA-587h-7wmj-h5pm) launch-editor: `fs.existsSync()` existence check can be byp… ([#48](https://github.com/AyakaRadiology/needle-protocol/issues/48)) ([1a656bd](https://github.com/AyakaRadiology/needle-protocol/commit/1a656bdfea982c8d1ae2d415ae52011e7acfc9ce)), closes [#47](https://github.com/AyakaRadiology/needle-protocol/issues/47)
+
 ## [0.4.2](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.1...v0.4.2) (2026-10-16)
 
 
