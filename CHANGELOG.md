@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.3...v0.5.0) (2026-10-30)
+
+
+### Features
+
+* **tracker:** JSON Schema for the tracker needle frame and other post-hello messages ([#57](https://github.com/AyakaRadiology/needle-protocol/issues/57)) ([63f167e](https://github.com/AyakaRadiology/needle-protocol/commit/63f167e866d16be592f7615d8c0bd41e204d0558))
+
 ## [0.4.3](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.2...v0.4.3) (2026-10-22)
 
 

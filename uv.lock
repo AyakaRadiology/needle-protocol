@@ -292,7 +292,7 @@ wheels = [
 
 [[package]]
 name = "needle-protocol"
-version = "0.4.3"
+version = "0.5.0"
 source = { editable = "gen/py" }
 
 [package.optional-dependencies]
