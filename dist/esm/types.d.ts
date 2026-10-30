@@ -287,6 +287,99 @@ export interface PlanChannelPayloadPlanAck {
     applied_revision?: number;
 }
 /**
+ * The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the three.js axes (X right, Y up, Z depth). Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.
+ */
+export interface TrackerFrameNeedle {
+    /**
+     * Needle tip X, tracker mm (right).
+     */
+    tipX: number;
+    /**
+     * Needle tip Y, tracker mm (up).
+     */
+    tipY: number;
+    /**
+     * Needle tip Z, tracker mm (depth).
+     */
+    tipZ: number;
+    /**
+     * Surface-snapped entry point X, tracker mm.
+     */
+    entryX: number;
+    /**
+     * Surface-snapped entry point Y, tracker mm.
+     */
+    entryY: number;
+    /**
+     * Surface-snapped entry point Z, tracker mm.
+     */
+    entryZ: number;
+    /**
+     * Wall-clock time (Unix seconds, float) at which the engine built this frame.
+     */
+    timestamp: number;
+    /**
+     * `detected` = this frame had a fresh detection; `predicted` = detection was lost and the Kalman prediction is being broadcast. The producer never emits `lost`: that value exists only in the desktop's type and its e2e mock.
+     */
+    source: 'detected' | 'predicted';
+    /**
+     * Detection confidence of the LO camera face (AprilTag ids 0-3). null when this frame had no detection on both faces (including every `predicted` frame).
+     */
+    conf_lo: number | null;
+    /**
+     * Detection confidence of the HI camera face (AprilTag ids 4-7). null under the same conditions as conf_lo.
+     */
+    conf_hi: number | null;
+    /**
+     * Wall-clock time (Unix seconds) of the last frame with a fresh detection. null if the engine has none since its last reset.
+     */
+    lastDetectionTimestamp: number | null;
+    /**
+     * Skin-surface entry point X, tracker mm: where the needle line crosses the phantom's visible top face. null when the line does not cross it.
+     */
+    skin_entry_x: number | null;
+    /**
+     * Skin-surface entry point Y, tracker mm. null together with skin_entry_x.
+     */
+    skin_entry_y: number | null;
+    /**
+     * Skin-surface entry point Z, tracker mm. null together with skin_entry_x.
+     */
+    skin_entry_z: number | null;
+    /**
+     * Capture-side monotonic frame counter.
+     */
+    frame_id: number;
+    /**
+     * Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null.
+     */
+    surface_to_tip_mm: number | null;
+    /**
+     * Length from the surface-snapped entry point to the tip, mm. Never null.
+     */
+    entry_to_tip_mm: number;
+    [k: string]: unknown;
+}
+/**
+ * Health frame the Jetson tracker's WebSocket sends after `hello`, interleaved with needle frames (needle-simulator packages/needle-jetson/.../tracker/engine.py, _build_status_payload()). Consumer: apps/desktop/src/types.ts (StatusFrame); apps/desktop/src-tauri/src/ws_client.rs tags frames with `type` == `status` as health and forwards every other post-hello frame as needle data.
+ */
+export interface TrackerFrameStatus {
+    type: 'status';
+    /**
+     * `degraded` iff `issues` is non-empty. The desktop's type also admits `error`; the producer never sends it.
+     */
+    health: 'ok' | 'degraded';
+    /**
+     * Active problems. camera_*_missing come from capture health via the calibrated face-to-slot map; markers_invisible only while CALIBRATING.
+     */
+    issues: ('camera_lo_missing' | 'camera_hi_missing' | 'markers_invisible')[];
+    /**
+     * Whether a needle is currently being tracked (TRACKING with an initialised tip filter, which includes the Kalman-prediction window). False = ready/background, which the desktop must not show as a stale link.
+     */
+    needle_present: boolean;
+    [k: string]: unknown;
+}
+/**
  * First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them (apps/desktop/src-tauri/src/ws_client.rs, SUPPORTED_PROTOCOL_VERSIONS).
  */
 export interface TrackerHello {

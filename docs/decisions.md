@@ -328,7 +328,7 @@ not a DICOM series and a receiver that parsed the id would break on the first
 one that was not.
 
 **`additionalProperties: false`, alone among the host-side contracts.** The
-angle stream and the tracker hello are open because they are read-only telemetry
+angle stream and the tracker frames (hello, needle, status) are open because they are read-only telemetry
 whose emitters state that additive optional fields do not bump the protocol
 version, and a strict reader there would refuse a peer that is compatible by its
 own rule. This wire is not telemetry. A key the receiver does not understand is

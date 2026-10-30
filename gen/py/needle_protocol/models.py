@@ -355,6 +355,98 @@ class PlanChannelPayloadPlanAck(BaseModel):
     )
 
 
+class TrackerFrameNeedleSource(Enum):
+    detected = 'detected'
+    predicted = 'predicted'
+
+
+class TrackerFrameNeedle(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    tipX: float = Field(..., description='Needle tip X, tracker mm (right).')
+    tipY: float = Field(..., description='Needle tip Y, tracker mm (up).')
+    tipZ: float = Field(..., description='Needle tip Z, tracker mm (depth).')
+    entryX: float = Field(..., description='Surface-snapped entry point X, tracker mm.')
+    entryY: float = Field(..., description='Surface-snapped entry point Y, tracker mm.')
+    entryZ: float = Field(..., description='Surface-snapped entry point Z, tracker mm.')
+    timestamp: float = Field(
+        ...,
+        description='Wall-clock time (Unix seconds, float) at which the engine built this frame.',
+    )
+    source: TrackerFrameNeedleSource = Field(
+        ...,
+        description="`detected` = this frame had a fresh detection; `predicted` = detection was lost and the Kalman prediction is being broadcast. The producer never emits `lost`: that value exists only in the desktop's type and its e2e mock.",
+        title='TrackerFrameNeedleSource',
+    )
+    conf_lo: float | None = Field(
+        ...,
+        description='Detection confidence of the LO camera face (AprilTag ids 0-3). null when this frame had no detection on both faces (including every `predicted` frame).',
+    )
+    conf_hi: float | None = Field(
+        ...,
+        description='Detection confidence of the HI camera face (AprilTag ids 4-7). null under the same conditions as conf_lo.',
+    )
+    lastDetectionTimestamp: float | None = Field(
+        ...,
+        description='Wall-clock time (Unix seconds) of the last frame with a fresh detection. null if the engine has none since its last reset.',
+    )
+    skin_entry_x: float | None = Field(
+        ...,
+        description="Skin-surface entry point X, tracker mm: where the needle line crosses the phantom's visible top face. null when the line does not cross it.",
+    )
+    skin_entry_y: float | None = Field(
+        ...,
+        description='Skin-surface entry point Y, tracker mm. null together with skin_entry_x.',
+    )
+    skin_entry_z: float | None = Field(
+        ...,
+        description='Skin-surface entry point Z, tracker mm. null together with skin_entry_x.',
+    )
+    frame_id: conint(ge=0) = Field(
+        ..., description='Capture-side monotonic frame counter.'
+    )
+    surface_to_tip_mm: float | None = Field(
+        ...,
+        description='Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null.',
+    )
+    entry_to_tip_mm: float = Field(
+        ...,
+        description='Length from the surface-snapped entry point to the tip, mm. Never null.',
+    )
+
+
+class TrackerFrameStatusHealth(Enum):
+    ok = 'ok'
+    degraded = 'degraded'
+
+
+class Issue(Enum):
+    camera_lo_missing = 'camera_lo_missing'
+    camera_hi_missing = 'camera_hi_missing'
+    markers_invisible = 'markers_invisible'
+
+
+class TrackerFrameStatus(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    type: Literal['status']
+    health: TrackerFrameStatusHealth = Field(
+        ...,
+        description="`degraded` iff `issues` is non-empty. The desktop's type also admits `error`; the producer never sends it.",
+        title='TrackerFrameStatusHealth',
+    )
+    issues: list[Issue] = Field(
+        ...,
+        description='Active problems. camera_*_missing come from capture health via the calibrated face-to-slot map; markers_invisible only while CALIBRATING.',
+    )
+    needle_present: bool = Field(
+        ...,
+        description='Whether a needle is currently being tracked (TRACKING with an initialised tip filter, which includes the Kalman-prediction window). False = ready/background, which the desktop must not show as a stale link.',
+    )
+
+
 class TrackerHello(BaseModel):
     model_config = ConfigDict(
         extra='allow',

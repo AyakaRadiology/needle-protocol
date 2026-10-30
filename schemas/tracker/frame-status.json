@@ -1,0 +1,31 @@
+{
+    "$id": "urn:needle:schema:tracker-frame-status",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Tracker Status Frame",
+    "description": "Health frame the Jetson tracker's WebSocket sends after `hello`, interleaved with needle frames (needle-simulator packages/needle-jetson/.../tracker/engine.py, _build_status_payload()). Consumer: apps/desktop/src/types.ts (StatusFrame); apps/desktop/src-tauri/src/ws_client.rs tags frames with `type` == `status` as health and forwards every other post-hello frame as needle data.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "additionalProperties is true and MUST stay true, for the same reason as tracker/hello.json. The producer is the only status/needle discriminator the client has, so `type` must stay const 'status' here and absent from tracker/frame-needle.json.",
+    "additionalProperties": true,
+    "properties": {
+        "type": { "const": "status" },
+        "health": {
+            "type": "string",
+            "enum": ["ok", "degraded"],
+            "description": "`degraded` iff `issues` is non-empty. The desktop's type also admits `error`; the producer never sends it."
+        },
+        "issues": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": ["camera_lo_missing", "camera_hi_missing", "markers_invisible"]
+            },
+            "description": "Active problems. camera_*_missing come from capture health via the calibrated face-to-slot map; markers_invisible only while CALIBRATING."
+        },
+        "needle_present": {
+            "type": "boolean",
+            "description": "Whether a needle is currently being tracked (TRACKING with an initialised tip filter, which includes the Kalman-prediction window). False = ready/background, which the desktop must not show as a stale link."
+        }
+    },
+    "required": ["type", "health", "issues", "needle_present"]
+}

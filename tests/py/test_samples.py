@@ -67,6 +67,8 @@ def test_samples_cover_the_contracts_the_generators_get_wrong() -> None:
     assert "AngleStreamEnvelope" in contracts
     assert "TrackerHello" in contracts
     assert "PlanChannelEnvelope" in contracts
+    assert "TrackerFrameNeedle" in contracts
+    assert "TrackerFrameStatus" in contracts
 
 
 def test_the_deferred_confirm_sequence_is_one_exchange() -> None:
