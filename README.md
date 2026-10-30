@@ -44,7 +44,7 @@ next regeneration would revert it anyway.
 | Device NDJSON envelope + payloads | `schemas/device/` | scl3300-stream firmware → needle-guide's serial reader |
 | Inclination WebSocket stream | `schemas/angle-stream/` | needle-guide → needle-simulator |
 | Plan channel (request/response) | `schemas/plan-channel/` | needle-simulator → needle-guide, and its ack back |
-| Tracker hello | `schemas/tracker/hello.json` | needle-simulator's Jetson → its desktop client |
+| Tracker hello, needle frame, status frame | `schemas/tracker/` | needle-simulator's Jetson → its desktop client and needle-eval |
 
 ### The plan channel
 
@@ -112,9 +112,6 @@ reads them, so a shared package would add a release cycle and buy nothing.
 Listed so the omission reads as a decision rather than an oversight.
 
 - **Session JSONL** (needle-simulator). A recording format, not a wire.
-- **Tracker needle-frame bodies** (needle-simulator). The Jetson→desktop frame
-  payloads change with the tracker's own vocabulary; only the `hello`
-  handshake, which is what decides whether the two can talk at all, is shared.
 - **needle-guide host WebSocket schemas** (`server/schemas/ws-envelope.json`
   and its payloads). Its own renderer is the only consumer. The angle-stream
   envelope here is modelled on it, and the two are expected to stay similar,

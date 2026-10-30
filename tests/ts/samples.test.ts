@@ -31,6 +31,8 @@ describe('generated zod validators', () => {
         expect(contracts).toContain('DeviceEnvelope');
         expect(contracts).toContain('AngleStreamEnvelope');
         expect(contracts).toContain('PlanChannelEnvelope');
+        expect(contracts).toContain("TrackerFrameNeedle");
+        expect(contracts).toContain("TrackerFrameStatus");
     });
 
     for (const sample of samples.valid as Sample[]) {

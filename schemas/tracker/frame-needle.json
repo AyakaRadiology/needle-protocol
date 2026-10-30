@@ -1,0 +1,68 @@
+{
+    "$id": "urn:needle:schema:tracker-frame-needle",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Tracker Needle Frame",
+    "description": "The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the three.js axes (X right, Y up, Z depth). Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.",
+    "x-version": "1.0.0",
+    "type": "object",
+    "$comment": "additionalProperties is true and MUST stay true: the tracker's stated rule is that additive optional fields do NOT bump protocol_version (see tracker/hello.json). `required` lists exactly what the producer sends on every frame; a frame that omits one of them is not a v2 frame (a v1 rig lacks conf_lo, skin_entry_*, surface_to_tip_mm and entry_to_tip_mm, and is rejected here on purpose).",
+    "additionalProperties": true,
+    "properties": {
+        "tipX": { "type": "number", "description": "Needle tip X, tracker mm (right)." },
+        "tipY": { "type": "number", "description": "Needle tip Y, tracker mm (up)." },
+        "tipZ": { "type": "number", "description": "Needle tip Z, tracker mm (depth)." },
+        "entryX": { "type": "number", "description": "Surface-snapped entry point X, tracker mm." },
+        "entryY": { "type": "number", "description": "Surface-snapped entry point Y, tracker mm." },
+        "entryZ": { "type": "number", "description": "Surface-snapped entry point Z, tracker mm." },
+        "timestamp": {
+            "type": "number",
+            "description": "Wall-clock time (Unix seconds, float) at which the engine built this frame."
+        },
+        "source": {
+            "type": "string",
+            "enum": ["detected", "predicted"],
+            "description": "`detected` = this frame had a fresh detection; `predicted` = detection was lost and the Kalman prediction is being broadcast. The producer never emits `lost`: that value exists only in the desktop's type and its e2e mock."
+        },
+        "conf_lo": {
+            "type": ["number", "null"],
+            "description": "Detection confidence of the LO camera face (AprilTag ids 0-3). null when this frame had no detection on both faces (including every `predicted` frame)."
+        },
+        "conf_hi": {
+            "type": ["number", "null"],
+            "description": "Detection confidence of the HI camera face (AprilTag ids 4-7). null under the same conditions as conf_lo."
+        },
+        "lastDetectionTimestamp": {
+            "type": ["number", "null"],
+            "description": "Wall-clock time (Unix seconds) of the last frame with a fresh detection. null if the engine has none since its last reset."
+        },
+        "skin_entry_x": {
+            "type": ["number", "null"],
+            "description": "Skin-surface entry point X, tracker mm: where the needle line crosses the phantom's visible top face. null when the line does not cross it."
+        },
+        "skin_entry_y": { "type": ["number", "null"], "description": "Skin-surface entry point Y, tracker mm. null together with skin_entry_x." },
+        "skin_entry_z": { "type": ["number", "null"], "description": "Skin-surface entry point Z, tracker mm. null together with skin_entry_x." },
+        "frame_id": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Capture-side monotonic frame counter."
+        },
+        "surface_to_tip_mm": {
+            "type": ["number", "null"],
+            "description": "Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null."
+        },
+        "entry_to_tip_mm": {
+            "type": "number",
+            "description": "Length from the surface-snapped entry point to the tip, mm. Never null."
+        }
+    },
+    "required": [
+        "tipX", "tipY", "tipZ",
+        "entryX", "entryY", "entryZ",
+        "timestamp", "source",
+        "conf_lo", "conf_hi",
+        "lastDetectionTimestamp",
+        "skin_entry_x", "skin_entry_y", "skin_entry_z",
+        "frame_id",
+        "surface_to_tip_mm", "entry_to_tip_mm"
+    ]
+}

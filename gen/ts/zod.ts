@@ -43,6 +43,12 @@ export const PlanChannelPayloadPlanSchema = z.object({ "plan_inclination_deg": z
 /** `schemas/plan-channel/payload-plan-ack.json` */
 export const PlanChannelPayloadPlanAckSchema = z.object({ "plan_id": z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": z.number().int().gte(0), "result": z.enum(["applied","pending_confirm","rejected"]), "reason": z.string().min(1).optional(), "applied_revision": z.number().int().gte(0).optional() }).strict();
 
+/** `schemas/tracker/frame-needle.json` */
+export const TrackerFrameNeedleSchema = z.object({ "tipX": z.number(), "tipY": z.number(), "tipZ": z.number(), "entryX": z.number(), "entryY": z.number(), "entryZ": z.number(), "timestamp": z.number(), "source": z.enum(["detected","predicted"]), "conf_lo": z.union([z.number(), z.null()]), "conf_hi": z.union([z.number(), z.null()]), "lastDetectionTimestamp": z.union([z.number(), z.null()]), "skin_entry_x": z.union([z.number(), z.null()]), "skin_entry_y": z.union([z.number(), z.null()]), "skin_entry_z": z.union([z.number(), z.null()]), "frame_id": z.number().int().gte(0), "surface_to_tip_mm": z.union([z.number(), z.null()]), "entry_to_tip_mm": z.number() }).catchall(z.any());
+
+/** `schemas/tracker/frame-status.json` */
+export const TrackerFrameStatusSchema = z.object({ "type": z.literal("status"), "health": z.enum(["ok","degraded"]), "issues": z.array(z.enum(["camera_lo_missing","camera_hi_missing","markers_invisible"])), "needle_present": z.boolean() }).catchall(z.any());
+
 /** `schemas/tracker/hello.json` */
 export const TrackerHelloSchema = z.object({ "type": z.literal("hello"), "protocol_version": z.number().int().gte(1), "server_bind": z.string().optional(), "client_addr": z.string().optional() }).catchall(z.any());
 

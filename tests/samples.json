@@ -348,6 +348,127 @@
                 "client_addr": "10.0.0.42",
                 "rig_id": "jetson-01"
             }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-detected",
+            "from": "needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast() (the `data` dict) + packages/needle-pipeline/.../pipeline/measure.py needle_length_fields(); values illustrative, key set and types verbatim",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-predicted",
+            "from": "same emitter, the Kalman-prediction branch (source='predicted', no per-face confidences)",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.2,
+                "source": "predicted",
+                "conf_lo": null,
+                "conf_hi": null,
+                "lastDetectionTimestamp": 1761799999.9,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4822,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-no-skin-crossing",
+            "from": "same emitter, needle line does not cross the top face (surface_mm None, needle_length_fields returns surface_to_tip_mm None)",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": null,
+                "skin_entry_y": null,
+                "skin_entry_z": null,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": null
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-additive-field",
+            "from": "a future rig: additive optional fields do NOT bump protocol_version, so this MUST parse",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1,
+                "rig_temp_c": 51.0
+            }
+        },
+        {
+            "contract": "TrackerFrameStatus",
+            "name": "tracker-frame-status-ok",
+            "from": "same emitter family, engine.py _build_status_payload() with no issues",
+            "frame": {
+                "type": "status",
+                "health": "ok",
+                "issues": [],
+                "needle_present": true
+            }
+        },
+        {
+            "contract": "TrackerFrameStatus",
+            "name": "tracker-frame-status-degraded",
+            "from": "same emitter, _build_status_payload() with a missing camera",
+            "frame": {
+                "type": "status",
+                "health": "degraded",
+                "issues": [
+                    "camera_lo_missing"
+                ],
+                "needle_present": false
+            }
         }
     ],
     "invalid": [
@@ -664,6 +785,231 @@
             "name": "tracker-hello-version-as-string",
             "why": "A string version compares unequal to every supported integer, which would look like a protocol mismatch rather than a malformed hello.",
             "frame": { "type": "hello", "protocol_version": "2" }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-v1-names",
+            "why": "A v1 rig (confA/confB/surfaceX..lenSurfaceTip) is not a v2 frame; consumers normalise it, the contract does not describe it.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "lastDetectionTimestamp": 1761800000.123,
+                "frame_id": 4821,
+                "confA": 0.9,
+                "confB": 0.8,
+                "surfaceX": 1.0,
+                "surfaceY": 2.0,
+                "surfaceZ": 3.0,
+                "lenSurfaceTip": 20.0,
+                "lenEntryTip": 30.0
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-no-tip",
+            "why": "A frame without a tip position draws a needle nowhere, indistinguishable from not detected.",
+            "frame": {
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-null-tip",
+            "why": "tipX is a number or the frame is not usable; null is not 'unknown' here.",
+            "frame": {
+                "tipX": null,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-string-coordinate",
+            "why": "A quoted coordinate is a wire bug, not a number to coerce.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": "62.5",
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-source-lost",
+            "why": "The producer never emits `lost`; it exists only in the desktop's type and its e2e mock.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "lost",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-source-unknown",
+            "why": "An unknown source is not a frame the consumers know how to draw.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "extrapolated",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-no-entry-length",
+            "why": "entry_to_tip_mm is always sent and never null.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 4821,
+                "entry_to_tip_mm": null,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-fractional-frame-id",
+            "why": "frame_id is a counter.",
+            "frame": {
+                "tipX": 12.5,
+                "tipY": 30.25,
+                "tipZ": -48.0,
+                "entryX": 10.0,
+                "entryY": 62.5,
+                "entryZ": -20.0,
+                "timestamp": 1761800000.123,
+                "source": "detected",
+                "conf_lo": 0.91,
+                "conf_hi": 0.88,
+                "lastDetectionTimestamp": 1761800000.123,
+                "skin_entry_x": 10.8,
+                "skin_entry_y": 55.0,
+                "skin_entry_z": -26.5,
+                "frame_id": 1.5,
+                "entry_to_tip_mm": 38.4,
+                "surface_to_tip_mm": 28.1
+            }
+        },
+        {
+            "contract": "TrackerFrameStatus",
+            "name": "tracker-frame-status-no-needle-present",
+            "why": "The producer always sends needle_present.",
+            "frame": {
+                "type": "status",
+                "health": "ok",
+                "issues": []
+            }
+        },
+        {
+            "contract": "TrackerFrameStatus",
+            "name": "tracker-frame-status-unknown-issue",
+            "why": "issues is a closed vocabulary the desktop maps to messages.",
+            "frame": {
+                "type": "status",
+                "health": "degraded",
+                "issues": [
+                    "thermal"
+                ],
+                "needle_present": true
+            }
+        },
+        {
+            "contract": "TrackerFrameStatus",
+            "name": "tracker-frame-status-wrong-type",
+            "why": "A needle frame's discriminator is the ABSENCE of type=status.",
+            "frame": {
+                "type": "hello",
+                "health": "ok",
+                "issues": [],
+                "needle_present": true
+            }
         }
     ]
 }
