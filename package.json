@@ -94,7 +94,7 @@
         "vite": "7.3.7"
     },
     "devDependencies": {
-        "@types/node": "26.6.5",
+        "@types/node": "26.6.6",
         "json-schema-to-typescript": "16.0.0",
         "json-schema-to-zod": "2.8.1",
         "typescript": "7.0.2",
