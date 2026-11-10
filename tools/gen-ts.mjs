@@ -77,7 +77,15 @@ async function compileType(bundled, name) {
 }
 
 async function writeTypes(bundles, idToSlug) {
-    const parts = [BANNER('every schema under schemas/ (json-schema-to-typescript)')];
+    const parts = [
+        BANNER('every schema under schemas/ (json-schema-to-typescript)'),
+        '// Key remapping preserves named fields even when the base has a string index signature.',
+        '// Pick-based Omit collapses those fields into the index signature instead.',
+        'type EnvelopeOmit<T, K extends PropertyKey> = {',
+        '    [P in keyof T as P extends K ? never : P]: T[P];',
+        '};',
+        '',
+    ];
     for (const { slug, path, schema, bundled } of bundles) {
         const table = discriminatorTable(schema, idToSlug, path);
         const name = pascal(slug);
@@ -92,7 +100,7 @@ async function writeTypes(bundles, idToSlug) {
             const pinned = Object.entries(consts ?? {});
             const omitted = [table.discriminator, 'payload', ...pinned.map(([key]) => key)];
             return (
-                `    | (Omit<${name}Base, ${omitted.map((key) => `'${key}'`).join(' | ')}> & {\n` +
+                `    | (EnvelopeOmit<${name}Base, ${omitted.map((key) => `'${key}'`).join(' | ')}> & {\n` +
                 `          ${table.discriminator}: '${value}';\n` +
                 pinned.map(([key, pin]) => `          ${key}: '${pin}';\n`).join('') +
                 `          payload: ${pascal(payloadSlug)};\n` +
