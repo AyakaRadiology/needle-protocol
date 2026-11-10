@@ -22,12 +22,14 @@ constants/       constants.json — the one place a shared literal is written
 angles/          SPEC.md (the conventions), vectors.json (shared test cases,
                  PUBLISHED to consumers), and the two reference
                  implementations they are run against
-gen/             GENERATED and committed: TypeScript, Python, C. CI diffs it.
+gen/             GENERATED and committed: TypeScript, Python, C, and a Swift
+                 package for the tracker schemas. CI diffs it.
 dist/            GENERATED and committed: gen/ts compiled to ESM + CommonJS
                  JavaScript with declarations, which is what `needle-protocol`
                  resolves to. CI diffs it too.
 tools/           gen.sh and the generators behind it
-tests/           ts (vitest), py (pytest), c (gcc + g++), consumer (packs the
+tests/           ts (vitest), py (pytest), c (gcc + g++), swift (XCTest, run from
+                 gen/swift), consumer (packs the
                  tarball and loads it with a stock node); samples.json is
                  shared with consumers too — it is PUBLISHED, not a fixture
 docs/decisions.md  why this repository exists, and why in this shape
@@ -220,6 +222,44 @@ frames = pydantic.TypeAdapter(AngleStreamEnvelope)
 frame = frames.validate_json(raw_bytes, strict=True)   # ISO-8601 `ts` still fine
 ```
 
+### Swift / SwiftPM (tracker schemas only)
+
+`gen/swift` is a Swift package (`NeedleProtocol`) with `Codable`, `Sendable`,
+`Equatable` types for the three tracker frames (`hello`, `frame-status`,
+`frame-needle`) and `NeedleProtocolConstants.trackerSupportedProtocolVersions`.
+Nothing else is generated: the iPad app is a tracker client, and the device,
+angle-stream and plan-channel contracts have no Swift speaker.
+
+```swift
+// Package.swift of the consumer, pinned to a tag like every other consumer
+.package(path: "../needle-protocol/gen/swift")
+```
+
+Properties are camelCase and `CodingKeys` carry the wire names exactly
+(`conf_lo` is `confLo`, `skin_entry_x` is `skinEntryX`, `frame_id` is `frameId`).
+Decoding follows the schemas: a `required` key must be present (a nullable one
+may be `null`, but a v1 frame that omits it is refused), unknown keys are
+ignored, enum values and `type` consts are checked, `minimum` is enforced. A
+field that is nullable or not `required` is an Optional; a nullable required one
+is written as an explicit `null` on encode.
+
+Two limits are stated rather than discovered. A SwiftPM **git URL** dependency
+needs `Package.swift` at the repository root, and this one lives in `gen/swift`,
+so today the package is consumed by path (a submodule or checkout pinned to the
+tag). The tests read `tests/samples.json` by a path relative to their own
+source, so they run from a checkout of this repository, not from a consumed copy.
+
+Swift is not installed on harry. nixpkgs' swift 6.3.3 works through `nix-shell`;
+`nix shell nixpkgs#swift nixpkgs#swiftpm -c swift test` does not, and SwiftPM
+fails to link its own manifest (`cannot find -lswiftCore`).
+
+```bash
+cd gen/swift
+nix-shell -I nixpkgs=flake:nixpkgs -p swift swiftpm --run 'swift test'
+```
+
+On a Mac with Xcode, `swift test` in `gen/swift` is enough.
+
 ### Pico firmware / CMake
 
 The firmware takes this repository as a submodule pinned to a tag and generates
@@ -358,4 +398,5 @@ in the emitted bytes, and CI diffs those.
 Adding a shared angle case means one line in `angles/vectors.json`; it runs
 against both reference implementations automatically. Adding a frame means one
 entry in `tests/samples.json`; it is validated by zod and by pydantic
-automatically. Neither has a second place to remember.
+automatically (and, for the tracker contracts, by the Swift types). Neither has
+a second place to remember.

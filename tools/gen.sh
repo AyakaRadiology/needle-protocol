@@ -55,4 +55,10 @@ uv run --frozen python tools/gen_schema_header.py \
     --schemas schemas/device/*.json \
     --out gen/c/schema_keys.h
 
+echo "==> Swift package (tracker schemas only)"
+# The three tracker schemas and TRACKER_SUPPORTED_PROTOCOL_VERSIONS, nothing
+# else: the iPad app is a tracker client, and the firmware, angle-stream and
+# plan-channel contracts have no Swift speaker.
+uv run --frozen python tools/gen-swift.py
+
 echo "==> done"
