@@ -11,3 +11,4 @@ __pycache__/
 
 # SwiftPM build output from `swift test` in gen/swift (see README.md).
 /gen/swift/.build/
+/.build/
