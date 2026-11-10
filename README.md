@@ -232,7 +232,7 @@ angle-stream and plan-channel contracts have no Swift speaker.
 
 ```swift
 // Package.swift of the consumer, pinned to a tag like every other consumer
-.package(path: "../needle-protocol/gen/swift")
+.package(url: "https://github.com/AyakaRadiology/needle-protocol.git", exact: "<tag>")
 ```
 
 Properties are camelCase and `CodingKeys` carry the wire names exactly
@@ -243,10 +243,9 @@ ignored, enum values and `type` consts are checked, `minimum` is enforced. A
 field that is nullable or not `required` is an Optional; a nullable required one
 is written as an explicit `null` on encode.
 
-Two limits are stated rather than discovered. A SwiftPM **git URL** dependency
-needs `Package.swift` at the repository root, and this one lives in `gen/swift`,
-so today the package is consumed by path (a submodule or checkout pinned to the
-tag). The tests read `tests/samples.json` by a path relative to their own
+The root `Package.swift` is hand-written and exposes only the library, built
+from `gen/swift/Sources`; `gen/swift` keeps its own generated manifest with the
+test target. The tests read `tests/samples.json` by a path relative to their own
 source, so they run from a checkout of this repository, not from a consumed copy.
 
 Swift is not installed on harry. nixpkgs' swift 6.3.3 works through `nix-shell`;
