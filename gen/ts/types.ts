@@ -312,11 +312,11 @@ export interface PlanChannelPayloadPlanAck {
 }
 
 /**
- * The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the three.js axes (X right, Y up, Z depth). Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.
+ * The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up, Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.
  */
 export interface TrackerFrameNeedle {
     /**
-     * Needle tip X, tracker mm (right).
+     * Needle tip X, tracker mm (depth into the phantom).
      */
     tipX: number;
     /**
@@ -324,7 +324,7 @@ export interface TrackerFrameNeedle {
      */
     tipY: number;
     /**
-     * Needle tip Z, tracker mm (depth).
+     * Needle tip Z, tracker mm (right).
      */
     tipZ: number;
     /**
