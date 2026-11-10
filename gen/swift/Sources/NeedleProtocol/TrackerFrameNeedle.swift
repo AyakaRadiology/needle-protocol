@@ -19,18 +19,20 @@ public enum TrackerFrameNeedleSource: String, Codable, Sendable, Equatable, Case
 /// packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO
 /// `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is
 /// not `status` as a needle frame, so there is no discriminator to put in an envelope. All
-/// coordinates are tracker (trk) mm on the three.js axes (X right, Y up, Z depth). Only v2 names
-/// are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are
-/// a consumer-side compatibility concern and are deliberately not part of this contract.
+/// coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits
+/// (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up,
+/// Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z,
+/// lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not
+/// part of this contract.
 /// Schema `x-version` 1.0.0; source `schemas/tracker/frame-needle.json`.
 public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
-    /// Needle tip X, tracker mm (right).
+    /// Needle tip X, tracker mm (depth into the phantom).
     public var tipX: Double
 
     /// Needle tip Y, tracker mm (up).
     public var tipY: Double
 
-    /// Needle tip Z, tracker mm (depth).
+    /// Needle tip Z, tracker mm (right).
     public var tipZ: Double
 
     /// Surface-snapped entry point X, tracker mm.
