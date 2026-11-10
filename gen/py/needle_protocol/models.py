@@ -364,9 +364,11 @@ class TrackerFrameNeedle(BaseModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    tipX: float = Field(..., description='Needle tip X, tracker mm (right).')
+    tipX: float = Field(
+        ..., description='Needle tip X, tracker mm (depth into the phantom).'
+    )
     tipY: float = Field(..., description='Needle tip Y, tracker mm (up).')
-    tipZ: float = Field(..., description='Needle tip Z, tracker mm (depth).')
+    tipZ: float = Field(..., description='Needle tip Z, tracker mm (right).')
     entryX: float = Field(..., description='Surface-snapped entry point X, tracker mm.')
     entryY: float = Field(..., description='Surface-snapped entry point Y, tracker mm.')
     entryZ: float = Field(..., description='Surface-snapped entry point Z, tracker mm.')
