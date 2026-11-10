@@ -8,3 +8,6 @@ node_modules/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# SwiftPM build output from `swift test` in gen/swift (see README.md).
+/gen/swift/.build/
