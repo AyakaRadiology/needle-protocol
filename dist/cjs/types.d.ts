@@ -4,6 +4,9 @@
  * Source: every schema under schemas/ (json-schema-to-typescript)
  * Regenerate with `tools/gen.sh`; CI fails on any drift.
  */
+type EnvelopeOmit<T, K extends PropertyKey> = {
+    [P in keyof T as P extends K ? never : P]: T[P];
+};
 /**
  * Envelope for every frame on Needle Guide's output-only inclination WebSocket (needle-guide SYSTEM_SPEC.md 5.3, electron/modules/inclinationStreamServer.ts). The wrapper is the one needle-guide's backend transport already uses (server/schemas/ws-envelope.json), narrowed to the fields this stream actually emits.
  */
@@ -31,13 +34,13 @@ export interface AngleStreamEnvelopeBase {
  * payload with it. Reconstructed from the schema's `allOf` if/then table by
  * tools/gen-ts.mjs, which json-schema-to-typescript renders as `payload: {}`.
  */
-export type AngleStreamEnvelope = (Omit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
+export type AngleStreamEnvelope = (EnvelopeOmit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
     type: 'inclination';
     payload: AngleStreamFrameInclination;
-}) | (Omit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
+}) | (EnvelopeOmit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
     type: 'theta';
     payload: AngleStreamFrameTheta;
-}) | (Omit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
+}) | (EnvelopeOmit<AngleStreamEnvelopeBase, 'type' | 'payload'> & {
     type: 'heartbeat';
     payload: AngleStreamFrameHeartbeat;
 });
@@ -139,16 +142,16 @@ export interface DeviceEnvelopeBase {
  * payload with it. Reconstructed from the schema's `allOf` if/then table by
  * tools/gen-ts.mjs, which json-schema-to-typescript renders as `payload: {}`.
  */
-export type DeviceEnvelope = (Omit<DeviceEnvelopeBase, 'type' | 'payload'> & {
+export type DeviceEnvelope = (EnvelopeOmit<DeviceEnvelopeBase, 'type' | 'payload'> & {
     type: 'status';
     payload: DevicePayloadStatus;
-}) | (Omit<DeviceEnvelopeBase, 'type' | 'payload'> & {
+}) | (EnvelopeOmit<DeviceEnvelopeBase, 'type' | 'payload'> & {
     type: 'data';
     payload: DevicePayloadData;
-}) | (Omit<DeviceEnvelopeBase, 'type' | 'payload'> & {
+}) | (EnvelopeOmit<DeviceEnvelopeBase, 'type' | 'payload'> & {
     type: 'error';
     payload: DevicePayloadError;
-}) | (Omit<DeviceEnvelopeBase, 'type' | 'payload'> & {
+}) | (EnvelopeOmit<DeviceEnvelopeBase, 'type' | 'payload'> & {
     type: 'log';
     payload: DevicePayloadLog;
 });
@@ -206,11 +209,11 @@ export interface PlanChannelEnvelopeBase {
  * payload with it. Reconstructed from the schema's `allOf` if/then table by
  * tools/gen-ts.mjs, which json-schema-to-typescript renders as `payload: {}`.
  */
-export type PlanChannelEnvelope = (Omit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
+export type PlanChannelEnvelope = (EnvelopeOmit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
     type: 'plan';
     kind: 'req';
     payload: PlanChannelPayloadPlan;
-}) | (Omit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
+}) | (EnvelopeOmit<PlanChannelEnvelopeBase, 'type' | 'payload' | 'kind'> & {
     type: 'plan_ack';
     kind: 'res';
     payload: PlanChannelPayloadPlanAck;
@@ -398,3 +401,4 @@ export interface TrackerHello {
     client_addr?: string;
     [k: string]: unknown;
 }
+export {};
