@@ -37,7 +37,7 @@ export const TrackerFrameNeedleSchema = z.object({ "tipX": z.number(), "tipY": z
 /** `schemas/tracker/frame-status.json` */
 export const TrackerFrameStatusSchema = z.object({ "type": z.literal("status"), "health": z.enum(["ok", "degraded"]), "issues": z.array(z.enum(["camera_lo_missing", "camera_hi_missing", "markers_invisible"])), "needle_present": z.boolean() }).catchall(z.any());
 /** `schemas/tracker/hello.json` */
-export const TrackerHelloSchema = z.object({ "type": z.literal("hello"), "protocol_version": z.number().int().gte(1), "server_bind": z.string().optional(), "client_addr": z.string().optional() }).catchall(z.any());
+export const TrackerHelloSchema = z.object({ "type": z.literal("hello"), "protocol_version": z.number().int().gte(1), "server_bind": z.string().optional(), "client_addr": z.string().optional(), "phantom": z.object({ "id": z.string().min(1), "extent_mm": z.object({ "x": z.number().gt(0), "y": z.number().gt(0), "z": z.number().gt(0) }).catchall(z.any()) }).catchall(z.any()).optional() }).catchall(z.any());
 /** Shared fields of `schemas/angle-stream/envelope.json`, before the payload is pinned down. */
 const AngleStreamEnvelopeBase = z.object({ "v": z.literal(1), "kind": z.literal("evt"), "type": z.enum(["inclination", "theta", "heartbeat"]), "ts": z.string().datetime({ offset: true }), "payload": z.record(z.string(), z.any()) }).catchall(z.any());
 /**

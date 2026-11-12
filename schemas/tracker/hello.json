@@ -21,6 +21,30 @@
         "client_addr": {
             "type": "string",
             "description": "The peer address the tracker sees for this client, or 'unknown'."
+        },
+        "phantom": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never has to assume its size. A tracker that does not say (older builds) omits the object and the client must not guess a box. Additive: protocol_version is not bumped.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The phantom generation, e.g. 'v3' (needle-simulator config/rig/phantoms/<id>.json)."
+                },
+                "extent_mm": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "The visible box in the frame's own scene axes, millimetres: x = depth into the phantom, y = up to the operator-visible top (skin layer included), z = width to the right. The box the needle frames' tipX/tipY/tipZ move in.",
+                    "properties": {
+                        "x": { "type": "number", "exclusiveMinimum": 0 },
+                        "y": { "type": "number", "exclusiveMinimum": 0 },
+                        "z": { "type": "number", "exclusiveMinimum": 0 }
+                    },
+                    "required": ["x", "y", "z"]
+                }
+            },
+            "required": ["id", "extent_mm"]
         }
     },
     "required": ["type", "protocol_version"]

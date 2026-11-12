@@ -350,6 +350,21 @@
             }
         },
         {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-phantom",
+            "from": "needle-simulator packages/needle-jetson/.../server/websocket.py, _handler() on a rig with the v3 phantom: the tracker tells the client which box the needle is in (x depth, y up to the visible top, z width, mm)",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "server_bind": "0.0.0.0:8765",
+                "client_addr": "10.0.0.42",
+                "phantom": {
+                    "id": "v3",
+                    "extent_mm": { "x": 119, "y": 120, "z": 119 }
+                }
+            }
+        },
+        {
             "contract": "TrackerFrameNeedle",
             "name": "tracker-frame-needle-detected",
             "from": "needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast() (the `data` dict) + packages/needle-pipeline/.../pipeline/measure.py needle_length_fields(); values illustrative, key set and types verbatim",
@@ -779,6 +794,26 @@
             "name": "tracker-hello-no-version",
             "why": "Without protocol_version the client cannot decide whether it can read the stream, and connecting anyway is how a v1 rig gets driven as a v2 one.",
             "frame": { "type": "hello", "server_bind": "0.0.0.0:8765" }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-phantom-zero-extent",
+            "why": "A zero-size box cannot be drawn and would hide a tracker that did not know its phantom; the field is optional, so a tracker with no box omits it instead.",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "phantom": { "id": "v3", "extent_mm": { "x": 119, "y": 0, "z": 119 } }
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-phantom-no-extent",
+            "why": "A phantom id without a size is the assumption this field exists to remove: the client would have to guess the box.",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "phantom": { "id": "v3" }
+            }
         },
         {
             "contract": "TrackerHello",
