@@ -16,6 +16,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    PositiveFloat,
     confloat,
     conint,
     constr,
@@ -449,6 +450,30 @@ class TrackerFrameStatus(BaseModel):
     )
 
 
+class TrackerHelloPhantomExtentMm(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    x: PositiveFloat
+    y: PositiveFloat
+    z: PositiveFloat
+
+
+class TrackerHelloPhantom(BaseModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    id: constr(min_length=1) = Field(
+        ...,
+        description="The phantom generation, e.g. 'v3' (needle-simulator config/rig/phantoms/<id>.json).",
+    )
+    extent_mm: TrackerHelloPhantomExtentMm = Field(
+        ...,
+        description="The visible box in the frame's own scene axes, millimetres: x = depth into the phantom, y = up to the operator-visible top (skin layer included), z = width to the right. The box the needle frames' tipX/tipY/tipZ move in.",
+        title='TrackerHelloPhantomExtentMm',
+    )
+
+
 class TrackerHello(BaseModel):
     model_config = ConfigDict(
         extra='allow',
@@ -465,6 +490,11 @@ class TrackerHello(BaseModel):
     client_addr: str | None = Field(
         None,
         description="The peer address the tracker sees for this client, or 'unknown'.",
+    )
+    phantom: TrackerHelloPhantom | None = Field(
+        None,
+        description='OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never has to assume its size. A tracker that does not say (older builds) omits the object and the client must not guess a box. Additive: protocol_version is not bumped.',
+        title='TrackerHelloPhantom',
     )
 
 # ---------------------------------------------------------------------------

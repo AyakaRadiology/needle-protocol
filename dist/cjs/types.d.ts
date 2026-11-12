@@ -399,6 +399,25 @@ export interface TrackerHello {
      * The peer address the tracker sees for this client, or 'unknown'.
      */
     client_addr?: string;
+    /**
+     * OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never has to assume its size. A tracker that does not say (older builds) omits the object and the client must not guess a box. Additive: protocol_version is not bumped.
+     */
+    phantom?: {
+        /**
+         * The phantom generation, e.g. 'v3' (needle-simulator config/rig/phantoms/<id>.json).
+         */
+        id: string;
+        /**
+         * The visible box in the frame's own scene axes, millimetres: x = depth into the phantom, y = up to the operator-visible top (skin layer included), z = width to the right. The box the needle frames' tipX/tipY/tipZ move in.
+         */
+        extent_mm: {
+            x: number;
+            y: number;
+            z: number;
+            [k: string]: unknown;
+        };
+        [k: string]: unknown;
+    };
     [k: string]: unknown;
 }
 export {};

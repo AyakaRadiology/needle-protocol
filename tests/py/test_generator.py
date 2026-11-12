@@ -81,4 +81,33 @@ def test_swift_generator_refuses_what_it_cannot_express(tmp_path):
     with pytest.raises(error, match="maximum"):
         render_struct(schema(properties={"a": {"type": "integer", "maximum": 3}}))
     with pytest.raises(error, match="unsupported type"):
+        render_struct(schema(properties={"a": {"type": "null"}}))
+    # A nested object is expressible only when it is open and says what is in it.
+    with pytest.raises(error, match="nested object"):
         render_struct(schema(properties={"a": {"type": "object"}}))
+    with pytest.raises(error, match="nested object"):
+        render_struct(
+            schema(
+                properties={
+                    "a": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {"b": {"type": "integer"}},
+                    }
+                }
+            )
+        )
+    nested = render_struct(
+        schema(
+            properties={
+                "a": {
+                    "type": "object",
+                    "additionalProperties": True,
+                    "properties": {"b": {"type": "number", "exclusiveMinimum": 0}},
+                    "required": ["b"],
+                }
+            }
+        )
+    )
+    assert any(line.startswith("public struct") and "Codable" in line for line in nested)
+    assert any("b must be > 0" in line for line in nested)

@@ -5,6 +5,105 @@
 
 import Foundation
 
+/// The visible box in the frame's own scene axes, millimetres: x = depth into the phantom, y = up
+/// to the operator-visible top (skin layer included), z = width to the right. The box the needle
+/// frames' tipX/tipY/tipZ move in.
+public struct TrackerHelloPhantomExtentMm: Codable, Sendable, Equatable {
+    public var x: Double
+
+    public var y: Double
+
+    public var z: Double
+
+    public init(
+        x: Double,
+        y: Double,
+        z: Double
+    ) {
+        self.x = x
+        self.y = y
+        self.z = z
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case x
+        case y
+        case z
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.x = try container.decode(Double.self, forKey: .x)
+        if self.x <= 0 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .x, in: container,
+                debugDescription: "x must be > 0")
+        }
+        self.y = try container.decode(Double.self, forKey: .y)
+        if self.y <= 0 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .y, in: container,
+                debugDescription: "y must be > 0")
+        }
+        self.z = try container.decode(Double.self, forKey: .z)
+        if self.z <= 0 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .z, in: container,
+                debugDescription: "z must be > 0")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.x, forKey: .x)
+        try container.encode(self.y, forKey: .y)
+        try container.encode(self.z, forKey: .z)
+    }
+}
+
+/// OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never
+/// has to assume its size. A tracker that does not say (older builds) omits the object and the
+/// client must not guess a box. Additive: protocol_version is not bumped.
+public struct TrackerHelloPhantom: Codable, Sendable, Equatable {
+    /// The phantom generation, e.g. 'v3' (needle-simulator config/rig/phantoms/<id>.json).
+    public var id: String
+
+    /// The visible box in the frame's own scene axes, millimetres: x = depth into the phantom, y = up
+    /// to the operator-visible top (skin layer included), z = width to the right. The box the needle
+    /// frames' tipX/tipY/tipZ move in.
+    public var extentMm: TrackerHelloPhantomExtentMm
+
+    public init(
+        id: String,
+        extentMm: TrackerHelloPhantomExtentMm
+    ) {
+        self.id = id
+        self.extentMm = extentMm
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case extentMm = "extent_mm"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(String.self, forKey: .id)
+        if self.id.count < 1 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .id, in: container,
+                debugDescription: "id must have at least 1 character(s)")
+        }
+        self.extentMm = try container.decode(TrackerHelloPhantomExtentMm.self, forKey: .extentMm)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.extentMm, forKey: .extentMm)
+    }
+}
+
 /// First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator
 /// packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against
 /// the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them
@@ -25,14 +124,21 @@ public struct TrackerHello: Codable, Sendable, Equatable {
     /// The peer address the tracker sees for this client, or 'unknown'.
     public var clientAddr: String?
 
+    /// OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never
+    /// has to assume its size. A tracker that does not say (older builds) omits the object and the
+    /// client must not guess a box. Additive: protocol_version is not bumped.
+    public var phantom: TrackerHelloPhantom?
+
     public init(
         protocolVersion: Int,
         serverBind: String? = nil,
-        clientAddr: String? = nil
+        clientAddr: String? = nil,
+        phantom: TrackerHelloPhantom? = nil
     ) {
         self.protocolVersion = protocolVersion
         self.serverBind = serverBind
         self.clientAddr = clientAddr
+        self.phantom = phantom
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -40,6 +146,7 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         case protocolVersion = "protocol_version"
         case serverBind = "server_bind"
         case clientAddr = "client_addr"
+        case phantom
     }
 
     public init(from decoder: Decoder) throws {
@@ -58,6 +165,7 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         }
         self.serverBind = try container.decodeIfPresent(String.self, forKey: .serverBind)
         self.clientAddr = try container.decodeIfPresent(String.self, forKey: .clientAddr)
+        self.phantom = try container.decodeIfPresent(TrackerHelloPhantom.self, forKey: .phantom)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -66,5 +174,6 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         try container.encode(self.protocolVersion, forKey: .protocolVersion)
         try container.encodeIfPresent(self.serverBind, forKey: .serverBind)
         try container.encodeIfPresent(self.clientAddr, forKey: .clientAddr)
+        try container.encodeIfPresent(self.phantom, forKey: .phantom)
     }
 }

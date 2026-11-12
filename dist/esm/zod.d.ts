@@ -335,16 +335,154 @@ export declare const TrackerHelloSchema: z.ZodObject<{
     protocol_version: z.ZodNumber;
     server_bind: z.ZodOptional<z.ZodString>;
     client_addr: z.ZodOptional<z.ZodString>;
+    phantom: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">>>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
     server_bind: z.ZodOptional<z.ZodString>;
     client_addr: z.ZodOptional<z.ZodString>;
+    phantom: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">>>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
     server_bind: z.ZodOptional<z.ZodString>;
     client_addr: z.ZodOptional<z.ZodString>;
+    phantom: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodString;
+        extent_mm: z.ZodObject<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, "strip", z.ZodAny, z.objectOutputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">, z.objectInputType<{
+            x: z.ZodNumber;
+            y: z.ZodNumber;
+            z: z.ZodNumber;
+        }, z.ZodAny, "strip">>;
+    }, z.ZodAny, "strip">>>;
 }, z.ZodAny, "strip">>;
 /**
  * `schemas/angle-stream/envelope.json`

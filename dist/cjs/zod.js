@@ -40,7 +40,7 @@ exports.TrackerFrameNeedleSchema = v3_1.z.object({ "tipX": v3_1.z.number(), "tip
 /** `schemas/tracker/frame-status.json` */
 exports.TrackerFrameStatusSchema = v3_1.z.object({ "type": v3_1.z.literal("status"), "health": v3_1.z.enum(["ok", "degraded"]), "issues": v3_1.z.array(v3_1.z.enum(["camera_lo_missing", "camera_hi_missing", "markers_invisible"])), "needle_present": v3_1.z.boolean() }).catchall(v3_1.z.any());
 /** `schemas/tracker/hello.json` */
-exports.TrackerHelloSchema = v3_1.z.object({ "type": v3_1.z.literal("hello"), "protocol_version": v3_1.z.number().int().gte(1), "server_bind": v3_1.z.string().optional(), "client_addr": v3_1.z.string().optional() }).catchall(v3_1.z.any());
+exports.TrackerHelloSchema = v3_1.z.object({ "type": v3_1.z.literal("hello"), "protocol_version": v3_1.z.number().int().gte(1), "server_bind": v3_1.z.string().optional(), "client_addr": v3_1.z.string().optional(), "phantom": v3_1.z.object({ "id": v3_1.z.string().min(1), "extent_mm": v3_1.z.object({ "x": v3_1.z.number().gt(0), "y": v3_1.z.number().gt(0), "z": v3_1.z.number().gt(0) }).catchall(v3_1.z.any()) }).catchall(v3_1.z.any()).optional() }).catchall(v3_1.z.any());
 /** Shared fields of `schemas/angle-stream/envelope.json`, before the payload is pinned down. */
 const AngleStreamEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": v3_1.z.literal("evt"), "type": v3_1.z.enum(["inclination", "theta", "heartbeat"]), "ts": v3_1.z.string().datetime({ offset: true }), "payload": v3_1.z.record(v3_1.z.string(), v3_1.z.any()) }).catchall(v3_1.z.any());
 /**

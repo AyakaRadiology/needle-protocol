@@ -24,6 +24,9 @@ Decisions worth knowing before reading the output:
 * **Closed enums, ``const`` checked.** An unknown enum value is a decode error
   (the schemas' own samples reject it). A ``const`` property is not stored; it is
   verified on decode, written on encode, and exposed as a static.
+* **Nested objects** (``hello.phantom``) become nested structs named after their owner and
+  property (``TrackerHelloPhantom``); they must say ``additionalProperties: true`` for the
+  same reason as the top level.
 * **Unsupported schema keywords fail generation** rather than being dropped, so
   a schema edit that this generator cannot express is a red build, not a
   contract the Swift types quietly do not enforce.
@@ -62,7 +65,10 @@ BANNER = """\
 // Regenerate with `tools/gen.sh`; CI fails on any drift.
 """
 
-PROPERTY_KEYS = {"type", "description", "enum", "const", "minimum", "items"}
+PROPERTY_KEYS = {
+    "type", "description", "enum", "const", "minimum", "exclusiveMinimum", "minLength", "items",
+    "properties", "required", "additionalProperties",
+}
 SCHEMA_KEYS = {
     "$id", "$schema", "title", "description", "x-version", "type", "$comment",
     "additionalProperties", "properties", "required",
@@ -139,6 +145,10 @@ class Field:
         self.required = required
         self.const = spec.get("const")
         self.minimum = spec.get("minimum")
+        self.exclusive_minimum = spec.get("exclusiveMinimum")
+        self.min_length = spec.get("minLength")
+        self.nested_schema: dict | None = None
+        self.nested_type: str | None = None
         self.enum_type: str | None = None
         self.enum_values: list[str] = []
 
@@ -164,6 +174,15 @@ class Field:
             self.enum_type = owner + camel_pascal(wire)
             self.enum_values = item["enum"]
             self.swift = f"[{self.enum_type}]"
+        elif kind == "object":
+            if spec.get("additionalProperties") is not True or "properties" not in spec:
+                raise GenerationError(
+                    f"{where}.{wire}: a nested object needs `properties` and "
+                    "`additionalProperties: true`"
+                )
+            self.nested_schema = spec
+            self.nested_type = owner + camel_pascal(wire)
+            self.swift = self.nested_type
         elif kind == "string" and "enum" in spec:
             self.enum_type = owner + camel_pascal(wire)
             self.enum_values = spec["enum"]
@@ -175,6 +194,10 @@ class Field:
                 raise GenerationError(f"{where}.{wire}: unsupported type {kind!r}") from None
         if self.minimum is not None and kind != "integer":
             raise GenerationError(f"{where}.{wire}: minimum is only supported on integers")
+        if self.exclusive_minimum is not None and kind != "number":
+            raise GenerationError(f"{where}.{wire}: exclusiveMinimum is only supported on numbers")
+        if self.min_length is not None and kind != "string":
+            raise GenerationError(f"{where}.{wire}: minLength is only supported on strings")
 
     @property
     def optional(self) -> bool:
@@ -220,7 +243,13 @@ def render_struct(path: str) -> list[str]:
             f"{where}: additionalProperties must be true; Codable ignores unknown keys and this "
             "generator cannot express a closed object"
         )
-    name = pascal(slug_of(path))
+    header = doc(schema["description"]) + [
+        f"/// Schema `x-version` {schema['x-version']}; source `{path}`."
+    ]
+    return render_object(schema, pascal(slug_of(path)), where, header)
+
+
+def render_object(schema: dict, name: str, where: str, header: list[str]) -> list[str]:
     required = set(schema.get("required", []))
     fields = [
         Field(wire, spec, wire in required, name, where)
@@ -236,9 +265,12 @@ def render_struct(path: str) -> list[str]:
     for f in stored:
         if f.enum_type:
             out += render_enum(f) + [""]
+        if f.nested_schema is not None:
+            out += render_object(
+                f.nested_schema, f.nested_type, f"{where}.{f.wire}", doc(f.description)
+            ) + [""]
 
-    out += doc(schema["description"])
-    out += [f"/// Schema `x-version` {schema['x-version']}; source `{path}`."]
+    out += header
     out += [f"public struct {name}: Codable, Sendable, Equatable {{"]
     for f in consts:
         out += doc(f.description or f"Always `{f.const}`; checked on decode.", "    ")
@@ -285,6 +317,32 @@ def render_struct(path: str) -> list[str]:
             out += [f"        self.{f.name} = try container.decode({f.swift}.self, forKey: .{f.name})"]
         else:
             out += [f"        self.{f.name} = try container.decodeIfPresent({f.swift}.self, forKey: .{f.name})"]
+        if f.exclusive_minimum is not None:
+            check = (
+                f"if let value = self.{f.name}, value <= {f.exclusive_minimum}"
+                if f.optional
+                else f"if self.{f.name} <= {f.exclusive_minimum}"
+            )
+            out += [
+                f"        {check} {{",
+                "            throw DecodingError.dataCorruptedError(",
+                f"                forKey: .{f.name}, in: container,",
+                f"                debugDescription: \"{f.wire} must be > {f.exclusive_minimum}\")",
+                "        }",
+            ]
+        if f.min_length is not None:
+            check = (
+                f"if let value = self.{f.name}, value.count < {f.min_length}"
+                if f.optional
+                else f"if self.{f.name}.count < {f.min_length}"
+            )
+            out += [
+                f"        {check} {{",
+                "            throw DecodingError.dataCorruptedError(",
+                f"                forKey: .{f.name}, in: container,",
+                f"                debugDescription: \"{f.wire} must have at least {f.min_length} character(s)\")",
+                "        }",
+            ]
         if f.minimum is not None:
             check = (
                 f"if let value = self.{f.name}, value < {f.minimum}"
