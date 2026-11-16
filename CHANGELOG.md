@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.5.0...v0.6.0) (2026-11-12)
+
+
+### Features
+
+* **swift:** add a root Package.swift so SwiftPM consumers can pin a tag ([#67](https://github.com/AyakaRadiology/needle-protocol/issues/67)) ([211c552](https://github.com/AyakaRadiology/needle-protocol/commit/211c5520de8c8ab5c0d2699139449febfa289750))
+* **swift:** generate Swift types for the tracker schemas ([#63](https://github.com/AyakaRadiology/needle-protocol/issues/63)) ([7968ff8](https://github.com/AyakaRadiology/needle-protocol/commit/7968ff8df26b2c4ae76632fe99cd588458fe775b))
+* **tracker:** hello carries the phantom id and size ([#70](https://github.com/AyakaRadiology/needle-protocol/issues/70)) ([4767713](https://github.com/AyakaRadiology/needle-protocol/commit/476771329d86f297142d9bee4648d040bc5c2b93))
+
+
+### Bug Fixes
+
+* [agent-found] dist/cjs/types.d.ts:34 A TypeScript subscriber imports AngleStreamEnvelope and pass ([#66](https://github.com/AyakaRadiology/needle-protocol/issues/66)) ([3947866](https://github.com/AyakaRadiology/needle-protocol/commit/394786635c5fe2f9b8349f7365823ca5d0cd3d8b)), closes [#64](https://github.com/AyakaRadiology/needle-protocol/issues/64)
+
 ## [0.5.0](https://github.com/AyakaRadiology/needle-protocol/compare/v0.4.3...v0.5.0) (2026-10-30)
 
 
