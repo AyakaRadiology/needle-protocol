@@ -690,6 +690,21 @@
             "note": "MIN_NEEDLE_LENGTH_MM exactly: accepted. The floor is 'shorter than', not 'at most'."
         },
         {
+            "id": "needle-min-length-with-decimal-endpoints",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                { "x": 32.3, "y": 0, "z": 0 },
+                { "x": 12.3, "y": 0, "z": 0 },
+                { "x": 0, "y": 0, "z": 1 }
+            ],
+            "expect": {
+                "inclinationDeg": 90,
+                "consoleThetaDeg": 0,
+                "pointsUp": false
+            },
+            "note": "Subtracting the decimal endpoints rounds the 20 mm span slightly below the inclusive minimum."
+        },
+        {
             "id": "needle-too-short",
             "fn": "needleInclinationFromVertical",
             "args": [

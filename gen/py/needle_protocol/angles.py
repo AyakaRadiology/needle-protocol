@@ -222,7 +222,9 @@ def needle_inclination_from_vertical(
     if tip is None or entry is None:
         return None
     axis = (tip[0] - entry[0], tip[1] - entry[1], tip[2] - entry[2])
-    if math.sqrt(axis[0] ** 2 + axis[1] ** 2 + axis[2] ** 2) < MIN_NEEDLE_LENGTH_MM:
+    # Allow 1e-9 mm for floating-point error at the inclusive minimum.
+    length_mm = math.sqrt(axis[0] ** 2 + axis[1] ** 2 + axis[2] ** 2)
+    if length_mm < MIN_NEEDLE_LENGTH_MM - 1e-9:
         return None
 
     inclination_deg = angle_between_deg(axis, gravity_down_trk)
