@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 import vectors from '../../angles/vectors.json' with { type: 'json' };
 import constantsSource from '../../constants/constants.json' with { type: 'json' };
 import * as angles from '../../angles/ts/src/index.js';
+import { needleInclinationFromVertical } from '../../gen/ts/angles.js';
 import { CONSOLE_THETA_VERTICAL_DEG as GENERATED_CONSOLE_THETA_VERTICAL_DEG } from '../../gen/ts/constants.js';
 
 type Case = {
@@ -40,6 +41,16 @@ function decode(value: unknown): unknown {
 }
 
 const IMPLEMENTATIONS = angles as unknown as Record<string, (...args: unknown[]) => unknown>;
+
+it('reports a horizontal needle with oblique gravity in the generated module', () => {
+    const d = 1 / Math.sqrt(18);
+    const result = needleInclinationFromVertical(
+        { x: 5, y: 63, z: 17 },
+        { x: 0, y: 0, z: 0 },
+        { x: d, y: d, z: -4 * d }
+    );
+    expect(result).toEqual({ inclinationDeg: 90, consoleThetaDeg: 0, pointsUp: false });
+});
 
 describe('shared angle vectors', () => {
     it('covers enough of the surface to be worth trusting', () => {

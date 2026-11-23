@@ -92,9 +92,14 @@ def test_vector(case: dict, vectors: dict) -> None:
 
     if isinstance(expected, dict):
         assert actual is not None
-        assert abs(actual.inclination_deg - expected["inclinationDeg"]) < tolerance
-        assert abs(actual.console_theta_deg - expected["consoleThetaDeg"]) < tolerance
         assert actual.points_up is expected["pointsUp"]
+        if expected["inclinationDeg"] == angles.HORIZONTAL_INCLINATION_DEG:
+            assert actual.inclination_deg == expected["inclinationDeg"]
+            assert actual.console_theta_deg == expected["consoleThetaDeg"]
+            assert math.copysign(1.0, actual.console_theta_deg) == 1.0
+        else:
+            assert abs(actual.inclination_deg - expected["inclinationDeg"]) < tolerance
+            assert abs(actual.console_theta_deg - expected["consoleThetaDeg"]) < tolerance
         return
 
     assert actual is not None

@@ -61,6 +61,9 @@ CONSOLE_THETA_VERTICAL_DEG: Final[float] = 90.0
 #: that one is a theta on the console's scale, this one an inclination on ours.
 HORIZONTAL_INCLINATION_DEG: Final[float] = 90.0
 
+# Absorb floating-point error when the needle axis is perpendicular to gravity.
+_HORIZONTAL_TOLERANCE_DEG: Final[float] = 1e-9
+
 #: Entry->tip shorter than this is not a needle axis but two nearly coincident
 #: points whose difference is mostly detection noise.
 MIN_NEEDLE_LENGTH_MM: Final[float] = 20.0
@@ -225,6 +228,9 @@ def needle_inclination_from_vertical(
     inclination_deg = angle_between_deg(axis, gravity_down_trk)
     if inclination_deg is None:
         return None
+
+    if abs(inclination_deg - HORIZONTAL_INCLINATION_DEG) <= _HORIZONTAL_TOLERANCE_DEG:
+        inclination_deg = HORIZONTAL_INCLINATION_DEG
 
     console_theta_deg = console_theta_from_inclination(inclination_deg)
     if console_theta_deg is None:

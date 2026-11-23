@@ -554,7 +554,34 @@
                 "consoleThetaDeg": 0,
                 "pointsUp": false
             },
-            "note": "Exactly horizontal is NOT pointsUp: the boundary is strict."
+            "note": "An exactly horizontal needle has pointsUp set to false."
+        },
+        {
+            "id": "needle-horizontal-oblique-gravity",
+            "fn": "needleInclinationFromVertical",
+            "args": [
+                {
+                    "x": 5,
+                    "y": 63,
+                    "z": 17
+                },
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                {
+                    "x": 0.23570226039551587,
+                    "y": 0.23570226039551587,
+                    "z": -0.9428090415820635
+                }
+            ],
+            "expect": {
+                "inclinationDeg": 90,
+                "consoleThetaDeg": 0,
+                "pointsUp": false
+            },
+            "note": "The unit gravity vector is (1, 1, -4) divided by sqrt(18). Its dot product with the needle axis is mathematically zero."
         },
         {
             "id": "needle-45-down",
