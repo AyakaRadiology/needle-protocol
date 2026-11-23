@@ -55,6 +55,21 @@ def test_accepts_real_frames(sample: dict) -> None:
 
 
 @pytest.mark.parametrize(
+    "sample",
+    [
+        s for s in SAMPLES["valid"]
+        if s["contract"] in {"PlanChannelEnvelope", "AngleStreamEnvelope", "DeviceEnvelope"}
+    ],
+    ids=lambda sample: sample["name"],
+)
+def test_serialization_schema_accepts_envelope_frames(sample: dict) -> None:
+    envelope = adapter(sample["contract"])
+    parsed = parse(sample["contract"], sample["frame"])
+    schema = envelope.json_schema(mode="serialization")
+    jsonschema.Draft202012Validator(schema).validate(json.loads(envelope.dump_json(parsed)))
+
+
+@pytest.mark.parametrize(
     "sample", SAMPLES["invalid"], ids=[s["name"] for s in SAMPLES["invalid"]]
 )
 def test_rejects_malformed_frames(sample: dict) -> None:
