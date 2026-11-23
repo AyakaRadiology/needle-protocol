@@ -9,6 +9,9 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import jsonschema
@@ -184,6 +187,45 @@ def test_the_enum_order_gate_sees_every_schema_directory() -> None:
     assert gate.enums_of(load(ROOT / "schemas" / "plan-channel" / "payload-plan-ack.json"))[
         "/properties/result"
     ] == ["applied", "pending_confirm", "rejected"]
+
+
+def test_enum_order_gate_uses_latest_tag_reachable_from_head(tmp_path: Path) -> None:
+    def git(*args: str) -> None:
+        subprocess.run(
+            [
+                "git",
+                "-c", "user.name=Enum Gate Test",
+                "-c", "user.email=enum-gate@example.test",
+                "-c", "commit.gpgsign=false",
+                "-c", "tag.gpgsign=false",
+                "-c", "core.hooksPath=.git/no-hooks",
+                *args,
+            ],
+            cwd=tmp_path,
+            check=True,
+        )
+
+    git("init", "--quiet")
+    schema = tmp_path / "schemas" / "example.json"
+    schema.parent.mkdir()
+    schema.write_text(json.dumps({"enum": ["a", "b"]}))
+    git("add", "schemas/example.json")
+    git("commit", "--quiet", "-m", "Initial enum")
+    git("tag", "v0.1.0")
+
+    schema.write_text(json.dumps({"enum": ["a", "b", "c"]}))
+    git("commit", "--quiet", "-am", "Append enum value")
+    git("tag", "v0.2.0")
+    git("checkout", "--quiet", "--detach", "v0.1.0")
+
+    gate = tmp_path / "tools" / "check-enum-order.py"
+    gate.parent.mkdir()
+    shutil.copyfile(ROOT / "tools" / gate.name, gate)
+    result = subprocess.run(
+        [sys.executable, str(gate)], cwd=tmp_path, capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    assert "enum ordering unchanged since v0.1.0" in result.stdout
 
 
 def test_generated_artifacts_exist() -> None:
