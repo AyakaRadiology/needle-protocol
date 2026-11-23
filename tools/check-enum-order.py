@@ -15,9 +15,8 @@ Neither is forbidden forever. Both are MAJOR changes: bump the schema's
 `x-version` major, note it, and the tag you compare against moves on. What is
 forbidden is doing it by accident.
 
-Compares against the newest `v*` tag reachable in this checkout. With no tags at
-all -- the first release -- there is nothing to compare against and the check
-prints that and passes, rather than inventing a baseline.
+Compares against the highest-version `v*` tag reachable from HEAD. If no such tag
+is reachable, the check reports that it has no baseline and passes.
 """
 
 from __future__ import annotations
@@ -32,13 +31,20 @@ SCHEMA_DIR = ROOT / "schemas"
 
 
 def newest_tag() -> str | None:
-    """The highest `v*` tag in this checkout, or None when there are none.
+    """The highest-version `v*` tag reachable from HEAD, or None if absent.
 
-    `git for-each-ref` rather than `git tag`: it sorts by version semantics
-    (`v0.10.0` after `v0.9.0`, which a lexical sort gets wrong) in one call.
+    `git for-each-ref` filters by ancestry and sorts by version semantics
+    (`v0.10.0` after `v0.9.0`) in one call.
     """
     out = subprocess.run(
-        ["git", "for-each-ref", "--sort=-v:refname", "--format=%(refname:short)", "refs/tags/v*"],
+        [
+            "git",
+            "for-each-ref",
+            "--merged=HEAD",
+            "--sort=-v:refname",
+            "--format=%(refname:short)",
+            "refs/tags/v*",
+        ],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -77,9 +83,8 @@ def main() -> int:
     tag = newest_tag()
     if tag is None:
         print(
-            "[check-enum-order] No v* tag in this checkout, so there is no released enum ordering "
-            "to compare against. Nothing checked. This is expected before the first release, and "
-            "on a shallow clone that fetched no tags."
+            "[check-enum-order] No v* tag reachable from HEAD, so there is no released enum "
+            "ordering to compare against. Nothing checked."
         )
         return 0
 
