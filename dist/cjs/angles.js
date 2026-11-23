@@ -190,7 +190,8 @@ function needleInclinationFromVertical(tipMm, entryMm, gravityDownTrk) {
         y: tipMm.y - entryMm.y,
         z: tipMm.z - entryMm.z,
     };
-    if (norm(axis) < exports.MIN_NEEDLE_LENGTH_MM)
+    // Allow 1e-9 mm for floating-point error at the inclusive minimum.
+    if (norm(axis) < exports.MIN_NEEDLE_LENGTH_MM - 1e-9)
         return null;
     const measuredInclinationDeg = angleBetweenDeg(axis, gravityDownTrk);
     if (measuredInclinationDeg === null)

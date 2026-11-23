@@ -52,6 +52,15 @@ it('reports a horizontal needle with oblique gravity in the generated module', (
     expect(result).toEqual({ inclinationDeg: 90, consoleThetaDeg: 0, pointsUp: false });
 });
 
+it('reports a horizontal needle at the 20 mm minimum with decimal endpoints', () => {
+    const result = needleInclinationFromVertical(
+        { x: 32.3, y: 0, z: 0 },
+        { x: 12.3, y: 0, z: 0 },
+        { x: 0, y: 0, z: 1 }
+    );
+    expect(result?.inclinationDeg).toBe(90);
+});
+
 describe('shared angle vectors', () => {
     it('covers enough of the surface to be worth trusting', () => {
         // A vector file that quietly shrank would still pass every case in it.
