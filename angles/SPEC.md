@@ -147,7 +147,8 @@ disagreement in the field as evidence about the table, not about the arithmetic.
   the console's θ goes negative, and no real insertion produces the pose. The
   angle is still returned unchanged — it is a true angle and the diagnostics want
   it — and `pointsUp` is what tells a surface to print a placeholder instead of
-  the number. Exactly horizontal (90°) is **not** up; the boundary is strict.
+  the number. Inclinations within 1e-9° of horizontal are returned as 90°
+  with console θ of 0° and `pointsUp` set to `false`.
 
 ## Who owns what
 

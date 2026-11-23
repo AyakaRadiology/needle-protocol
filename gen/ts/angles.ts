@@ -49,6 +49,9 @@ export const CONSOLE_THETA_VERTICAL_DEG = 90;
  */
 export const HORIZONTAL_INCLINATION_DEG = 90;
 
+// Absorb floating-point error when the needle axis is perpendicular to gravity.
+const HORIZONTAL_TOLERANCE_DEG = 1e-9;
+
 /**
  * Entry→tip shorter than this is not a needle axis: it is two nearly coincident
  * points whose difference is mostly detection noise, and the direction it
@@ -229,8 +232,13 @@ export function needleInclinationFromVertical(
     };
     if (norm(axis) < MIN_NEEDLE_LENGTH_MM) return null;
 
-    const inclinationDeg = angleBetweenDeg(axis, gravityDownTrk);
-    if (inclinationDeg === null) return null;
+    const measuredInclinationDeg = angleBetweenDeg(axis, gravityDownTrk);
+    if (measuredInclinationDeg === null) return null;
+
+    const inclinationDeg =
+        Math.abs(measuredInclinationDeg - HORIZONTAL_INCLINATION_DEG) <= HORIZONTAL_TOLERANCE_DEG
+            ? HORIZONTAL_INCLINATION_DEG
+            : measuredInclinationDeg;
 
     const consoleThetaDeg = consoleThetaFromInclination(inclinationDeg);
     if (consoleThetaDeg === null) return null;
