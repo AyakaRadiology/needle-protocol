@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import jsonschema
 import pydantic
 import pytest
 
@@ -59,6 +60,34 @@ def test_accepts_real_frames(sample: dict) -> None:
 def test_rejects_malformed_frames(sample: dict) -> None:
     with pytest.raises(pydantic.ValidationError):
         parse(sample["contract"], sample["frame"])
+
+
+@pytest.mark.parametrize("suffix", ["-minimal", ""])
+def test_plan_request_json_round_trip(suffix: str) -> None:
+    frame = next(
+        s["frame"] for s in SAMPLES["valid"]
+        if s["name"] == f"plan-channel-plan-request{suffix}"
+    )
+    plan = models.PlanChannelPayloadPlan.model_validate_json(
+        json.dumps(frame["payload"]), strict=True
+    )
+    payload = json.loads(plan.model_dump_json())
+    schema = json.loads((ROOT / "schemas/plan-channel/payload-plan.json").read_text())
+    jsonschema.Draft202012Validator(schema).validate(payload)
+    assert payload == frame["payload"]
+
+    envelope = adapter("PlanChannelEnvelope")
+    parsed = envelope.validate_json(json.dumps(frame), strict=True)
+    assert json.loads(envelope.dump_json(parsed))["payload"] == frame["payload"]
+
+
+def test_json_round_trip_preserves_explicit_null() -> None:
+    frame = next(
+        s["frame"] for s in SAMPLES["valid"] if s["name"] == "angle-stream-inclination-null"
+    )
+    envelope = adapter("AngleStreamEnvelope")
+    parsed = envelope.validate_json(json.dumps(frame), strict=True)
+    assert json.loads(envelope.dump_json(parsed))["payload"]["inclination_deg"] is None
 
 
 def test_samples_cover_the_contracts_the_generators_get_wrong() -> None:
