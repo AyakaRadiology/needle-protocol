@@ -6,7 +6,7 @@ gen/``), so the output must be a pure function of ``schemas/``,
 ``constants/constants.json`` and ``angles/py/`` -- no timestamps, no host paths,
 no iteration over an unordered set.
 
-Two things this does that a bare ``datamodel-codegen`` invocation does not:
+Three things this does that a bare ``datamodel-codegen`` invocation does not:
 
 1. **Stable nested class names.** Left alone, the generator names nested objects
    and enums ``Link``, ``Link1``, ``Type``, ``Type1`` -- numbered by the order it
@@ -19,6 +19,9 @@ Two things this does that a bare ``datamodel-codegen`` invocation does not:
    rendered as ``payload: dict[str, Any]``, i.e. a model that accepts a
    heartbeat payload inside an ``inclination`` frame. The base is generated as
    ``<Name>Base`` and the tagged union is appended, mirroring gen/ts.
+
+3. **Omitted fields stay omitted in JSON.** The generator uses ``None`` as
+   the default for optional fields, even when the wire schema excludes null.
 """
 
 from __future__ import annotations
@@ -47,7 +50,7 @@ BANNER = """\
 
 # datamodel-codegen emits this for the combined document's own (empty) root. It
 # is an artefact of having to hand the tool ONE file, carries no contract, and
-# is removed rather than exported. Matched exactly: if the tool's output shape
+# is replaced with the wire model base. Matched exactly: if the tool's output shape
 # changes, this script fails instead of leaving a stray class behind.
 ROOT_CLASS = """class NeedleProtocol(BaseModel):
     model_config = ConfigDict(
@@ -56,6 +59,26 @@ ROOT_CLASS = """class NeedleProtocol(BaseModel):
 
 
 """
+
+WIRE_MODEL = '''class _WireModel(BaseModel):
+    @model_serializer(mode='wrap', when_used='json')
+    def _omit_unset_fields(
+        self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
+    ) -> dict[str, Any]:
+        data = handler(self)
+        # Keep explicit nulls and omit only the None defaults for absent fields.
+        for name, field in type(self).model_fields.items():
+            if (
+                name not in self.model_fields_set
+                and not field.is_required()
+                and getattr(self, name) is None
+            ):
+                key = (field.serialization_alias or name) if info.by_alias else name
+                data.pop(key, None)
+        return data
+
+
+'''
 
 
 def pascal(slug: str) -> str:
@@ -289,8 +312,8 @@ def main() -> int:
         cwd=combined_path.parent,
     )
 
-    body = models_tmp.read_text()
-    if ROOT_CLASS not in body:
+    imports, root, classes = models_tmp.read_text().partition(ROOT_CLASS)
+    if not root:
         print(
             "[gen-py] datamodel-codegen no longer emits the combined document's root class in the "
             "expected shape. Update ROOT_CLASS in tools/gen-py.py to match, rather than leaving an "
@@ -298,7 +321,12 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    body = body.replace(ROOT_CLASS, "", 1)
+    body = (
+        imports.rstrip("\n")
+        + "\nfrom pydantic import SerializationInfo, SerializerFunctionWrapHandler, model_serializer\n\n\n"
+        + WIRE_MODEL
+        + classes.replace("(BaseModel):", "(_WireModel):")
+    )
 
     unions = render_unions(contracts)
     OUT.joinpath("models.py").write_text(

@@ -21,6 +21,25 @@ from pydantic import (
     conint,
     constr,
 )
+from pydantic import SerializationInfo, SerializerFunctionWrapHandler, model_serializer
+
+
+class _WireModel(BaseModel):
+    @model_serializer(mode='wrap', when_used='json')
+    def _omit_unset_fields(
+        self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
+    ) -> dict[str, Any]:
+        data = handler(self)
+        # Keep explicit nulls and omit only the None defaults for absent fields.
+        for name, field in type(self).model_fields.items():
+            if (
+                name not in self.model_fields_set
+                and not field.is_required()
+                and getattr(self, name) is None
+            ):
+                key = (field.serialization_alias or name) if info.by_alias else name
+                data.pop(key, None)
+        return data
 
 
 class AngleStreamEnvelopeBaseType(Enum):
@@ -29,7 +48,7 @@ class AngleStreamEnvelopeBaseType(Enum):
     heartbeat = 'heartbeat'
 
 
-class AngleStreamEnvelopeBase(BaseModel):
+class AngleStreamEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -50,7 +69,7 @@ class AngleStreamEnvelopeBase(BaseModel):
     payload: dict[str, Any]
 
 
-class AngleStreamFrameHeartbeatLink(BaseModel):
+class AngleStreamFrameHeartbeatLink(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -64,7 +83,7 @@ class AngleStreamFrameHeartbeatLink(BaseModel):
     )
 
 
-class AngleStreamFrameHeartbeat(BaseModel):
+class AngleStreamFrameHeartbeat(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -90,7 +109,7 @@ class AngleStreamFrameHeartbeat(BaseModel):
     )
 
 
-class AngleStreamFrameInclinationLink(BaseModel):
+class AngleStreamFrameInclinationLink(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -104,7 +123,7 @@ class AngleStreamFrameInclinationLink(BaseModel):
     )
 
 
-class AngleStreamFrameInclination(BaseModel):
+class AngleStreamFrameInclination(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -118,7 +137,7 @@ class AngleStreamFrameInclination(BaseModel):
     )
 
 
-class AngleStreamFrameThetaLink(BaseModel):
+class AngleStreamFrameThetaLink(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -132,7 +151,7 @@ class AngleStreamFrameThetaLink(BaseModel):
     )
 
 
-class AngleStreamFrameTheta(BaseModel):
+class AngleStreamFrameTheta(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -151,7 +170,7 @@ class DeviceEnvelopeBaseType(Enum):
     log = 'log'
 
 
-class DeviceEnvelopeBase(BaseModel):
+class DeviceEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -169,7 +188,7 @@ class DeviceEnvelopeBase(BaseModel):
     payload: Any
 
 
-class DevicePayloadData(BaseModel):
+class DevicePayloadData(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -178,7 +197,7 @@ class DevicePayloadData(BaseModel):
     accel_z: float
 
 
-class DevicePayloadError(BaseModel):
+class DevicePayloadError(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -196,7 +215,7 @@ class DevicePayloadLogLevel(Enum):
     critical = 'critical'
 
 
-class DevicePayloadLog(BaseModel):
+class DevicePayloadLog(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -214,7 +233,7 @@ class DevicePayloadStatusState(Enum):
     stopped = 'stopped'
 
 
-class DevicePayloadStatus(BaseModel):
+class DevicePayloadStatus(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -235,7 +254,7 @@ class PlanChannelEnvelopeBaseType(Enum):
     plan_ack = 'plan_ack'
 
 
-class PlanChannelEnvelopeBase(BaseModel):
+class PlanChannelEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -268,7 +287,7 @@ class PlanChannelPayloadPlanSourceApp(Enum):
     needle_simulator = 'needle-simulator'
 
 
-class PlanChannelPayloadPlanSource(BaseModel):
+class PlanChannelPayloadPlanSource(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -289,7 +308,7 @@ class PlanChannelPayloadPlanSource(BaseModel):
     )
 
 
-class PlanChannelPayloadPlan(BaseModel):
+class PlanChannelPayloadPlan(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -330,7 +349,7 @@ class PlanChannelPayloadPlanAckResult(Enum):
     rejected = 'rejected'
 
 
-class PlanChannelPayloadPlanAck(BaseModel):
+class PlanChannelPayloadPlanAck(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
@@ -361,7 +380,7 @@ class TrackerFrameNeedleSource(Enum):
     predicted = 'predicted'
 
 
-class TrackerFrameNeedle(BaseModel):
+class TrackerFrameNeedle(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -430,7 +449,7 @@ class Issue(Enum):
     markers_invisible = 'markers_invisible'
 
 
-class TrackerFrameStatus(BaseModel):
+class TrackerFrameStatus(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -450,7 +469,7 @@ class TrackerFrameStatus(BaseModel):
     )
 
 
-class TrackerHelloPhantomExtentMm(BaseModel):
+class TrackerHelloPhantomExtentMm(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -459,7 +478,7 @@ class TrackerHelloPhantomExtentMm(BaseModel):
     z: PositiveFloat
 
 
-class TrackerHelloPhantom(BaseModel):
+class TrackerHelloPhantom(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
@@ -474,7 +493,7 @@ class TrackerHelloPhantom(BaseModel):
     )
 
 
-class TrackerHello(BaseModel):
+class TrackerHello(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
