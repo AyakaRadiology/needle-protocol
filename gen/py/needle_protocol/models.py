@@ -25,10 +25,12 @@ from pydantic import SerializationInfo, SerializerFunctionWrapHandler, model_ser
 
 
 class _WireModel(BaseModel):
+    # Leave the return type unannotated so Pydantic uses each model's fields
+    # for its serialization schema.
     @model_serializer(mode='wrap', when_used='json')
     def _omit_unset_fields(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
-    ) -> dict[str, Any]:
+    ):
         data = handler(self)
         # Keep explicit nulls and omit only the None defaults for absent fields.
         for name, field in type(self).model_fields.items():
