@@ -96,6 +96,20 @@ def test_plan_request_json_round_trip(suffix: str) -> None:
     assert json.loads(envelope.dump_json(parsed))["payload"] == frame["payload"]
 
 
+@pytest.mark.parametrize("field", ["azimuth_deg", "entry_lateral_mm", "entry_longitudinal_mm"])
+def test_plan_request_rejects_explicit_null_for_optional_number(field: str) -> None:
+    frame = next(
+        s["frame"] for s in SAMPLES["valid"] if s["name"] == "plan-channel-plan-request-minimal"
+    )
+    envelope = adapter("PlanChannelEnvelope")
+    parsed = envelope.validate_json(json.dumps(frame), strict=True)
+    assert field not in json.loads(envelope.dump_json(parsed))["payload"]
+
+    with pytest.raises(pydantic.ValidationError) as error:
+        parse("PlanChannelEnvelope", {**frame, "payload": {**frame["payload"], field: None}})
+    assert error.value.errors()[0]["loc"] == ("plan", "payload", field)
+
+
 def test_json_round_trip_preserves_explicit_null() -> None:
     frame = next(
         s["frame"] for s in SAMPLES["valid"] if s["name"] == "angle-stream-inclination-null"

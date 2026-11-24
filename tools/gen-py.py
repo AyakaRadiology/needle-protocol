@@ -33,6 +33,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 ROOT = Path(__file__).resolve().parent.parent
 BUNDLED = ROOT / "build" / "bundled"
 OUT = ROOT / "gen" / "py" / "needle_protocol"
@@ -87,25 +89,30 @@ def pascal(slug: str) -> str:
     return "".join(part[:1].upper() + part[1:] for part in re.split(r"[-_]", slug))
 
 
-def title_nested(node: object, prefix: str) -> None:
-    """Give every nested object/enum an explicit, path-derived ``title``.
-
-    Only nested ones: the top level already carries the contract's own name.
-    """
+def prepare_schema(node: object, prefix: str) -> None:
+    """Give nested models stable names and preserve optional field nullability."""
     if isinstance(node, list):
         for item in node:
-            title_nested(item, prefix)
+            prepare_schema(item, prefix)
         return
     if not isinstance(node, dict):
         return
     for key, value in node.items():
         if key == "properties" and isinstance(value, dict):
             for prop, sub in value.items():
-                if isinstance(sub, dict) and ("properties" in sub or "enum" in sub):
-                    sub.setdefault("title", prefix + pascal(prop))
-                title_nested(sub, prefix + pascal(prop))
+                if isinstance(sub, dict):
+                    if "properties" in sub or "enum" in sub:
+                        sub.setdefault("title", prefix + pascal(prop))
+                    # datamodel-codegen needs an explicit marker even with
+                    # --strict-nullable when a field is optional with no default.
+                    if (
+                        prop not in node.get("required", ())
+                        and not Draft202012Validator(sub).is_valid(None)
+                    ):
+                        sub["nullable"] = False
+                prepare_schema(sub, prefix + pascal(prop))
         else:
-            title_nested(value, prefix)
+            prepare_schema(value, prefix)
 
 
 def build_combined(contracts: list[dict]) -> dict:
@@ -127,7 +134,7 @@ def build_combined(contracts: list[dict]) -> dict:
             # the fields every variant shares.
             schema.pop("allOf", None)
             name += "Base"
-        title_nested(schema, name)
+        prepare_schema(schema, name)
         defs[name] = schema
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -304,6 +311,8 @@ def main() -> int:
             "--target-python-version", "3.10",
             "--use-title-as-name",
             "--use-standard-collections",
+            # Omission and explicit null are independent in JSON Schema.
+            "--strict-nullable",
             "--disable-timestamp",
             # Explicit, because the default set is on its way to becoming
             # opt-in; leaving it implicit would change the committed output on a
