@@ -96,15 +96,12 @@ class AngleStreamFrameHeartbeat(_WireModel):
     link: AngleStreamFrameHeartbeatLink = Field(
         ..., title='AngleStreamFrameHeartbeatLink'
     )
-    protocol_version: conint(ge=1) | None = Field(
+    protocol_version: conint(ge=1) = Field(
         None,
         description="OPTIONAL. The angle-stream wire version the emitter speaks. Rides the heartbeat so liveness and version arrive on the same tick: a subscriber that has a heartbeat has, by construction, everything it needs to decide whether it can read the angle frames. Absent from an emitter built before this field existed, which a subscriber must read as 'unknown', never as 1.",
     )
-    protocol_package_version: (
-        constr(
-            pattern=r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
-        )
-        | None
+    protocol_package_version: constr(
+        pattern=r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
     ) = Field(
         None,
         description='OPTIONAL. Semver of the needle-protocol package the emitter was built against. Diagnostic, not a compatibility gate -- `protocol_version` is the gate. It exists so an operator staring at two disagreeing screens can tell which side is behind without opening either build.',
@@ -205,7 +202,7 @@ class DevicePayloadError(_WireModel):
     )
     code: constr(min_length=1)
     message: str
-    detail: str | None = None
+    detail: str = None
 
 
 class DevicePayloadLogLevel(Enum):
@@ -240,7 +237,7 @@ class DevicePayloadStatus(_WireModel):
         extra='forbid',
     )
     state: DevicePayloadStatusState = Field(..., title='DevicePayloadStatusState')
-    envelope_schema_version: constr(pattern=r'^\d+\.\d+\.\d+$') | None = Field(
+    envelope_schema_version: constr(pattern=r'^\d+\.\d+\.\d+$') = Field(
         None,
         description='The device-envelope schema x-version the firmware was built against. Emitted once per session, on the FIRST status event; absent on every later status event, and absent altogether from firmware built before this field existed. Optional for that reason: a host that requires it cannot read a rig that is still in the field.',
     )
@@ -318,15 +315,15 @@ class PlanChannelPayloadPlan(_WireModel):
         ...,
         description="Planned inclination FROM VERTICAL: 0 is a needle straight down, 90 is horizontal (angles/SPEC.md). Identity with needle-guide's own `plan_inclination_deg`, so the name is the same on both sides and no conversion happens on the wire. REFUSE, NEVER CLAMP: a value outside 0..90 is rejected and reported, never quietly moved inside the range -- an inclination silently pulled to 90 is a plan the operator never planned. Same rule, same wording, as needle-guide shared/planInputs.ts.",
     )
-    azimuth_deg: confloat(ge=-180.0, le=180.0) | None = Field(
+    azimuth_deg: confloat(ge=-180.0, le=180.0) = Field(
         None,
         description="OPTIONAL. Planned horizontal-plane angle, stated as a signed half-turn (needle-guide shared/planInputs.ts MIN_AZIMUTH_DEG/MAX_AZIMUTH_DEG). Optional because a plan that only constrains the tilt is a complete plan: needle-guide's inclination readout uses it for nothing. Absent means 'not planned', never 0 -- 0 is a real azimuth.",
     )
-    entry_lateral_mm: confloat(ge=-1000.0, le=1000.0) | None = Field(
+    entry_lateral_mm: confloat(ge=-1000.0, le=1000.0) = Field(
         None,
         description="OPTIONAL. Entry point offset, mediolateral, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_LATERAL_MM, which is beyond a CT bore either way. Absent means 'not planned', never 0.",
     )
-    entry_longitudinal_mm: confloat(ge=-3000.0, le=3000.0) | None = Field(
+    entry_longitudinal_mm: confloat(ge=-3000.0, le=3000.0) = Field(
         None,
         description="OPTIONAL. Entry point offset, craniocaudal, millimetres. Bound is needle-guide shared/planInputs.ts MAX_ENTRY_LONGITUDINAL_MM, and it is deliberately THREE TIMES the lateral one because it bounds a different quantity: lateral is an offset across the patient, which the bore genuinely limits, while longitudinal is a position along the CT table, whose travel runs past 1000 mm on a modern scanner. Sharing the bore's metre refused entry points a real procedure produced -- a stored value of 1150.1 mm made every arriving plan unusable. This bound exists to catch GARBAGE (a stray keystroke, a value typed in the wrong unit), not to encode a clinical limit, so it is looser than any real scanner rather than tuned to one. Same 'absent is not zero' rule as entry_lateral_mm.",
     )
@@ -367,11 +364,11 @@ class PlanChannelPayloadPlanAck(_WireModel):
         description="`applied` -- the plan is in effect and the guide's readout is measuring against it. `pending_confirm` -- the frame was understood and is waiting on the operator, who has NOT yet pressed Apply; nothing has changed on the guide's display. `rejected` -- the plan will not be applied, and `reason` says why. Append-only: ORDER IS LOAD-BEARING (README > Versioning).",
         title='PlanChannelPayloadPlanAckResult',
     )
-    reason: constr(min_length=1) | None = Field(
+    reason: constr(min_length=1) = Field(
         None,
         description="OPTIONAL. Short operator-facing explanation. The sender SHOULD show it verbatim and MUST NOT parse it. A `rejected` ack without one is unactionable and needle-guide always sends it there -- but that is a rule the emitter keeps, not one this schema states: making `reason` conditional on `result` needs an if/then that json-schema-to-zod renders as a validator accepting anything (see tools/gen-ts.mjs), and a validator that silently does not validate is worse than a documented rule. The receiving side's own tests are where it is enforced; see docs/decisions.md ADR-0003.",
     )
-    applied_revision: conint(ge=0) | None = Field(
+    applied_revision: conint(ge=0) = Field(
         None,
         description='OPTIONAL. The revision the guide currently has APPLIED, which is not always the one being acked: on `pending_confirm` it is the previous revision still in effect (absent when there is none), and on `rejected` it is what the guide kept. It exists so the sender can render what the other screen is actually showing instead of what it hoped.',
     )
@@ -504,15 +501,15 @@ class TrackerHello(_WireModel):
         ...,
         description='Bumped only when the wire schema changes in a way the client must opt into (field rename, type change, new REQUIRED field). See TRACKER_SUPPORTED_PROTOCOL_VERSIONS.',
     )
-    server_bind: str | None = Field(
+    server_bind: str = Field(
         None,
         description='The address the tracker bound. Used by the desktop path indicator to confirm which interface is carrying the stream.',
     )
-    client_addr: str | None = Field(
+    client_addr: str = Field(
         None,
         description="The peer address the tracker sees for this client, or 'unknown'.",
     )
-    phantom: TrackerHelloPhantom | None = Field(
+    phantom: TrackerHelloPhantom = Field(
         None,
         description='OPTIONAL. The phantom (the box the needle moves in) this tracker is tracking, so a client never has to assume its size. A tracker that does not say (older builds) omits the object and the client must not guess a box. Additive: protocol_version is not bumped.',
         title='TrackerHelloPhantom',
