@@ -119,6 +119,43 @@ def test_json_round_trip_preserves_explicit_null() -> None:
     assert json.loads(envelope.dump_json(parsed))["payload"]["inclination_deg"] is None
 
 
+NON_FINITE_CASES = [
+    ("tracker-frame-needle-detected", ("tipX",)),
+    ("tracker-frame-needle-detected", ("timestamp",)),
+    ("tracker-hello-phantom", ("phantom", "extent_mm", "x")),
+]
+
+
+def _with_value(frame: dict, path: tuple[str, ...], value: float) -> dict:
+    copy = json.loads(json.dumps(frame))
+    target = copy
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    return copy
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")], ids=str)
+@pytest.mark.parametrize(("name", "path"), NON_FINITE_CASES, ids=lambda c: str(c))
+def test_rejects_non_finite_numbers(name: str, path: tuple[str, ...], value: float) -> None:
+    """NaN and +/-Infinity are not JSON numbers, so no binding may accept them.
+
+    Python's ``json.dumps`` writes them as the bare tokens ``NaN``/``Infinity``,
+    which ``JSON.parse`` and Swift's ``JSONDecoder`` refuse outright; a Python
+    receiver that accepted them would see a needle the iPad and desktop drop.
+    And a Python SENDER whose model accepted one would serialise it as ``null``
+    (pydantic's default for a non-finite float), turning a required ``tipX`` or
+    a phantom extent into the null every receiver rejects: a hello the iPad
+    reports as unreadable. Both paths, wire text and Python values, must refuse.
+    """
+    sample = next(s for s in SAMPLES["valid"] if s["name"] == name)
+    frame = _with_value(sample["frame"], path, value)
+    with pytest.raises(pydantic.ValidationError):
+        adapter(sample["contract"]).validate_json(json.dumps(frame), strict=True)
+    with pytest.raises(pydantic.ValidationError):
+        adapter(sample["contract"]).validate_python(frame)
+
+
 def test_samples_cover_the_contracts_the_generators_get_wrong() -> None:
     contracts = {s["contract"] for s in SAMPLES["valid"] + SAMPLES["invalid"]}
     assert "DeviceEnvelope" in contracts
