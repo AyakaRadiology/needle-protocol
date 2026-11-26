@@ -4,6 +4,7 @@ import ast
 import json
 from pathlib import Path
 import runpy
+import shutil
 import subprocess
 
 import pytest
@@ -128,3 +129,33 @@ def test_swift_generator_refuses_what_it_cannot_express(tmp_path):
     )
     assert any(line.startswith("public struct") and "Codable" in line for line in nested)
     assert any("b must be > 0" in line for line in nested)
+
+
+def test_swift_generator_preserves_output_on_schema_error(tmp_path, capsys):
+    for directory in ("schemas/tracker", "constants", "tests/swift"):
+        shutil.copytree(ROOT / directory, tmp_path / directory)
+    generator = tmp_path / "tools" / "gen-swift.py"
+    generator.parent.mkdir()
+    shutil.copyfile(ROOT / "tools" / "gen-swift.py", generator)
+    main = runpy.run_path(str(generator))["main"]
+
+    output = tmp_path / "gen" / "swift"
+
+    def snapshot():
+        return {path.relative_to(output): path.read_bytes() for path in output.rglob("*") if path.is_file()}
+
+    assert main() == 0
+    before = snapshot()
+    schema_path = tmp_path / "schemas" / "tracker" / "frame-needle.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema["properties"]["frame_id"]["maximum"] = 100
+    schema_path.write_text(json.dumps(schema), encoding="utf-8")
+
+    assert main() == 1
+    assert capsys.readouterr().err == (
+        "[gen-swift] schemas/tracker/frame-needle.json.frame_id: "
+        "unsupported schema keyword(s) ['maximum']\n"
+    )
+    after = snapshot()
+    assert after.keys() == before.keys()
+    assert after == before
