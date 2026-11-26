@@ -15,11 +15,27 @@ from pathlib import Path
 import jsonschema
 import pydantic
 import pytest
+import yaml
 
 from needle_protocol import models
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 SAMPLES = json.loads((ROOT / "tests" / "samples.json").read_text())
+
+
+def test_quality_check_runs_swift_samples() -> None:
+    """A Swift-only decode disagreement must fail the required CI job."""
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    job = workflow["jobs"]["check"]
+    steps = job["steps"]
+    generation = next(i for i, step in enumerate(steps) if step.get("run") == "tools/gen.sh")
+    assert any(
+        step.get("run") == "swift test"
+        and step.get("working-directory") == "gen/swift"
+        and "if" not in step
+        and step.get("continue-on-error", False) is False
+        for step in steps[generation + 1 :]
+    ), "Quality Check must run swift test in gen/swift after regenerating the bindings"
 
 
 def adapter(contract: str) -> pydantic.TypeAdapter:

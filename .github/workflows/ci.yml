@@ -124,6 +124,10 @@ jobs:
             - name: Python tests
               run: uv run --frozen pytest tests/py -q
 
+            - name: Swift sample tests
+              working-directory: gen/swift
+              run: swift test
+
             - name: C header compiles and runs
               run: tests/c/run.sh
 
