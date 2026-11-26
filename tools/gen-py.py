@@ -63,6 +63,11 @@ ROOT_CLASS = """class NeedleProtocol(BaseModel):
 """
 
 WIRE_MODEL = '''class _WireModel(BaseModel):
+    # JSON has no NaN or Infinity: the TypeScript and Swift bindings refuse
+    # them, and pydantic would serialise one as null. Every subclass's own
+    # model_config is merged with this one, so this reaches every model.
+    model_config = ConfigDict(allow_inf_nan=False)
+
     # Leave the return type unannotated so Pydantic uses each model's fields
     # for its serialization schema.
     @model_serializer(mode='wrap', when_used='json')
