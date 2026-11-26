@@ -52,11 +52,11 @@
         },
         "./zod": {
             "import": {
-                "types": "./dist/esm/zod.d.ts",
+                "types": "./dist/esm/zod-inference.d.ts",
                 "default": "./dist/esm/zod.js"
             },
             "require": {
-                "types": "./dist/cjs/zod.d.ts",
+                "types": "./dist/cjs/zod-inference.d.ts",
                 "default": "./dist/cjs/zod.js"
             }
         },

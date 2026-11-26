@@ -26,8 +26,14 @@ def test_zod_consumer(version, tmp_path):
     (package / "package.json").write_text(json.dumps(PACKAGE))
     shutil.copytree(ROOT / "dist", package / "dist")
     source = """
+import { z } from 'zod';
 import * as validators from 'needle-protocol/zod';
-import { AngleStreamFrameHeartbeatSchema } from 'needle-protocol/zod';
+import { AngleStreamFrameHeartbeatSchema, TrackerHelloSchema } from 'needle-protocol/zod';
+type Hello = z.infer<typeof TrackerHelloSchema>;
+declare const hello: Hello;
+const protocolVersion: number = hello.protocol_version;
+type Assert<T extends true> = T;
+type ProtocolVersionIsNumber = Assert<number extends Hello['protocol_version'] ? true : false>;
 const heartbeat = AngleStreamFrameHeartbeatSchema.parse({calibrated: true, link: {state: 'ready', live: true}});
 const calibrated: boolean = heartbeat.calibrated;
 const status = validators.DevicePayloadStatusSchema.parse({ state: 'ready' });

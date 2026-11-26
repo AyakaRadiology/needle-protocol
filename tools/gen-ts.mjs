@@ -173,6 +173,25 @@ function writeZod(bundles, idToSlug) {
         );
     }
     writeFileSync(join(OUT, 'zod.ts'), `${parts.join('\n')}\n`);
+
+    // Zod 4 infers from phantom _zod metadata. Project the existing validator
+    // types for inference while leaving the actual validators on the v3 API.
+    const declarations = [
+        BANNER('generated Zod validators'),
+        "import type { z } from 'zod/v3';",
+        "import type * as validators from './zod.js';",
+        '',
+        'type Inferable<T extends z.ZodTypeAny> = T & {',
+        '    /** @internal Type-only metadata for Zod 4 inference. */',
+        '    readonly _zod: { readonly input: z.input<T>; readonly output: z.output<T> };',
+        '};',
+        '',
+        ...bundles.map(({ slug }) => {
+            const name = `${pascal(slug)}Schema`;
+            return `export declare const ${name}: Inferable<typeof validators.${name}>;`;
+        }),
+    ];
+    writeFileSync(join(OUT, 'zod-inference.d.ts'), `${declarations.join('\n')}\n`);
 }
 
 function wrap(text, width) {
