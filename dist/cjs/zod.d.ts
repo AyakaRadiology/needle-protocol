@@ -29,7 +29,7 @@ export declare const AngleStreamFrameHeartbeatSchema: z.ZodObject<{
     }, z.ZodAny, "strip">>;
     protocol_version: z.ZodOptional<z.ZodNumber>;
     protocol_package_version: z.ZodOptional<z.ZodString>;
-}, "strip", z.ZodAny, z.objectOutputType<{
+}, "strip", z.ZodUnknown, z.objectOutputType<{
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
         state: z.ZodString;
@@ -43,7 +43,7 @@ export declare const AngleStreamFrameHeartbeatSchema: z.ZodObject<{
     }, z.ZodAny, "strip">>;
     protocol_version: z.ZodOptional<z.ZodNumber>;
     protocol_package_version: z.ZodOptional<z.ZodString>;
-}, z.ZodAny, "strip">, z.objectInputType<{
+}, z.ZodUnknown, "strip">, z.objectInputType<{
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
         state: z.ZodString;
@@ -57,7 +57,7 @@ export declare const AngleStreamFrameHeartbeatSchema: z.ZodObject<{
     }, z.ZodAny, "strip">>;
     protocol_version: z.ZodOptional<z.ZodNumber>;
     protocol_package_version: z.ZodOptional<z.ZodString>;
-}, z.ZodAny, "strip">>;
+}, z.ZodUnknown, "strip">>;
 /** `schemas/angle-stream/frame-inclination.json` */
 export declare const AngleStreamFrameInclinationSchema: z.ZodObject<{
     inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
@@ -72,7 +72,7 @@ export declare const AngleStreamFrameInclinationSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, "strip", z.ZodAny, z.objectOutputType<{
+}, "strip", z.ZodUnknown, z.objectOutputType<{
     inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
@@ -85,7 +85,7 @@ export declare const AngleStreamFrameInclinationSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, z.ZodAny, "strip">, z.objectInputType<{
+}, z.ZodUnknown, "strip">, z.objectInputType<{
     inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
@@ -98,7 +98,7 @@ export declare const AngleStreamFrameInclinationSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, z.ZodAny, "strip">>;
+}, z.ZodUnknown, "strip">>;
 /** `schemas/angle-stream/frame-theta.json` */
 export declare const AngleStreamFrameThetaSchema: z.ZodObject<{
     theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
@@ -113,7 +113,7 @@ export declare const AngleStreamFrameThetaSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, "strip", z.ZodAny, z.objectOutputType<{
+}, "strip", z.ZodUnknown, z.objectOutputType<{
     theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
@@ -126,7 +126,7 @@ export declare const AngleStreamFrameThetaSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, z.ZodAny, "strip">, z.objectInputType<{
+}, z.ZodUnknown, "strip">, z.objectInputType<{
     theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     calibrated: z.ZodBoolean;
     link: z.ZodObject<{
@@ -139,7 +139,7 @@ export declare const AngleStreamFrameThetaSchema: z.ZodObject<{
         state: z.ZodString;
         live: z.ZodBoolean;
     }, z.ZodAny, "strip">>;
-}, z.ZodAny, "strip">>;
+}, z.ZodUnknown, "strip">>;
 /** `schemas/device/payload-data.json` */
 export declare const DevicePayloadDataSchema: z.ZodObject<{
     accel_x: z.ZodNumber;
@@ -516,7 +516,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -529,7 +529,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -542,7 +542,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -562,7 +562,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -575,7 +575,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -588,7 +588,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -608,7 +608,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -621,7 +621,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         inclination_deg: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -634,7 +634,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">>, z.ZodObject<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -654,7 +654,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -667,7 +667,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -680,7 +680,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -700,7 +700,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -713,7 +713,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -726,7 +726,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -746,7 +746,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -759,7 +759,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         theta: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
@@ -772,7 +772,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
             state: z.ZodString;
             live: z.ZodBoolean;
         }, z.ZodAny, "strip">>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">>, z.ZodObject<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -793,7 +793,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -807,7 +807,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -821,7 +821,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -842,7 +842,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -856,7 +856,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -870,7 +870,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     v: z.ZodLiteral<1>;
     kind: z.ZodLiteral<"evt">;
@@ -891,7 +891,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, "strip", z.ZodAny, z.objectOutputType<{
+    }, "strip", z.ZodUnknown, z.objectOutputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -905,7 +905,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">, z.objectInputType<{
+    }, z.ZodUnknown, "strip">, z.objectInputType<{
         calibrated: z.ZodBoolean;
         link: z.ZodObject<{
             state: z.ZodString;
@@ -919,7 +919,7 @@ export declare const AngleStreamEnvelopeSchema: z.ZodDiscriminatedUnion<"type", 
         }, z.ZodAny, "strip">>;
         protocol_version: z.ZodOptional<z.ZodNumber>;
         protocol_package_version: z.ZodOptional<z.ZodString>;
-    }, z.ZodAny, "strip">>;
+    }, z.ZodUnknown, "strip">>;
 }, z.ZodAny, "strip">>]>;
 /**
  * `schemas/device/envelope.json`

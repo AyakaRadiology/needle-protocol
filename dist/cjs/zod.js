@@ -18,11 +18,11 @@ exports.PlanChannelEnvelopeSchema = exports.DeviceEnvelopeSchema = exports.Angle
  */
 const v3_1 = require("zod/v3");
 /** `schemas/angle-stream/frame-heartbeat.json` */
-exports.AngleStreamFrameHeartbeatSchema = v3_1.z.object({ "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()), "protocol_version": v3_1.z.number().int().gte(1).optional(), "protocol_package_version": v3_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(v3_1.z.any());
+exports.AngleStreamFrameHeartbeatSchema = v3_1.z.object({ "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()), "protocol_version": v3_1.z.number().int().gte(1).optional(), "protocol_package_version": v3_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(v3_1.z.unknown());
 /** `schemas/angle-stream/frame-inclination.json` */
-exports.AngleStreamFrameInclinationSchema = v3_1.z.object({ "inclination_deg": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.any());
+exports.AngleStreamFrameInclinationSchema = v3_1.z.object({ "inclination_deg": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.unknown());
 /** `schemas/angle-stream/frame-theta.json` */
-exports.AngleStreamFrameThetaSchema = v3_1.z.object({ "theta": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.any());
+exports.AngleStreamFrameThetaSchema = v3_1.z.object({ "theta": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.unknown());
 /** `schemas/device/payload-data.json` */
 exports.DevicePayloadDataSchema = v3_1.z.object({ "accel_x": v3_1.z.number(), "accel_y": v3_1.z.number(), "accel_z": v3_1.z.number() }).strict();
 /** `schemas/device/payload-error.json` */

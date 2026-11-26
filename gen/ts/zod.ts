@@ -17,13 +17,13 @@
 import { z } from 'zod/v3';
 
 /** `schemas/angle-stream/frame-heartbeat.json` */
-export const AngleStreamFrameHeartbeatSchema = z.object({ "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()), "protocol_version": z.number().int().gte(1).optional(), "protocol_package_version": z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(z.any());
+export const AngleStreamFrameHeartbeatSchema = z.object({ "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()), "protocol_version": z.number().int().gte(1).optional(), "protocol_package_version": z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(z.unknown());
 
 /** `schemas/angle-stream/frame-inclination.json` */
-export const AngleStreamFrameInclinationSchema = z.object({ "inclination_deg": z.union([z.number(), z.null()]), "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()) }).catchall(z.any());
+export const AngleStreamFrameInclinationSchema = z.object({ "inclination_deg": z.union([z.number(), z.null()]), "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()) }).catchall(z.unknown());
 
 /** `schemas/angle-stream/frame-theta.json` */
-export const AngleStreamFrameThetaSchema = z.object({ "theta": z.union([z.number(), z.null()]), "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()) }).catchall(z.any());
+export const AngleStreamFrameThetaSchema = z.object({ "theta": z.union([z.number(), z.null()]), "calibrated": z.boolean(), "link": z.object({ "state": z.string(), "live": z.boolean() }).catchall(z.any()) }).catchall(z.unknown());
 
 /** `schemas/device/payload-data.json` */
 export const DevicePayloadDataSchema = z.object({ "accel_x": z.number(), "accel_y": z.number(), "accel_z": z.number() }).strict();
