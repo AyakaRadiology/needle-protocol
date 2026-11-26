@@ -53,6 +53,10 @@
         "entry_to_tip_mm": {
             "type": "number",
             "description": "Length from the surface-snapped entry point to the tip, mm. Never null."
+        },
+        "geometry_settling": {
+            "type": "boolean",
+            "description": "OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the phantom or a camera move and its geometry has not followed yet, so the position may be off by up to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in the phantom's frame): no such flag. Additive: protocol_version is not bumped."
         }
     },
     "required": [

@@ -275,6 +275,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     frame_id: z.ZodNumber;
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
+    geometry_settling: z.ZodOptional<z.ZodBoolean>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     tipX: z.ZodNumber;
     tipY: z.ZodNumber;
@@ -293,6 +294,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     frame_id: z.ZodNumber;
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
+    geometry_settling: z.ZodOptional<z.ZodBoolean>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     tipX: z.ZodNumber;
     tipY: z.ZodNumber;
@@ -311,6 +313,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     frame_id: z.ZodNumber;
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
+    geometry_settling: z.ZodOptional<z.ZodBoolean>;
 }, z.ZodAny, "strip">>;
 /** `schemas/tracker/frame-status.json` */
 export declare const TrackerFrameStatusSchema: z.ZodObject<{
@@ -381,6 +384,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
             z: z.ZodNumber;
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
+    world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
@@ -432,6 +436,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
             z: z.ZodNumber;
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
+    world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
@@ -483,6 +488,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
             z: z.ZodNumber;
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
+    world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
 }, z.ZodAny, "strip">>;
 /**
  * `schemas/angle-stream/envelope.json`

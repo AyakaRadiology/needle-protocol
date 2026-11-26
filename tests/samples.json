@@ -25,6 +25,17 @@
             }
         },
         {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needle-geometry-settling",
+            "from": "needle-simulator packages/needle-jetson/.../tracker/measure_publish.py, triangulate_and_broadcast() with NEEDLE_WORLD=rig",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "geometry_settling": true
+            }
+        },
+        {
             "contract": "PlanChannelEnvelope",
             "name": "plan-channel-ack-whole-number-tokens",
             "from": "plan-channel-plan-ack-applied with integral decimal revisions",
@@ -360,6 +371,18 @@
                 "protocol_version": 2,
                 "server_bind": "0.0.0.0:8765",
                 "client_addr": "10.0.0.42"
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-world-rig",
+            "from": "needle-simulator packages/needle-jetson/.../server/websocket.py, _hello() with NEEDLE_WORLD=rig",
+            "frame": {
+                "type": "hello",
+                "protocol_version": 2,
+                "server_bind": "0.0.0.0:8765",
+                "client_addr": "10.0.0.42",
+                "world": "rig"
             }
         },
         {
@@ -867,6 +890,23 @@
             "name": "tracker-hello-null-phantom",
             "why": "A tracker that does not report a phantom omits the object.",
             "frame": { "type": "hello", "protocol_version": 2, "phantom": null }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-unknown-world",
+            "why": "Positions in a frame the client does not know would be drawn in the wrong place; the frames are 'phantom' and 'rig'.",
+            "frame": { "type": "hello", "protocol_version": 2, "world": "gel" }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needle-settling-not-boolean",
+            "why": "geometry_settling is a flag; the string 'false' would read as true in a loosely typed client.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "geometry_settling": "false"
+            }
         },
         {
             "contract": "TrackerHello",

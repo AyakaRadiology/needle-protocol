@@ -389,6 +389,10 @@ export interface TrackerFrameNeedle {
      * Length from the surface-snapped entry point to the tip, mm. Never null.
      */
     entry_to_tip_mm: number;
+    /**
+     * OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the phantom or a camera move and its geometry has not followed yet, so the position may be off by up to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in the phantom's frame): no such flag. Additive: protocol_version is not bumped.
+     */
+    geometry_settling?: boolean;
     [k: string]: unknown;
 }
 
@@ -448,6 +452,10 @@ export interface TrackerHello {
         };
         [k: string]: unknown;
     };
+    /**
+     * OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ, entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the phantom's own frame, its gel box corner (what every tracker sent before this field existed). 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and axes are the phantom's nominal place in the rig: the phantom is located inside it and a re-seated phantom does not move the positions (needle-simulator docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's frame omits it. Additive: protocol_version is not bumped.
+     */
+    world?: 'phantom' | 'rig';
     [k: string]: unknown;
 }
 
