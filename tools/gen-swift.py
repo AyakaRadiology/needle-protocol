@@ -316,6 +316,15 @@ def render_object(schema: dict, name: str, where: str, header: list[str]) -> lis
         elif f.required:
             out += [f"        self.{f.name} = try container.decode({f.swift}.self, forKey: .{f.name})"]
         else:
+            # decodeIfPresent treats a missing key and explicit null alike.
+            if not f.nullable:
+                out += [
+                    f"        if container.contains(.{f.name}), try container.decodeNil(forKey: .{f.name}) {{",
+                    "            throw DecodingError.dataCorruptedError(",
+                    f"                forKey: .{f.name}, in: container,",
+                    f"                debugDescription: {swift_string(f.wire + ' must not be null')})",
+                    "        }",
+                ]
             out += [f"        self.{f.name} = try container.decodeIfPresent({f.swift}.self, forKey: .{f.name})"]
         if f.exclusive_minimum is not None:
             check = (

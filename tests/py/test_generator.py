@@ -56,6 +56,23 @@ def test_integer_array_literal_is_a_tuple(values, expected_literal, expected_val
     assert literal == expected_literal
 
 
+@pytest.mark.parametrize(
+    "wire_key, swift_key",
+    [("server_bind", "serverBind"), ("client_addr", "clientAddr"), ("phantom", "phantom")],
+)
+def test_swift_hello_rejects_null_for_optional_fields(wire_key, swift_key):
+    render_struct = runpy.run_path(str(ROOT / "tools" / "gen-swift.py"))["render_struct"]
+    source = "\n".join(render_struct(str(ROOT / "schemas/tracker/hello.json")))
+    assert (
+        f"if container.contains(.{swift_key}), try container.decodeNil(forKey: .{swift_key}) {{\n"
+        "            throw DecodingError.dataCorruptedError(\n"
+        f"                forKey: .{swift_key}, in: container,\n"
+        f'                debugDescription: "{wire_key} must not be null")\n'
+        "        }\n"
+        f"        self.{swift_key} = try container.decodeIfPresent("
+    ) in source
+
+
 def test_swift_generator_refuses_what_it_cannot_express(tmp_path):
     """A schema edit the Swift types cannot enforce must fail generation, not be dropped."""
     gen_swift = runpy.run_path(str(ROOT / "tools" / "gen-swift.py"))
