@@ -1,9 +1,10 @@
-"""Regression tests for Python literal generation."""
+"""Regression tests for generated bindings."""
 
 import ast
 import json
 from pathlib import Path
 import runpy
+import shutil
 import subprocess
 
 import pytest
@@ -128,3 +129,29 @@ def test_swift_generator_refuses_what_it_cannot_express(tmp_path):
     )
     assert any(line.startswith("public struct") and "Codable" in line for line in nested)
     assert any("b must be > 0" in line for line in nested)
+
+
+def test_swift_generator_preserves_package_on_schema_rejection(tmp_path, capsys):
+    generator = "tools/gen-swift.py"
+    for path in (generator, "constants/constants.json", "tests/swift/SamplesTests.swift"):
+        destination = tmp_path / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / path, destination)
+    shutil.copytree(ROOT / "schemas", tmp_path / "schemas")
+    main = runpy.run_path(str(tmp_path / generator))["main"]
+    package = tmp_path / "gen/swift"
+
+    def snapshot():
+        return {path.relative_to(package): path.read_bytes() for path in package.rglob("*") if path.is_file()}
+
+    assert main() == 0
+    previous = snapshot()
+    assert Path("Sources/NeedleProtocol/TrackerFrameNeedle.swift") in previous
+    schema_path = tmp_path / "schemas/tracker/frame-needle.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    schema["properties"]["frame_id"]["maximum"] = 9007199254740991
+    schema_path.write_text(json.dumps(schema), encoding="utf-8")
+
+    assert main() == 1
+    assert "frame_id: unsupported schema keyword(s) ['maximum']" in capsys.readouterr().err
+    assert snapshot() == previous

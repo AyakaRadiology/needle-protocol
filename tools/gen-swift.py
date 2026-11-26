@@ -428,35 +428,36 @@ let package = Package(
 def main() -> int:
     constants = json.loads((ROOT / "constants" / "constants.json").read_text(encoding="utf-8"))
 
-    # Wipe first: a schema that leaves the list must take its generated file
-    # with it, and stale output under gen/ is exactly what CI is meant to see.
-    # Only the directories this writes: a developer's `swift build` leaves .build/
-    # beside them, and deleting that would turn every regeneration into a rebuild.
-    shutil.rmtree(OUT / "Sources", ignore_errors=True)
-    shutil.rmtree(OUT / "Tests", ignore_errors=True)
-    SOURCES.mkdir(parents=True)
-    TESTS.mkdir(parents=True)
-
+    # Finish rendering before touching the existing package so a rejected
+    # schema leaves the last successful generation available to consumers.
+    files = {OUT / "Package.swift": PACKAGE_SWIFT}
     try:
         for path in SCHEMAS:
             body = render_struct(path)
             name = pascal(slug_of(path))
-            (SOURCES / f"{name}.swift").write_text(
-                BANNER.format(source=path) + "\nimport Foundation\n\n" + "\n".join(body) + "\n",
-                encoding="utf-8",
+            files[SOURCES / f"{name}.swift"] = (
+                BANNER.format(source=path) + "\nimport Foundation\n\n" + "\n".join(body) + "\n"
             )
-        (SOURCES / "Constants.swift").write_text(render_constants(constants), encoding="utf-8")
+        files[SOURCES / "Constants.swift"] = render_constants(constants)
     except GenerationError as err:
         print(f"[gen-swift] {err}", file=sys.stderr)
         return 1
 
-    (OUT / "Package.swift").write_text(PACKAGE_SWIFT, encoding="utf-8")
-    (TESTS / TEST_SOURCE.name).write_text(
+    files[TESTS / TEST_SOURCE.name] = (
         BANNER.format(source="tests/swift/SamplesTests.swift (copied verbatim)")
         + "\n"
-        + TEST_SOURCE.read_text(encoding="utf-8"),
-        encoding="utf-8",
+        + TEST_SOURCE.read_text(encoding="utf-8")
     )
+
+    # Replace Sources and Tests to clear stale files while preserving .build/.
+    for directory in (OUT / "Sources", OUT / "Tests"):
+        if directory.exists():
+            shutil.rmtree(directory)
+    SOURCES.mkdir(parents=True)
+    TESTS.mkdir(parents=True)
+    for path, content in files.items():
+        path.write_text(content, encoding="utf-8")
+
     print(f"[gen-swift] gen/swift from {len(SCHEMAS)} schema(s)")
     return 0
 
