@@ -42,7 +42,7 @@
  * resolves into this build, so the angles module ships; it just ships once.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
@@ -89,6 +89,7 @@ for (const { dir, project } of PASSES) {
     });
     const out = join(DIST, dir);
     mkdirSync(out, { recursive: true });
+    copyFileSync(join(ROOT, 'gen', 'ts', 'zod-inference.d.ts'), join(out, 'zod-inference.d.ts'));
     writeFileSync(
         join(out, 'package.json'),
         `${JSON.stringify({ type: TYPE_MARKERS[dir] }, null, 4)}\n`,
