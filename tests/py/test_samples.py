@@ -125,6 +125,25 @@ def test_plan_request_rejects_explicit_null_for_optional_number(field: str) -> N
     assert error.value.errors()[0]["loc"] == ("plan", "payload", field)
 
 
+@pytest.mark.parametrize(
+    ("name", "overrides"),
+    [
+        ("tracker-hello-v2", {}),
+        ("tracker-hello-phantom", {}),
+        ("tracker-hello-whole-number-token", {}),
+        ("tracker-hello-additive-field", {"rig_id": None}),
+    ],
+    ids=["no-phantom", "with-phantom", "minimal", "explicit-null-extra"],
+)
+def test_tracker_hello_json_round_trip(name: str, overrides: dict[str, object]) -> None:
+    sample = next(s["frame"] for s in SAMPLES["valid"] if s["name"] == name)
+    frame = {**sample, **overrides}
+    hello = models.TrackerHello.model_validate_json(json.dumps(frame), strict=True)
+
+    assert json.loads(hello.model_dump_json()) == frame
+    assert json.loads(adapter("TrackerHello").dump_json(hello)) == frame
+
+
 def test_json_round_trip_preserves_explicit_null() -> None:
     frame = next(
         s["frame"] for s in SAMPLES["valid"] if s["name"] == "angle-stream-inclination-null"

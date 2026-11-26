@@ -43,9 +43,10 @@ class _WireModel(BaseModel):
     # model_config is merged with this one, so this reaches every model.
     model_config = ConfigDict(allow_inf_nan=False)
 
+    # Let the parent serializer omit unset nested models whose default is None.
     # Leave the return type unannotated so Pydantic uses each model's fields
     # for its serialization schema.
-    @model_serializer(mode='wrap', when_used='json')
+    @model_serializer(mode='wrap', when_used='json-unless-none')
     def _omit_unset_fields(
         self, handler: SerializerFunctionWrapHandler, info: SerializationInfo
     ):
