@@ -83,6 +83,12 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
     /// Length from the surface-snapped entry point to the tip, mm. Never null.
     public var entryToTipMm: Double
 
+    /// OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the
+    /// phantom or a camera move and its geometry has not followed yet, so the position may be off by up
+    /// to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in
+    /// the phantom's frame): no such flag. Additive: protocol_version is not bumped.
+    public var geometrySettling: Bool?
+
     public init(
         tipX: Double,
         tipY: Double,
@@ -100,7 +106,8 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         skinEntryZ: Double?,
         frameId: Int,
         surfaceToTipMm: Double?,
-        entryToTipMm: Double
+        entryToTipMm: Double,
+        geometrySettling: Bool? = nil
     ) {
         self.tipX = tipX
         self.tipY = tipY
@@ -119,6 +126,7 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         self.frameId = frameId
         self.surfaceToTipMm = surfaceToTipMm
         self.entryToTipMm = entryToTipMm
+        self.geometrySettling = geometrySettling
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -139,6 +147,7 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         case frameId = "frame_id"
         case surfaceToTipMm = "surface_to_tip_mm"
         case entryToTipMm = "entry_to_tip_mm"
+        case geometrySettling = "geometry_settling"
     }
 
     public init(from decoder: Decoder) throws {
@@ -165,6 +174,12 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         }
         self.surfaceToTipMm = try container.decode(Double?.self, forKey: .surfaceToTipMm)
         self.entryToTipMm = try container.decode(Double.self, forKey: .entryToTipMm)
+        if container.contains(.geometrySettling), try container.decodeNil(forKey: .geometrySettling) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .geometrySettling, in: container,
+                debugDescription: "geometry_settling must not be null")
+        }
+        self.geometrySettling = try container.decodeIfPresent(Bool.self, forKey: .geometrySettling)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -186,5 +201,6 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         try container.encode(self.frameId, forKey: .frameId)
         try container.encode(self.surfaceToTipMm, forKey: .surfaceToTipMm)
         try container.encode(self.entryToTipMm, forKey: .entryToTipMm)
+        try container.encodeIfPresent(self.geometrySettling, forKey: .geometrySettling)
     }
 }

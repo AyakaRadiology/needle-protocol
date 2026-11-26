@@ -104,6 +104,12 @@ public struct TrackerHelloPhantom: Codable, Sendable, Equatable {
     }
 }
 
+/// Values of `world` on the wire, in schema order.
+public enum TrackerHelloWorld: String, Codable, Sendable, Equatable, CaseIterable {
+    case phantom
+    case rig
+}
+
 /// First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator
 /// packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against
 /// the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them
@@ -129,16 +135,28 @@ public struct TrackerHello: Codable, Sendable, Equatable {
     /// client must not guess a box. Additive: protocol_version is not bumped.
     public var phantom: TrackerHelloPhantom?
 
+    /// OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ,
+    /// entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the
+    /// phantom's own frame, its gel box corner (what every tracker sent before this field existed).
+    /// 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and
+    /// axes are the phantom's nominal place in the rig: the phantom is located inside it and a
+    /// re-seated phantom does not move the positions (needle-simulator
+    /// docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's
+    /// frame omits it. Additive: protocol_version is not bumped.
+    public var world: TrackerHelloWorld?
+
     public init(
         protocolVersion: Int,
         serverBind: String? = nil,
         clientAddr: String? = nil,
-        phantom: TrackerHelloPhantom? = nil
+        phantom: TrackerHelloPhantom? = nil,
+        world: TrackerHelloWorld? = nil
     ) {
         self.protocolVersion = protocolVersion
         self.serverBind = serverBind
         self.clientAddr = clientAddr
         self.phantom = phantom
+        self.world = world
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -147,6 +165,7 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         case serverBind = "server_bind"
         case clientAddr = "client_addr"
         case phantom
+        case world
     }
 
     public init(from decoder: Decoder) throws {
@@ -181,6 +200,12 @@ public struct TrackerHello: Codable, Sendable, Equatable {
                 debugDescription: "phantom must not be null")
         }
         self.phantom = try container.decodeIfPresent(TrackerHelloPhantom.self, forKey: .phantom)
+        if container.contains(.world), try container.decodeNil(forKey: .world) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .world, in: container,
+                debugDescription: "world must not be null")
+        }
+        self.world = try container.decodeIfPresent(TrackerHelloWorld.self, forKey: .world)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -190,5 +215,6 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         try container.encodeIfPresent(self.serverBind, forKey: .serverBind)
         try container.encodeIfPresent(self.clientAddr, forKey: .clientAddr)
         try container.encodeIfPresent(self.phantom, forKey: .phantom)
+        try container.encodeIfPresent(self.world, forKey: .world)
     }
 }

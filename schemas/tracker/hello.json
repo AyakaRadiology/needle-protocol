@@ -45,6 +45,11 @@
                 }
             },
             "required": ["id", "extent_mm"]
+        },
+        "world": {
+            "type": "string",
+            "enum": ["phantom", "rig"],
+            "description": "OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ, entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the phantom's own frame, its gel box corner (what every tracker sent before this field existed). 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and axes are the phantom's nominal place in the rig: the phantom is located inside it and a re-seated phantom does not move the positions (needle-simulator docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's frame omits it. Additive: protocol_version is not bumped."
         }
     },
     "required": ["type", "protocol_version"]
