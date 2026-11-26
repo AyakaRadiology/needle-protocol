@@ -21,7 +21,20 @@ from pydantic import (
     conint,
     constr,
 )
-from pydantic import SerializationInfo, SerializerFunctionWrapHandler, model_serializer
+from typing import Annotated
+from pydantic import BeforeValidator, SerializationInfo, SerializerFunctionWrapHandler, model_serializer
+
+
+def _normalize_wire_integer(value: object) -> object:
+    # Pydantic's integer literals can match True against 1.
+    if isinstance(value, bool):
+        raise ValueError("a boolean is not an integer")
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+_WireInteger = BeforeValidator(_normalize_wire_integer)
 
 
 class _WireModel(BaseModel):
@@ -59,7 +72,7 @@ class AngleStreamEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='allow',
     )
-    v: Literal[1] = Field(
+    v: Annotated[Literal[1], _WireInteger] = Field(
         ...,
         description='Envelope version. Deliberately NOT bumped by adding a frame type: `type` is what selects the payload.',
     )
@@ -101,7 +114,7 @@ class AngleStreamFrameHeartbeat(_WireModel):
     link: AngleStreamFrameHeartbeatLink = Field(
         ..., title='AngleStreamFrameHeartbeatLink'
     )
-    protocol_version: conint(ge=1) = Field(
+    protocol_version: Annotated[conint(ge=1), _WireInteger] = Field(
         None,
         description="OPTIONAL. The angle-stream wire version the emitter speaks. Rides the heartbeat so liveness and version arrive on the same tick: a subscriber that has a heartbeat has, by construction, everything it needs to decide whether it can read the angle frames. Absent from an emitter built before this field existed, which a subscriber must read as 'unknown', never as 1.",
     )
@@ -178,14 +191,14 @@ class DeviceEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    v: Literal[1]
+    v: Annotated[Literal[1], _WireInteger]
     kind: Literal['evt']
     type: DeviceEnvelopeBaseType = Field(..., title='DeviceEnvelopeBaseType')
-    seq: conint(ge=0) = Field(
+    seq: Annotated[conint(ge=0), _WireInteger] = Field(
         ...,
         description='Monotonic sequence number per boot/session (uint32_t on device).',
     )
-    t_boot_ms: conint(ge=0) = Field(
+    t_boot_ms: Annotated[conint(ge=0), _WireInteger] = Field(
         ...,
         description='ms since device boot, monotonic (uint64_t on device). NOT wall-clock; the host correlates to absolute time on receipt. Named for its clock so no host mistakes it for a timestamp.',
     )
@@ -262,7 +275,7 @@ class PlanChannelEnvelopeBase(_WireModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    v: Literal[1] = Field(
+    v: Annotated[Literal[1], _WireInteger] = Field(
         ...,
         description='Envelope version, equal to PLAN_CHANNEL_PROTOCOL_VERSION in constants/constants.json (tests/py/test_constants.py pins the two together). It is NOT bumped by adding a `type`: `type` is what selects the payload.',
     )
@@ -336,7 +349,7 @@ class PlanChannelPayloadPlan(_WireModel):
         ...,
         description='Opaque identifier, stable for the life of one plan. Today needle-simulator fills it with the DICOM SeriesInstanceUID, but the pattern deliberately admits more than a UID does (`^[0-9.]{1,64}$` would not fit a rehearsal plan, a phantom sequence id, or anything else this channel is later asked to carry). Receivers MUST treat it as opaque: never parse it, never infer a modality from it.',
     )
-    plan_revision: conint(ge=0) = Field(
+    plan_revision: Annotated[conint(ge=0), _WireInteger] = Field(
         ...,
         description='Monotonic revision of `plan_id`, starting at 0. Re-sending the SAME plan_id and plan_revision is IDEMPOTENT: the receiver answers with the ack it would have sent, and does not re-prompt an operator who has already confirmed that revision. A LOWER revision than the one already applied is stale -- the receiver rejects it rather than winding the plan backwards.',
     )
@@ -361,7 +374,7 @@ class PlanChannelPayloadPlanAck(_WireModel):
         ...,
         description='The `plan_id` this answers, echoed verbatim. Present alongside the envelope `id` on purpose: the envelope id correlates one exchange, this says which PLAN the receiver believes it was about, and a disagreement between the two is a bug worth being able to see.',
     )
-    plan_revision: conint(ge=0) = Field(
+    plan_revision: Annotated[conint(ge=0), _WireInteger] = Field(
         ..., description='The `plan_revision` this answers, echoed verbatim.'
     )
     result: PlanChannelPayloadPlanAckResult = Field(
@@ -373,7 +386,7 @@ class PlanChannelPayloadPlanAck(_WireModel):
         None,
         description="OPTIONAL. Short operator-facing explanation. The sender SHOULD show it verbatim and MUST NOT parse it. A `rejected` ack without one is unactionable and needle-guide always sends it there -- but that is a rule the emitter keeps, not one this schema states: making `reason` conditional on `result` needs an if/then that json-schema-to-zod renders as a validator accepting anything (see tools/gen-ts.mjs), and a validator that silently does not validate is worse than a documented rule. The receiving side's own tests are where it is enforced; see docs/decisions.md ADR-0003.",
     )
-    applied_revision: conint(ge=0) = Field(
+    applied_revision: Annotated[conint(ge=0), _WireInteger] = Field(
         None,
         description='OPTIONAL. The revision the guide currently has APPLIED, which is not always the one being acked: on `pending_confirm` it is the previous revision still in effect (absent when there is none), and on `rejected` it is what the guide kept. It exists so the sender can render what the other screen is actually showing instead of what it hoped.',
     )
@@ -429,7 +442,7 @@ class TrackerFrameNeedle(_WireModel):
         ...,
         description='Skin-surface entry point Z, tracker mm. null together with skin_entry_x.',
     )
-    frame_id: conint(ge=0) = Field(
+    frame_id: Annotated[conint(ge=0), _WireInteger] = Field(
         ..., description='Capture-side monotonic frame counter.'
     )
     surface_to_tip_mm: float | None = Field(
@@ -502,7 +515,7 @@ class TrackerHello(_WireModel):
         extra='allow',
     )
     type: Literal['hello']
-    protocol_version: conint(ge=1) = Field(
+    protocol_version: Annotated[conint(ge=1), _WireInteger] = Field(
         ...,
         description='Bumped only when the wire schema changes in a way the client must opt into (field rename, type change, new REQUIRED field). See TRACKER_SUPPORTED_PROTOCOL_VERSIONS.',
     )
@@ -523,9 +536,6 @@ class TrackerHello(_WireModel):
 # ---------------------------------------------------------------------------
 # Tagged unions, appended by tools/gen-py.py from the schemas' if/then tables.
 # ---------------------------------------------------------------------------
-from typing import Annotated  # noqa: E402,F811
-
-from pydantic import Field  # noqa: E402,F811
 
 class AngleStreamEnvelopeInclination(AngleStreamEnvelopeBase):
     """`schemas/angle-stream/envelope.json` with `type == "inclination"`."""

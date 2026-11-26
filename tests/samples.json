@@ -3,6 +3,42 @@
     "valid": [
         {
             "contract": "DeviceEnvelope",
+            "name": "device-envelope-whole-number-tokens",
+            "from": "device-status-ready with integer fields written as whole-valued JSON numbers",
+            "frame": { "v": 1.0, "kind": "evt", "type": "status", "seq": 0.0, "t_boot_ms": 5.0, "payload": { "state": "ready" } }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-whole-number-token",
+            "from": "tracker hello with an integral decimal protocol version",
+            "frame": { "type": "hello", "protocol_version": 1.0 }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-id-whole-number-token",
+            "from": "tracker needle frame with an integral decimal frame counter",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": null,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 1.0, "surface_to_tip_mm": null, "entry_to_tip_mm": 1
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-ack-whole-number-tokens",
+            "from": "plan-channel-plan-ack-applied with integral decimal revisions",
+            "frame": {
+                "v": 1,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QK3W4Z9C2N5E8T6Y1XQ0M",
+                "ts": "2026-09-04T09:16:42.517Z",
+                "payload": { "plan_id": "1.2.826.0.1.3680043.8.498.10011", "plan_revision": 3.0, "result": "applied", "applied_revision": 3.0 }
+            }
+        },
+        {
+            "contract": "DeviceEnvelope",
             "name": "device-data",
             "from": "scl3300-stream docs/PROTOCOL.md, Payloads > data (verbatim)",
             "frame": {
@@ -487,6 +523,37 @@
         }
     ],
     "invalid": [
+        {
+            "contract": "DeviceEnvelope",
+            "name": "device-envelope-v-true",
+            "why": "A boolean cannot stand in for the numeric envelope version.",
+            "frame": { "v": true, "kind": "evt", "type": "status", "seq": 0, "t_boot_ms": 5, "payload": { "state": "ready" } }
+        },
+        {
+            "contract": "AngleStreamEnvelope",
+            "name": "angle-stream-v-true",
+            "why": "A boolean cannot stand in for the numeric envelope version.",
+            "frame": {
+                "v": true,
+                "kind": "evt",
+                "type": "heartbeat",
+                "ts": "2026-09-04T01:02:03.504Z",
+                "payload": { "calibrated": true, "link": { "state": "connected", "live": true } }
+            }
+        },
+        {
+            "contract": "PlanChannelEnvelope",
+            "name": "plan-channel-v-true",
+            "why": "A boolean cannot stand in for the numeric envelope version.",
+            "frame": {
+                "v": true,
+                "kind": "res",
+                "type": "plan_ack",
+                "id": "01JB7QK3W4Z9C2N5E8T6Y1XQ0M",
+                "ts": "2026-09-04T09:16:42.517Z",
+                "payload": { "plan_id": "1.2.826.0.1.3680043.8.498.10011", "plan_revision": 3, "result": "applied" }
+            }
+        },
         {
             "contract": "DeviceEnvelope",
             "name": "device-payload-belongs-to-another-type",

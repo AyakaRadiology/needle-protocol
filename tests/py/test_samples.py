@@ -77,6 +77,21 @@ def test_rejects_malformed_frames(sample: dict) -> None:
         parse(sample["contract"], sample["frame"])
 
 
+def test_whole_number_tokens_normalize_to_int() -> None:
+    sample = next(s for s in SAMPLES["valid"] if s["name"] == "device-envelope-whole-number-tokens")
+    parsed = parse(sample["contract"], sample["frame"])
+    assert (parsed.v, parsed.seq, parsed.t_boot_ms) == (1, 0, 5)
+    assert all(type(value) is int for value in (parsed.v, parsed.seq, parsed.t_boot_ms))
+
+
+@pytest.mark.parametrize("value", [True, "1", 0.5, -1.0])
+def test_device_sequence_keeps_integer_type_and_bounds(value: object) -> None:
+    sample = next(s for s in SAMPLES["valid"] if s["name"] == "device-status-ready")
+    with pytest.raises(pydantic.ValidationError) as error:
+        parse(sample["contract"], {**sample["frame"], "seq": value})
+    assert error.value.errors()[0]["loc"] == ("status", "seq")
+
+
 @pytest.mark.parametrize("suffix", ["-minimal", ""])
 def test_plan_request_json_round_trip(suffix: str) -> None:
     frame = next(
