@@ -222,6 +222,9 @@ frames = pydantic.TypeAdapter(AngleStreamEnvelope)
 frame = frames.validate_json(raw_bytes, strict=True)   # ISO-8601 `ts` still fine
 ```
 
+Integer fields accept whole-valued JSON numbers such as `1.0`, following JSON
+Schema. Booleans are invalid even for integer constants such as `v: 1`.
+
 ### Swift / SwiftPM (tracker schemas only)
 
 `gen/swift` is a Swift package (`NeedleProtocol`) with `Codable`, `Sendable`,

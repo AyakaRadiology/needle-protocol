@@ -6,7 +6,7 @@ gen/``), so the output must be a pure function of ``schemas/``,
 ``constants/constants.json`` and ``angles/py/`` -- no timestamps, no host paths,
 no iteration over an unordered set.
 
-Three things this does that a bare ``datamodel-codegen`` invocation does not:
+This adds wire semantics that a bare ``datamodel-codegen`` invocation misses:
 
 1. **Stable nested class names.** Left alone, the generator names nested objects
    and enums ``Link``, ``Link1``, ``Type``, ``Type1`` -- numbered by the order it
@@ -22,6 +22,9 @@ Three things this does that a bare ``datamodel-codegen`` invocation does not:
 
 3. **Omitted fields stay omitted in JSON.** The generator uses ``None`` as
    the default for optional fields, even when the wire schema excludes null.
+
+4. **Integer fields follow JSON Schema.** Whole-valued numbers are accepted
+   in strict mode, and integer literals reject booleans.
 """
 
 from __future__ import annotations
@@ -62,7 +65,19 @@ ROOT_CLASS = """class NeedleProtocol(BaseModel):
 
 """
 
-WIRE_MODEL = '''class _WireModel(BaseModel):
+WIRE_MODEL = '''def _normalize_wire_integer(value: object) -> object:
+    # Pydantic's integer literals can match True against 1.
+    if isinstance(value, bool):
+        raise ValueError("a boolean is not an integer")
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+_WireInteger = BeforeValidator(_normalize_wire_integer)
+
+
+class _WireModel(BaseModel):
     # JSON has no NaN or Infinity: the TypeScript and Swift bindings refuse
     # them, and pydantic would serialise one as null. Every subclass's own
     # model_config is merged with this one, so this reaches every model.
@@ -88,6 +103,17 @@ WIRE_MODEL = '''class _WireModel(BaseModel):
 
 
 '''
+
+
+def annotate_wire_integers(classes: str) -> str:
+    """Wrap generated scalar integer types without changing bounds or literals."""
+    return re.sub(
+        r"^(    \w+: )(int|conint\([^\n)]*\)|Literal\[-?\d+\]|"
+        r"(?:Non)?(?:Positive|Negative)Int)(?= |$)",
+        r"\1Annotated[\2, _WireInteger]",
+        classes,
+        flags=re.MULTILINE,
+    )
 
 
 def pascal(slug: str) -> str:
@@ -190,17 +216,10 @@ def render_unions(contracts: list[dict]) -> str:
         )
     if not blocks:
         return ""
-    # The imports are restated rather than spliced into the generator's own
-    # import block: which names datamodel-codegen happens to import varies with
-    # the schemas, and a splice that silently no-ops would produce a file that
-    # fails at import time instead of at generation time.
     return (
         "\n# ---------------------------------------------------------------------------\n"
         "# Tagged unions, appended by tools/gen-py.py from the schemas' if/then tables.\n"
-        "# ---------------------------------------------------------------------------\n"
-        "from typing import Annotated  # noqa: E402,F811\n"
-        "\n"
-        "from pydantic import Field  # noqa: E402,F811\n\n"
+        "# ---------------------------------------------------------------------------\n\n"
         + "\n\n".join(blocks)
         + "\n\n"
         + "\n\n".join(aliases)
@@ -339,7 +358,8 @@ def main() -> int:
         return 1
     body = (
         imports.rstrip("\n")
-        + "\nfrom pydantic import SerializationInfo, SerializerFunctionWrapHandler, model_serializer\n\n\n"
+        + "\nfrom typing import Annotated\n"
+        + "from pydantic import BeforeValidator, SerializationInfo, SerializerFunctionWrapHandler, model_serializer\n\n\n"
         + WIRE_MODEL
         + classes.replace("(BaseModel):", "(_WireModel):")
     )
@@ -348,9 +368,7 @@ def main() -> int:
     OUT.joinpath("models.py").write_text(
         BANNER.format(source="every schema under schemas/ (datamodel-code-generator)")
         + "\n"
-        + body.rstrip("\n")
-        + "\n"
-        + unions
+        + annotate_wire_integers(body.rstrip("\n") + "\n" + unions)
     )
 
     write_constants(json.loads((ROOT / "constants" / "constants.json").read_text()))
