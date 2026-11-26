@@ -797,6 +797,24 @@
         },
         {
             "contract": "TrackerHello",
+            "name": "tracker-hello-null-phantom",
+            "why": "A tracker that does not report a phantom omits the object.",
+            "frame": { "type": "hello", "protocol_version": 2, "phantom": null }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-null-server-bind",
+            "why": "When present, the bind address must be a string.",
+            "frame": { "type": "hello", "protocol_version": 2, "server_bind": null }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-null-client-addr",
+            "why": "When present, the peer address must be a string.",
+            "frame": { "type": "hello", "protocol_version": 2, "client_addr": null }
+        },
+        {
+            "contract": "TrackerHello",
             "name": "tracker-hello-phantom-zero-extent",
             "why": "A zero-size box cannot be drawn and would hide a tracker that did not know its phantom; the field is optional, so a tracker with no box omits it instead.",
             "frame": {

@@ -163,8 +163,23 @@ public struct TrackerHello: Codable, Sendable, Equatable {
                 forKey: .protocolVersion, in: container,
                 debugDescription: "protocol_version must be >= 1")
         }
+        if container.contains(.serverBind), try container.decodeNil(forKey: .serverBind) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .serverBind, in: container,
+                debugDescription: "server_bind must not be null")
+        }
         self.serverBind = try container.decodeIfPresent(String.self, forKey: .serverBind)
+        if container.contains(.clientAddr), try container.decodeNil(forKey: .clientAddr) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .clientAddr, in: container,
+                debugDescription: "client_addr must not be null")
+        }
         self.clientAddr = try container.decodeIfPresent(String.self, forKey: .clientAddr)
+        if container.contains(.phantom), try container.decodeNil(forKey: .phantom) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .phantom, in: container,
+                debugDescription: "phantom must not be null")
+        }
         self.phantom = try container.decodeIfPresent(TrackerHelloPhantom.self, forKey: .phantom)
     }
 
