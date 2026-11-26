@@ -30,6 +30,17 @@ import * as validators from 'needle-protocol/zod';
 import { AngleStreamFrameHeartbeatSchema } from 'needle-protocol/zod';
 const heartbeat = AngleStreamFrameHeartbeatSchema.parse({calibrated: true, link: {state: 'ready', live: true}});
 const calibrated: boolean = heartbeat.calibrated;
+const parsed = validators.AngleStreamEnvelopeSchema.parse({
+    v: 1, kind: 'evt', type: 'heartbeat', ts: '2026-09-04T01:02:03.004Z',
+    payload: { calibrated: true, link: { state: 'ready', live: true } },
+});
+// @ts-expect-error Extra fields on other frame types do not guarantee an inclination number.
+parsed.payload.inclination_deg.toFixed(1);
+// @ts-expect-error The same applies to theta outside the theta frame.
+parsed.payload.theta.toFixed(1);
+if (parsed.type === 'inclination' && parsed.payload.inclination_deg !== null) {
+    parsed.payload.inclination_deg.toFixed(1);
+}
 const status = validators.DevicePayloadStatusSchema.parse({ state: 'ready' });
 const state: 'init' | 'ready' | 'running' | 'degraded' | 'lost' | 'stopping' | 'stopped' = status.state;
 """

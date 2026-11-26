@@ -120,8 +120,20 @@ async function writeTypes(bundles, idToSlug) {
     writeFileSync(join(OUT, 'types.ts'), `${parts.join('\n')}\n`);
 }
 
-function zodFor(schema) {
-    return jsonSchemaToZod(stripDescriptions(structuredClone(schema)), { module: 'none', type: false });
+function zodFor(schema, unknownExtras = false) {
+    const input = stripDescriptions(structuredClone(schema));
+    // The parser override only receives objects. Use an empty schema for true.
+    const unconstrained = {};
+    if (unknownExtras && input.additionalProperties === true) {
+        input.additionalProperties = unconstrained;
+    }
+    return jsonSchemaToZod(input, {
+        module: 'none',
+        type: false,
+        parserOverride(node) {
+            if (node === unconstrained) return 'z.unknown()';
+        },
+    });
 }
 
 function writeZod(bundles, idToSlug) {
@@ -145,7 +157,9 @@ function writeZod(bundles, idToSlug) {
     for (const bundle of bundles) {
         const table = discriminatorTable(bundle.schema, idToSlug, bundle.path);
         if (table === null) {
-            parts.push(`/** \`${bundle.path}\` */`, `export const ${pascal(bundle.slug)}Schema = ${zodFor(bundle.bundled)};`, '');
+            // An unvalidated extra must not bypass the angle stream's discriminator.
+            const unknownExtras = bundle.slug.startsWith('angle-stream-frame-');
+            parts.push(`/** \`${bundle.path}\` */`, `export const ${pascal(bundle.slug)}Schema = ${zodFor(bundle.bundled, unknownExtras)};`, '');
         } else {
             deferred.push({ bundle, table });
         }
