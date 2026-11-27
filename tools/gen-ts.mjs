@@ -188,14 +188,27 @@ function writeZod(bundles, idToSlug) {
     }
     writeFileSync(join(OUT, 'zod.ts'), `${parts.join('\n')}\n`);
 
-    // Zod 4 infers from phantom _zod metadata. Project the existing validator
-    // types for inference while leaving the actual validators on the v3 API.
+    // Zod 4 infers from phantom _zod metadata. Carry it through schema
+    // composition while keeping the native v3 method signatures underneath.
     const declarations = [
         BANNER('generated Zod validators'),
         "import type { z } from 'zod/v3';",
         "import type * as validators from './zod.js';",
         '',
-        'type Inferable<T extends z.ZodTypeAny> = T & {',
+        'interface InferableWrappers<T extends z.ZodTypeAny> {',
+        '    optional(): Inferable<z.ZodOptional<this & T>>;',
+        '    nullable(): Inferable<z.ZodNullable<this & T>>;',
+        '    array(): Inferable<z.ZodArray<this & T>>;',
+        '}',
+        '',
+        'type InferableExtend<T extends z.ZodTypeAny> =',
+        "    T['_def'] extends z.ZodObjectDef<infer Shape, infer UnknownKeys, infer Catchall> ? {",
+        '        extend<A extends z.ZodRawShape>(augmentation: A):',
+        '            Inferable<z.ZodObject<z.objectUtil.extendShape<Shape, A>, UnknownKeys, Catchall>>;',
+        '    } : unknown;',
+        '',
+        '// Put the inference-aware overloads first so calls select them.',
+        'type Inferable<T extends z.ZodTypeAny> = InferableWrappers<T> & InferableExtend<T> & T & {',
         '    /** @internal Type-only metadata for Zod 4 inference. */',
         '    readonly _zod: { readonly input: z.input<T>; readonly output: z.output<T> };',
         '};',
