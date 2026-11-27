@@ -27,6 +27,7 @@ def test_zod_consumer(version, tmp_path):
     shutil.copytree(ROOT / "dist", package / "dist")
     source = """
 import { z } from 'zod';
+import { z as z3 } from 'zod/v3';
 import * as validators from 'needle-protocol/zod';
 import { AngleStreamFrameHeartbeatSchema, TrackerHelloSchema } from 'needle-protocol/zod';
 type Hello = z.infer<typeof TrackerHelloSchema>;
@@ -34,6 +35,23 @@ declare const hello: Hello;
 const protocolVersion: number = hello.protocol_version;
 type Assert<T extends true> = T;
 type ProtocolVersionIsNumber = Assert<number extends Hello['protocol_version'] ? true : false>;
+const OptionalHelloSchema = TrackerHelloSchema.optional();
+const NullableHelloSchema = TrackerHelloSchema.nullable();
+const HelloArraySchema = TrackerHelloSchema.array();
+const UnwrappedHelloSchema = OptionalHelloSchema.unwrap();
+const ExtendedHelloSchema = TrackerHelloSchema.extend({ label: z3.string() });
+const OptionalExtendedHelloSchema = ExtendedHelloSchema.optional();
+declare const optionalHello: z.infer<typeof OptionalHelloSchema>;
+const optionalVersion: number | undefined = optionalHello?.protocol_version;
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+type OptionalHello = Assert<Equal<z.infer<typeof OptionalHelloSchema>, Hello | undefined>>;
+type NullableHello = Assert<Equal<z.infer<typeof NullableHelloSchema>, Hello | null>>;
+type HelloArray = Assert<Equal<z.infer<typeof HelloArraySchema>, Hello[]>>;
+type UnwrappedHello = Assert<Equal<z.infer<typeof UnwrappedHelloSchema>, Hello>>;
+type ExtendedHello = Assert<Equal<Pick<z.infer<typeof ExtendedHelloSchema>, 'type' | 'protocol_version' | 'label'>,
+    { type: 'hello'; protocol_version: number; label: string }>>;
+type OptionalExtendedHello = Assert<Equal<z.infer<typeof OptionalExtendedHelloSchema>,
+    z.infer<typeof ExtendedHelloSchema> | undefined>>;
 const heartbeat = AngleStreamFrameHeartbeatSchema.parse({calibrated: true, link: {state: 'ready', live: true}});
 const calibrated: boolean = heartbeat.calibrated;
 const parsed = validators.AngleStreamEnvelopeSchema.parse({
