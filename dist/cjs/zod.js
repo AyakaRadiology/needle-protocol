@@ -16,33 +16,33 @@ exports.PlanChannelEnvelopeSchema = exports.DeviceEnvelopeSchema = exports.Angle
  * dependency in the hot path. Use these where the cost is free: tests,
  * fixtures, capture validation, and the first frame of a new connection.
  */
-const v3_1 = require("zod/v3");
+const zod_1 = require("zod");
 /** `schemas/angle-stream/frame-heartbeat.json` */
-exports.AngleStreamFrameHeartbeatSchema = v3_1.z.object({ "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()), "protocol_version": v3_1.z.number().int().gte(1).optional(), "protocol_package_version": v3_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(v3_1.z.unknown());
+exports.AngleStreamFrameHeartbeatSchema = zod_1.z.object({ "calibrated": zod_1.z.boolean(), "link": zod_1.z.object({ "state": zod_1.z.string(), "live": zod_1.z.boolean() }).catchall(zod_1.z.any()), "protocol_version": zod_1.z.number().int().gte(1).optional(), "protocol_package_version": zod_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")).optional() }).catchall(zod_1.z.unknown());
 /** `schemas/angle-stream/frame-inclination.json` */
-exports.AngleStreamFrameInclinationSchema = v3_1.z.object({ "inclination_deg": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.unknown());
+exports.AngleStreamFrameInclinationSchema = zod_1.z.object({ "inclination_deg": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "calibrated": zod_1.z.boolean(), "link": zod_1.z.object({ "state": zod_1.z.string(), "live": zod_1.z.boolean() }).catchall(zod_1.z.any()) }).catchall(zod_1.z.unknown());
 /** `schemas/angle-stream/frame-theta.json` */
-exports.AngleStreamFrameThetaSchema = v3_1.z.object({ "theta": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "calibrated": v3_1.z.boolean(), "link": v3_1.z.object({ "state": v3_1.z.string(), "live": v3_1.z.boolean() }).catchall(v3_1.z.any()) }).catchall(v3_1.z.unknown());
+exports.AngleStreamFrameThetaSchema = zod_1.z.object({ "theta": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "calibrated": zod_1.z.boolean(), "link": zod_1.z.object({ "state": zod_1.z.string(), "live": zod_1.z.boolean() }).catchall(zod_1.z.any()) }).catchall(zod_1.z.unknown());
 /** `schemas/device/payload-data.json` */
-exports.DevicePayloadDataSchema = v3_1.z.object({ "accel_x": v3_1.z.number(), "accel_y": v3_1.z.number(), "accel_z": v3_1.z.number() }).strict();
+exports.DevicePayloadDataSchema = zod_1.z.object({ "accel_x": zod_1.z.number(), "accel_y": zod_1.z.number(), "accel_z": zod_1.z.number() }).strict();
 /** `schemas/device/payload-error.json` */
-exports.DevicePayloadErrorSchema = v3_1.z.object({ "code": v3_1.z.string().min(1), "message": v3_1.z.string(), "detail": v3_1.z.string().optional() }).strict();
+exports.DevicePayloadErrorSchema = zod_1.z.object({ "code": zod_1.z.string().min(1), "message": zod_1.z.string(), "detail": zod_1.z.string().optional() }).strict();
 /** `schemas/device/payload-log.json` */
-exports.DevicePayloadLogSchema = v3_1.z.object({ "level": v3_1.z.enum(["trace", "debug", "info", "warn", "error", "critical"]), "message": v3_1.z.string() }).strict();
+exports.DevicePayloadLogSchema = zod_1.z.object({ "level": zod_1.z.enum(["trace", "debug", "info", "warn", "error", "critical"]), "message": zod_1.z.string() }).strict();
 /** `schemas/device/payload-status.json` */
-exports.DevicePayloadStatusSchema = v3_1.z.object({ "state": v3_1.z.enum(["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]), "envelope_schema_version": v3_1.z.string().regex(new RegExp("^\\d+\\.\\d+\\.\\d+$")).optional() }).strict();
+exports.DevicePayloadStatusSchema = zod_1.z.object({ "state": zod_1.z.enum(["init", "ready", "running", "degraded", "lost", "stopping", "stopped"]), "envelope_schema_version": zod_1.z.string().regex(new RegExp("^\\d+\\.\\d+\\.\\d+$")).optional() }).strict();
 /** `schemas/plan-channel/payload-plan.json` */
-exports.PlanChannelPayloadPlanSchema = v3_1.z.object({ "plan_inclination_deg": v3_1.z.number().gte(0).lte(90), "azimuth_deg": v3_1.z.number().gte(-180).lte(180).optional(), "entry_lateral_mm": v3_1.z.number().gte(-1000).lte(1000).optional(), "entry_longitudinal_mm": v3_1.z.number().gte(-3000).lte(3000).optional(), "plan_id": v3_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": v3_1.z.number().int().gte(0), "source": v3_1.z.object({ "app": v3_1.z.literal("needle-simulator"), "app_version": v3_1.z.string().min(1), "protocol_package_version": v3_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")) }).strict() }).strict();
+exports.PlanChannelPayloadPlanSchema = zod_1.z.object({ "plan_inclination_deg": zod_1.z.number().gte(0).lte(90), "azimuth_deg": zod_1.z.number().gte(-180).lte(180).optional(), "entry_lateral_mm": zod_1.z.number().gte(-1000).lte(1000).optional(), "entry_longitudinal_mm": zod_1.z.number().gte(-3000).lte(3000).optional(), "plan_id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": zod_1.z.number().int().gte(0), "source": zod_1.z.object({ "app": zod_1.z.literal("needle-simulator"), "app_version": zod_1.z.string().min(1), "protocol_package_version": zod_1.z.string().regex(new RegExp("^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$")) }).strict() }).strict();
 /** `schemas/plan-channel/payload-plan-ack.json` */
-exports.PlanChannelPayloadPlanAckSchema = v3_1.z.object({ "plan_id": v3_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": v3_1.z.number().int().gte(0), "result": v3_1.z.enum(["applied", "pending_confirm", "rejected"]), "reason": v3_1.z.string().min(1).optional(), "applied_revision": v3_1.z.number().int().gte(0).optional() }).strict();
+exports.PlanChannelPayloadPlanAckSchema = zod_1.z.object({ "plan_id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._-]{1,128}$")), "plan_revision": zod_1.z.number().int().gte(0), "result": zod_1.z.enum(["applied", "pending_confirm", "rejected"]), "reason": zod_1.z.string().min(1).optional(), "applied_revision": zod_1.z.number().int().gte(0).optional() }).strict();
 /** `schemas/tracker/frame-needle.json` */
-exports.TrackerFrameNeedleSchema = v3_1.z.object({ "tipX": v3_1.z.number(), "tipY": v3_1.z.number(), "tipZ": v3_1.z.number(), "entryX": v3_1.z.number(), "entryY": v3_1.z.number(), "entryZ": v3_1.z.number(), "timestamp": v3_1.z.number(), "source": v3_1.z.enum(["detected", "predicted"]), "conf_lo": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "conf_hi": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "lastDetectionTimestamp": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "skin_entry_x": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "skin_entry_y": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "skin_entry_z": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "frame_id": v3_1.z.number().int().gte(0), "surface_to_tip_mm": v3_1.z.union([v3_1.z.number(), v3_1.z.null()]), "entry_to_tip_mm": v3_1.z.number(), "geometry_settling": v3_1.z.boolean().optional() }).catchall(v3_1.z.any());
+exports.TrackerFrameNeedleSchema = zod_1.z.object({ "tipX": zod_1.z.number(), "tipY": zod_1.z.number(), "tipZ": zod_1.z.number(), "entryX": zod_1.z.number(), "entryY": zod_1.z.number(), "entryZ": zod_1.z.number(), "timestamp": zod_1.z.number(), "source": zod_1.z.enum(["detected", "predicted"]), "conf_lo": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "conf_hi": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "lastDetectionTimestamp": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "skin_entry_x": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "skin_entry_y": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "skin_entry_z": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "frame_id": zod_1.z.number().int().gte(0), "surface_to_tip_mm": zod_1.z.union([zod_1.z.number(), zod_1.z.null()]), "entry_to_tip_mm": zod_1.z.number(), "geometry_settling": zod_1.z.boolean().optional() }).catchall(zod_1.z.any());
 /** `schemas/tracker/frame-status.json` */
-exports.TrackerFrameStatusSchema = v3_1.z.object({ "type": v3_1.z.literal("status"), "health": v3_1.z.enum(["ok", "degraded"]), "issues": v3_1.z.array(v3_1.z.enum(["camera_lo_missing", "camera_hi_missing", "markers_invisible"])), "needle_present": v3_1.z.boolean() }).catchall(v3_1.z.any());
+exports.TrackerFrameStatusSchema = zod_1.z.object({ "type": zod_1.z.literal("status"), "health": zod_1.z.enum(["ok", "degraded"]), "issues": zod_1.z.array(zod_1.z.enum(["camera_lo_missing", "camera_hi_missing", "markers_invisible"])), "needle_present": zod_1.z.boolean() }).catchall(zod_1.z.any());
 /** `schemas/tracker/hello.json` */
-exports.TrackerHelloSchema = v3_1.z.object({ "type": v3_1.z.literal("hello"), "protocol_version": v3_1.z.number().int().gte(1), "server_bind": v3_1.z.string().optional(), "client_addr": v3_1.z.string().optional(), "phantom": v3_1.z.object({ "id": v3_1.z.string().min(1), "extent_mm": v3_1.z.object({ "x": v3_1.z.number().gt(0), "y": v3_1.z.number().gt(0), "z": v3_1.z.number().gt(0) }).catchall(v3_1.z.any()) }).catchall(v3_1.z.any()).optional(), "world": v3_1.z.enum(["phantom", "rig"]).optional() }).catchall(v3_1.z.any());
+exports.TrackerHelloSchema = zod_1.z.object({ "type": zod_1.z.literal("hello"), "protocol_version": zod_1.z.number().int().gte(1), "server_bind": zod_1.z.string().optional(), "client_addr": zod_1.z.string().optional(), "phantom": zod_1.z.object({ "id": zod_1.z.string().min(1), "extent_mm": zod_1.z.object({ "x": zod_1.z.number().gt(0), "y": zod_1.z.number().gt(0), "z": zod_1.z.number().gt(0) }).catchall(zod_1.z.any()) }).catchall(zod_1.z.any()).optional(), "world": zod_1.z.enum(["phantom", "rig"]).optional() }).catchall(zod_1.z.any());
 /** Shared fields of `schemas/angle-stream/envelope.json`, before the payload is pinned down. */
-const AngleStreamEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": v3_1.z.literal("evt"), "type": v3_1.z.enum(["inclination", "theta", "heartbeat"]), "ts": v3_1.z.string().datetime({ offset: true }), "payload": v3_1.z.record(v3_1.z.string(), v3_1.z.any()) }).catchall(v3_1.z.any());
+const AngleStreamEnvelopeBase = zod_1.z.object({ "v": zod_1.z.literal(1), "kind": zod_1.z.literal("evt"), "type": zod_1.z.enum(["inclination", "theta", "heartbeat"]), "ts": zod_1.z.string().datetime({ offset: true }), "payload": zod_1.z.record(zod_1.z.string(), zod_1.z.any()) }).catchall(zod_1.z.any());
 /**
  * `schemas/angle-stream/envelope.json`
  *
@@ -50,13 +50,13 @@ const AngleStreamEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": 
  * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
  * payload on any `type` and reports success.
  */
-exports.AngleStreamEnvelopeSchema = v3_1.z.discriminatedUnion('type', [
-    AngleStreamEnvelopeBase.extend({ type: v3_1.z.literal('inclination'), payload: exports.AngleStreamFrameInclinationSchema }),
-    AngleStreamEnvelopeBase.extend({ type: v3_1.z.literal('theta'), payload: exports.AngleStreamFrameThetaSchema }),
-    AngleStreamEnvelopeBase.extend({ type: v3_1.z.literal('heartbeat'), payload: exports.AngleStreamFrameHeartbeatSchema }),
+exports.AngleStreamEnvelopeSchema = zod_1.z.discriminatedUnion('type', [
+    AngleStreamEnvelopeBase.extend({ type: zod_1.z.literal('inclination'), payload: exports.AngleStreamFrameInclinationSchema }),
+    AngleStreamEnvelopeBase.extend({ type: zod_1.z.literal('theta'), payload: exports.AngleStreamFrameThetaSchema }),
+    AngleStreamEnvelopeBase.extend({ type: zod_1.z.literal('heartbeat'), payload: exports.AngleStreamFrameHeartbeatSchema }),
 ]);
 /** Shared fields of `schemas/device/envelope.json`, before the payload is pinned down. */
-const DeviceEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": v3_1.z.literal("evt"), "type": v3_1.z.enum(["status", "data", "error", "log"]), "seq": v3_1.z.number().int().gte(0), "t_boot_ms": v3_1.z.number().int().gte(0), "payload": v3_1.z.any() }).strict();
+const DeviceEnvelopeBase = zod_1.z.object({ "v": zod_1.z.literal(1), "kind": zod_1.z.literal("evt"), "type": zod_1.z.enum(["status", "data", "error", "log"]), "seq": zod_1.z.number().int().gte(0), "t_boot_ms": zod_1.z.number().int().gte(0), "payload": zod_1.z.any() }).strict();
 /**
  * `schemas/device/envelope.json`
  *
@@ -64,14 +64,14 @@ const DeviceEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": v3_1.
  * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
  * payload on any `type` and reports success.
  */
-exports.DeviceEnvelopeSchema = v3_1.z.discriminatedUnion('type', [
-    DeviceEnvelopeBase.extend({ type: v3_1.z.literal('status'), payload: exports.DevicePayloadStatusSchema }),
-    DeviceEnvelopeBase.extend({ type: v3_1.z.literal('data'), payload: exports.DevicePayloadDataSchema }),
-    DeviceEnvelopeBase.extend({ type: v3_1.z.literal('error'), payload: exports.DevicePayloadErrorSchema }),
-    DeviceEnvelopeBase.extend({ type: v3_1.z.literal('log'), payload: exports.DevicePayloadLogSchema }),
+exports.DeviceEnvelopeSchema = zod_1.z.discriminatedUnion('type', [
+    DeviceEnvelopeBase.extend({ type: zod_1.z.literal('status'), payload: exports.DevicePayloadStatusSchema }),
+    DeviceEnvelopeBase.extend({ type: zod_1.z.literal('data'), payload: exports.DevicePayloadDataSchema }),
+    DeviceEnvelopeBase.extend({ type: zod_1.z.literal('error'), payload: exports.DevicePayloadErrorSchema }),
+    DeviceEnvelopeBase.extend({ type: zod_1.z.literal('log'), payload: exports.DevicePayloadLogSchema }),
 ]);
 /** Shared fields of `schemas/plan-channel/envelope.json`, before the payload is pinned down. */
-const PlanChannelEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": v3_1.z.enum(["req", "res"]), "type": v3_1.z.enum(["plan", "plan_ack"]), "id": v3_1.z.string().regex(new RegExp("^[A-Za-z0-9._:-]{1,128}$")), "ts": v3_1.z.string().datetime({ offset: true }), "payload": v3_1.z.record(v3_1.z.string(), v3_1.z.any()) }).strict();
+const PlanChannelEnvelopeBase = zod_1.z.object({ "v": zod_1.z.literal(1), "kind": zod_1.z.enum(["req", "res"]), "type": zod_1.z.enum(["plan", "plan_ack"]), "id": zod_1.z.string().regex(new RegExp("^[A-Za-z0-9._:-]{1,128}$")), "ts": zod_1.z.string().datetime({ offset: true }), "payload": zod_1.z.record(zod_1.z.string(), zod_1.z.any()) }).strict();
 /**
  * `schemas/plan-channel/envelope.json`
  *
@@ -79,7 +79,7 @@ const PlanChannelEnvelopeBase = v3_1.z.object({ "v": v3_1.z.literal(1), "kind": 
  * renders an if/then table as `z.intersection(z.any(), z.any())`, which accepts any
  * payload on any `type` and reports success.
  */
-exports.PlanChannelEnvelopeSchema = v3_1.z.discriminatedUnion('type', [
-    PlanChannelEnvelopeBase.extend({ type: v3_1.z.literal('plan'), kind: v3_1.z.literal('req'), payload: exports.PlanChannelPayloadPlanSchema }),
-    PlanChannelEnvelopeBase.extend({ type: v3_1.z.literal('plan_ack'), kind: v3_1.z.literal('res'), payload: exports.PlanChannelPayloadPlanAckSchema }),
+exports.PlanChannelEnvelopeSchema = zod_1.z.discriminatedUnion('type', [
+    PlanChannelEnvelopeBase.extend({ type: zod_1.z.literal('plan'), kind: zod_1.z.literal('req'), payload: exports.PlanChannelPayloadPlanSchema }),
+    PlanChannelEnvelopeBase.extend({ type: zod_1.z.literal('plan_ack'), kind: zod_1.z.literal('res'), payload: exports.PlanChannelPayloadPlanAckSchema }),
 ]);

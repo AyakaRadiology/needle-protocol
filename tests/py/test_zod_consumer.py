@@ -1,4 +1,4 @@
-"""Published validators must type-check against every advertised Zod major."""
+"""Published validators must type-check and compose with both Zod majors."""
 
 import json
 from pathlib import Path
@@ -25,9 +25,9 @@ def test_zod_consumer(version, tmp_path):
     package.mkdir()
     (package / "package.json").write_text(json.dumps(PACKAGE))
     shutil.copytree(ROOT / "dist", package / "dist")
+    shutil.copytree(ROOT / "gen/ts", package / "gen/ts")
     source = """
 import { z } from 'zod';
-import { z as z3 } from 'zod/v3';
 import * as validators from 'needle-protocol/zod';
 import { AngleStreamFrameHeartbeatSchema, TrackerHelloSchema } from 'needle-protocol/zod';
 type Hello = z.infer<typeof TrackerHelloSchema>;
@@ -35,11 +35,13 @@ declare const hello: Hello;
 const protocolVersion: number = hello.protocol_version;
 type Assert<T extends true> = T;
 type ProtocolVersionIsNumber = Assert<number extends Hello['protocol_version'] ? true : false>;
+const CaptureSchema = z.object({ hello: TrackerHelloSchema });
+type CaptureVersionIsNumber = Assert<Equal<z.infer<typeof CaptureSchema>['hello']['protocol_version'], number>>;
 const OptionalHelloSchema = TrackerHelloSchema.optional();
 const NullableHelloSchema = TrackerHelloSchema.nullable();
 const HelloArraySchema = TrackerHelloSchema.array();
 const UnwrappedHelloSchema = OptionalHelloSchema.unwrap();
-const ExtendedHelloSchema = TrackerHelloSchema.extend({ label: z3.string() });
+const ExtendedHelloSchema = TrackerHelloSchema.extend({ label: z.string() });
 const OptionalExtendedHelloSchema = ExtendedHelloSchema.optional();
 declare const optionalHello: z.infer<typeof OptionalHelloSchema>;
 const optionalVersion: number | undefined = optionalHello?.protocol_version;
@@ -77,18 +79,33 @@ const state: 'init' | 'ready' | 'running' | 'degraded' | 'lost' | 'stopping' | '
         },
         "include": ["consumer.mts", "consumer.cts"],
     }))
-    result = subprocess.run(
+    typecheck = subprocess.run(
         ["node", str(ROOT / "node_modules/typescript/bin/tsc"), "-p", str(tmp_path)],
         capture_output=True, text=True, timeout=60,
     )
-    assert result.returncode == 0, result.stdout + result.stderr
+    errors = []
     for extension in ("mjs", "cjs"):
         (tmp_path / f"runtime.{extension}").write_text(
-            "import { DevicePayloadStatusSchema as status } from 'needle-protocol/zod';\n"
+            "import { z } from 'zod';\n"
+            "import { DevicePayloadStatusSchema as status, TrackerHelloSchema } from 'needle-protocol/zod';\n"
             if extension == "mjs" else
-            "const { DevicePayloadStatusSchema: status } = require('needle-protocol/zod');\n"
+            "const { z } = require('zod');\n"
+            "const { DevicePayloadStatusSchema: status, TrackerHelloSchema } = require('needle-protocol/zod');\n"
         )
         with (tmp_path / f"runtime.{extension}").open("a") as runtime:
             runtime.write("if (!status.safeParse({state: 'ready'}).success || "
                           "status.safeParse({state: 'invalid'}).success) throw Error('validation');\n")
-        subprocess.run(["node", f"runtime.{extension}"], cwd=tmp_path, check=True)
+            runtime.write("""
+const capture = z.object({ hello: TrackerHelloSchema });
+if (!capture.safeParse({ hello: { type: 'hello', protocol_version: 1 } }).success ||
+    capture.safeParse({ hello: { type: 'hello', protocol_version: '1' } }).success) {
+    throw Error('nested tracker hello validation');
+}
+""")
+        result = subprocess.run(
+            ["node", f"runtime.{extension}"], cwd=tmp_path, capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode:
+            errors.append(f"{extension}: {result.stderr}")
+    assert not errors, "\n".join(errors)
+    assert typecheck.returncode == 0, typecheck.stdout + typecheck.stderr
