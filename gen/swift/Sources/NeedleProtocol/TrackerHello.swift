@@ -114,7 +114,7 @@ public enum TrackerHelloWorld: String, Codable, Sendable, Equatable, CaseIterabl
 /// packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against
 /// the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them
 /// (apps/desktop/src-tauri/src/ws_client.rs, SUPPORTED_PROTOCOL_VERSIONS).
-/// Schema `x-version` 1.0.0; source `schemas/tracker/hello.json`.
+/// Schema `x-version` 1.1.0; source `schemas/tracker/hello.json`.
 public struct TrackerHello: Codable, Sendable, Equatable {
     /// Always `hello`; checked on decode.
     public static let type = "hello"
@@ -145,18 +145,27 @@ public struct TrackerHello: Codable, Sendable, Equatable {
     /// frame omits it. Additive: protocol_version is not bumped.
     public var world: TrackerHelloWorld?
 
+    /// OPTIONAL. An opaque value the tracker makes at random each time it starts. Needle ids (the
+    /// needle frame's `needles[].id`) mean something only within one run: a client that sees a
+    /// different `run` forgets every id it knew (needle-simulator
+    /// docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md). An older tracker omits
+    /// it. Additive: protocol_version is not bumped.
+    public var run: String?
+
     public init(
         protocolVersion: Int,
         serverBind: String? = nil,
         clientAddr: String? = nil,
         phantom: TrackerHelloPhantom? = nil,
-        world: TrackerHelloWorld? = nil
+        world: TrackerHelloWorld? = nil,
+        run: String? = nil
     ) {
         self.protocolVersion = protocolVersion
         self.serverBind = serverBind
         self.clientAddr = clientAddr
         self.phantom = phantom
         self.world = world
+        self.run = run
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -166,6 +175,7 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         case clientAddr = "client_addr"
         case phantom
         case world
+        case run
     }
 
     public init(from decoder: Decoder) throws {
@@ -206,6 +216,17 @@ public struct TrackerHello: Codable, Sendable, Equatable {
                 debugDescription: "world must not be null")
         }
         self.world = try container.decodeIfPresent(TrackerHelloWorld.self, forKey: .world)
+        if container.contains(.run), try container.decodeNil(forKey: .run) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .run, in: container,
+                debugDescription: "run must not be null")
+        }
+        self.run = try container.decodeIfPresent(String.self, forKey: .run)
+        if let value = self.run, value.count < 1 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .run, in: container,
+                debugDescription: "run must have at least 1 character(s)")
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -216,5 +237,6 @@ public struct TrackerHello: Codable, Sendable, Equatable {
         try container.encodeIfPresent(self.clientAddr, forKey: .clientAddr)
         try container.encodeIfPresent(self.phantom, forKey: .phantom)
         try container.encodeIfPresent(self.world, forKey: .world)
+        try container.encodeIfPresent(self.run, forKey: .run)
     }
 }

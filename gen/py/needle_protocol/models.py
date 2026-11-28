@@ -17,6 +17,7 @@ from pydantic import (
     ConfigDict,
     Field,
     PositiveFloat,
+    RootModel,
     confloat,
     conint,
     constr,
@@ -398,6 +399,78 @@ class TrackerFrameNeedleSource(Enum):
     predicted = 'predicted'
 
 
+class TrackerFrameNeedleNeedlesSource(Enum):
+    detected = 'detected'
+    predicted = 'predicted'
+
+
+class TrackerFrameNeedleNeedlesCurveItem(RootModel[list[float]]):
+    root: list[float] = Field(
+        ...,
+        description='One point [x, y, z], tracker mm, in the same frame and axes as tipX/tipY/tipZ.',
+        max_length=3,
+        min_length=3,
+        title='TrackerFrameNeedleNeedlesCurveItem',
+    )
+
+
+class TrackerFrameNeedleNeedlesItem(_WireModel):
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    id: Annotated[conint(ge=0), _WireInteger] = Field(
+        ...,
+        description="The tracker's number for this needle. It stays the same while the tracker follows this needle and is never reused within one tracker run (hello `run`); across runs it means nothing.",
+    )
+    tipX: float = Field(..., description='Needle tip X, tracker mm.')
+    tipY: float = Field(..., description='Needle tip Y, tracker mm.')
+    tipZ: float = Field(..., description='Needle tip Z, tracker mm.')
+    entryX: float = Field(..., description='Surface-snapped entry point X, tracker mm.')
+    entryY: float = Field(..., description='Surface-snapped entry point Y, tracker mm.')
+    entryZ: float = Field(..., description='Surface-snapped entry point Z, tracker mm.')
+    skin_entry_x: float | None = Field(
+        ...,
+        description="Skin-surface entry point X, tracker mm. null when this needle's line does not cross the top face.",
+    )
+    skin_entry_y: float | None = Field(
+        ...,
+        description='Skin-surface entry point Y, tracker mm. null together with skin_entry_x.',
+    )
+    skin_entry_z: float | None = Field(
+        ...,
+        description='Skin-surface entry point Z, tracker mm. null together with skin_entry_x.',
+    )
+    surface_to_tip_mm: float | None = Field(
+        ...,
+        description='Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null.',
+    )
+    entry_to_tip_mm: float = Field(
+        ...,
+        description='Length from the surface-snapped entry point to the tip, mm. Never null.',
+    )
+    source: TrackerFrameNeedleNeedlesSource = Field(
+        ...,
+        description="This needle's own filter: `detected` = a fresh detection this frame; `predicted` = its Kalman prediction.",
+        title='TrackerFrameNeedleNeedlesSource',
+    )
+    conf_lo: float | None = Field(
+        ...,
+        description='As the top-level conf_lo, for this needle (the curve model puts its per-needle score in both conf_lo and conf_hi).',
+    )
+    conf_hi: float | None = Field(
+        ..., description='As the top-level conf_hi, for this needle.'
+    )
+    lastDetectionTimestamp: float | None = Field(
+        ...,
+        description='Wall-clock time (Unix seconds) this needle was last detected. null if it has none.',
+    )
+    curve: list[TrackerFrameNeedleNeedlesCurveItem] = Field(
+        None,
+        description="OPTIONAL. The needle's 3D points from the entry to the tip, as many as the model outputs (not the tracker page's 8). These are the model's raw points: tipX/entryX are filtered and surface-snapped, so the curve's ends need not equal them and can differ by a few mm.",
+        min_length=2,
+    )
+
+
 class TrackerFrameNeedle(_WireModel):
     model_config = ConfigDict(
         extra='allow',
@@ -457,6 +530,12 @@ class TrackerFrameNeedle(_WireModel):
     geometry_settling: bool = Field(
         None,
         description="OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the phantom or a camera move and its geometry has not followed yet, so the position may be off by up to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in the phantom's frame): no such flag. Additive: protocol_version is not bumped.",
+    )
+    needles: list[TrackerFrameNeedleNeedlesItem] = Field(
+        None,
+        description="OPTIONAL. Every numbered needle the tracker is following this frame: at most the follower's slots (v1.0 handles 3; the format carries up to 4). A reader that understands `needles` uses only this array; a frame without it (the YOLO path, an older tracker) is one needle with no id, read from the top-level fields, which a tracker that sends `needles` still fills with the one needle it sent before. Candidates with no number are never listed. Additive: protocol_version is not bumped.",
+        max_length=4,
+        min_length=1,
     )
 
 
@@ -546,6 +625,10 @@ class TrackerHello(_WireModel):
         None,
         description="OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ, entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the phantom's own frame, its gel box corner (what every tracker sent before this field existed). 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and axes are the phantom's nominal place in the rig: the phantom is located inside it and a re-seated phantom does not move the positions (needle-simulator docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's frame omits it. Additive: protocol_version is not bumped.",
         title='TrackerHelloWorld',
+    )
+    run: constr(min_length=1) = Field(
+        None,
+        description="OPTIONAL. An opaque value the tracker makes at random each time it starts. Needle ids (the needle frame's `needles[].id`) mean something only within one run: a client that sees a different `run` forgets every id it knew (needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md). An older tracker omits it. Additive: protocol_version is not bumped.",
     )
 
 # ---------------------------------------------------------------------------

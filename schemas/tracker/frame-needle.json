@@ -2,8 +2,8 @@
     "$id": "urn:needle:schema:tracker-frame-needle",
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Tracker Needle Frame",
-    "description": "The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up, Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.",
-    "x-version": "1.0.0",
+    "description": "The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up, Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract. Since 1.1.0 a frame may also carry `needles`, the numbered list of every needle the tracker is following (needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md); the top-level fields stay the one needle the tracker sent before.",
+    "x-version": "1.1.0",
     "type": "object",
     "$comment": "additionalProperties is true and MUST stay true: the tracker's stated rule is that additive optional fields do NOT bump protocol_version (see tracker/hello.json). `required` lists exactly what the producer sends on every frame; a frame that omits one of them is not a v2 frame (a v1 rig lacks conf_lo, skin_entry_*, surface_to_tip_mm and entry_to_tip_mm, and is rejected here on purpose).",
     "additionalProperties": true,
@@ -57,6 +57,64 @@
         "geometry_settling": {
             "type": "boolean",
             "description": "OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the phantom or a camera move and its geometry has not followed yet, so the position may be off by up to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in the phantom's frame): no such flag. Additive: protocol_version is not bumped."
+        },
+        "needles": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "description": "OPTIONAL. Every numbered needle the tracker is following this frame: at most the follower's slots (v1.0 handles 3; the format carries up to 4). A reader that understands `needles` uses only this array; a frame without it (the YOLO path, an older tracker) is one needle with no id, read from the top-level fields, which a tracker that sends `needles` still fills with the one needle it sent before. Candidates with no number are never listed. Additive: protocol_version is not bumped.",
+            "items": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "One numbered needle. Every field but `id` and `curve` means what the top-level field of the same name means, for this needle, in the same frame and axes.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "The tracker's number for this needle. It stays the same while the tracker follows this needle and is never reused within one tracker run (hello `run`); across runs it means nothing."
+                    },
+                    "tipX": { "type": "number", "description": "Needle tip X, tracker mm." },
+                    "tipY": { "type": "number", "description": "Needle tip Y, tracker mm." },
+                    "tipZ": { "type": "number", "description": "Needle tip Z, tracker mm." },
+                    "entryX": { "type": "number", "description": "Surface-snapped entry point X, tracker mm." },
+                    "entryY": { "type": "number", "description": "Surface-snapped entry point Y, tracker mm." },
+                    "entryZ": { "type": "number", "description": "Surface-snapped entry point Z, tracker mm." },
+                    "skin_entry_x": { "type": ["number", "null"], "description": "Skin-surface entry point X, tracker mm. null when this needle's line does not cross the top face." },
+                    "skin_entry_y": { "type": ["number", "null"], "description": "Skin-surface entry point Y, tracker mm. null together with skin_entry_x." },
+                    "skin_entry_z": { "type": ["number", "null"], "description": "Skin-surface entry point Z, tracker mm. null together with skin_entry_x." },
+                    "surface_to_tip_mm": { "type": ["number", "null"], "description": "Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null." },
+                    "entry_to_tip_mm": { "type": "number", "description": "Length from the surface-snapped entry point to the tip, mm. Never null." },
+                    "source": {
+                        "type": "string",
+                        "enum": ["detected", "predicted"],
+                        "description": "This needle's own filter: `detected` = a fresh detection this frame; `predicted` = its Kalman prediction."
+                    },
+                    "conf_lo": { "type": ["number", "null"], "description": "As the top-level conf_lo, for this needle (the curve model puts its per-needle score in both conf_lo and conf_hi)." },
+                    "conf_hi": { "type": ["number", "null"], "description": "As the top-level conf_hi, for this needle." },
+                    "lastDetectionTimestamp": { "type": ["number", "null"], "description": "Wall-clock time (Unix seconds) this needle was last detected. null if it has none." },
+                    "curve": {
+                        "type": "array",
+                        "minItems": 2,
+                        "description": "OPTIONAL. The needle's 3D points from the entry to the tip, as many as the model outputs (not the tracker page's 8). These are the model's raw points: tipX/entryX are filtered and surface-snapped, so the curve's ends need not equal them and can differ by a few mm.",
+                        "items": {
+                            "type": "array",
+                            "minItems": 3,
+                            "maxItems": 3,
+                            "description": "One point [x, y, z], tracker mm, in the same frame and axes as tipX/tipY/tipZ.",
+                            "items": { "type": "number" }
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "tipX", "tipY", "tipZ",
+                    "entryX", "entryY", "entryZ",
+                    "skin_entry_x", "skin_entry_y", "skin_entry_z",
+                    "surface_to_tip_mm", "entry_to_tip_mm",
+                    "source", "conf_lo", "conf_hi",
+                    "lastDetectionTimestamp"
+                ]
+            }
         }
     },
     "required": [

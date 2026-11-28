@@ -61,11 +61,38 @@ function stripDescriptions(node) {
     return out;
 }
 
+/** Name every array item that is an object after its path (`needles` in
+ *  `TrackerFrameNeedle` → `TrackerFrameNeedleNeedlesItem`), as tools/gen-py.py
+ *  does. Left anonymous, json-schema-to-typescript writes the whole object out
+ *  once per tuple length a `maxItems` allows, and consumers get no name to
+ *  import for one element. */
+function nameArrayItems(node, prefix) {
+    if (Array.isArray(node)) {
+        node.forEach((item) => nameArrayItems(item, prefix));
+        return;
+    }
+    if (node === null || typeof node !== 'object') return;
+    for (const [key, value] of Object.entries(node)) {
+        if (key === 'properties' && value !== null && typeof value === 'object') {
+            for (const [prop, sub] of Object.entries(value)) {
+                const items = sub?.items;
+                if (items && typeof items === 'object' && !Array.isArray(items) && items.properties) {
+                    items.title ??= `${prefix}${pascal(prop)}Item`;
+                }
+                nameArrayItems(sub, `${prefix}${pascal(prop)}`);
+            }
+        } else {
+            nameArrayItems(value, prefix);
+        }
+    }
+}
+
 async function compileType(bundled, name) {
     // `$id` and `title` both outrank the name argument in
     // json-schema-to-typescript, and a URN `$id` produces an unusable name. Drop
     // both so the exported name is a pure function of the file path.
     const { $id, title, ...body } = structuredClone(bundled);
+    nameArrayItems(body, name);
     const compiled = await compile(body, name, {
         bannerComment: '',
         additionalProperties: false,

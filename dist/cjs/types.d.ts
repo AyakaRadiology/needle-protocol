@@ -290,7 +290,7 @@ export interface PlanChannelPayloadPlanAck {
     applied_revision?: number;
 }
 /**
- * The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up, Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract.
+ * The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py, _triangulate_and_broadcast(), with the two length fields from packages/needle-pipeline/.../pipeline/measure.py needle_length_fields()). Consumers: apps/desktop/src/types.ts (NeedleFrameWire) and lib/tracking/wire.ts, packages/needle-eval/.../schema.py (TrackEvent). Unlike `hello` and `status`, this frame has NO `type` field: the desktop client (ws_client.rs) treats every post-hello frame whose `type` is not `status` as a needle frame, so there is no discriminator to put in an envelope. All coordinates are tracker (trk) mm on the scene axes the producer's map_to_scene_mm() emits (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up, Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z, lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not part of this contract. Since 1.1.0 a frame may also carry `needles`, the numbered list of every needle the tracker is following (needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md); the top-level fields stay the one needle the tracker sent before.
  */
 export interface TrackerFrameNeedle {
     /**
@@ -365,6 +365,98 @@ export interface TrackerFrameNeedle {
      * OPTIONAL. Sent only by a tracker whose hello says world 'rig': true while it has seen the phantom or a camera move and its geometry has not followed yet, so the position may be off by up to that move (about 2 mm when the phantom is re-seated); false otherwise. Absent (a tracker in the phantom's frame): no such flag. Additive: protocol_version is not bumped.
      */
     geometry_settling?: boolean;
+    /**
+     * OPTIONAL. Every numbered needle the tracker is following this frame: at most the follower's slots (v1.0 handles 3; the format carries up to 4). A reader that understands `needles` uses only this array; a frame without it (the YOLO path, an older tracker) is one needle with no id, read from the top-level fields, which a tracker that sends `needles` still fills with the one needle it sent before. Candidates with no number are never listed. Additive: protocol_version is not bumped.
+     *
+     * @minItems 1
+     * @maxItems 4
+     */
+    needles?: [TrackerFrameNeedleNeedlesItem] | [TrackerFrameNeedleNeedlesItem, TrackerFrameNeedleNeedlesItem] | [
+        TrackerFrameNeedleNeedlesItem,
+        TrackerFrameNeedleNeedlesItem,
+        TrackerFrameNeedleNeedlesItem
+    ] | [
+        TrackerFrameNeedleNeedlesItem,
+        TrackerFrameNeedleNeedlesItem,
+        TrackerFrameNeedleNeedlesItem,
+        TrackerFrameNeedleNeedlesItem
+    ];
+    [k: string]: unknown;
+}
+/**
+ * One numbered needle. Every field but `id` and `curve` means what the top-level field of the same name means, for this needle, in the same frame and axes.
+ */
+export interface TrackerFrameNeedleNeedlesItem {
+    /**
+     * The tracker's number for this needle. It stays the same while the tracker follows this needle and is never reused within one tracker run (hello `run`); across runs it means nothing.
+     */
+    id: number;
+    /**
+     * Needle tip X, tracker mm.
+     */
+    tipX: number;
+    /**
+     * Needle tip Y, tracker mm.
+     */
+    tipY: number;
+    /**
+     * Needle tip Z, tracker mm.
+     */
+    tipZ: number;
+    /**
+     * Surface-snapped entry point X, tracker mm.
+     */
+    entryX: number;
+    /**
+     * Surface-snapped entry point Y, tracker mm.
+     */
+    entryY: number;
+    /**
+     * Surface-snapped entry point Z, tracker mm.
+     */
+    entryZ: number;
+    /**
+     * Skin-surface entry point X, tracker mm. null when this needle's line does not cross the top face.
+     */
+    skin_entry_x: number | null;
+    /**
+     * Skin-surface entry point Y, tracker mm. null together with skin_entry_x.
+     */
+    skin_entry_y: number | null;
+    /**
+     * Skin-surface entry point Z, tracker mm. null together with skin_entry_x.
+     */
+    skin_entry_z: number | null;
+    /**
+     * Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null.
+     */
+    surface_to_tip_mm: number | null;
+    /**
+     * Length from the surface-snapped entry point to the tip, mm. Never null.
+     */
+    entry_to_tip_mm: number;
+    /**
+     * This needle's own filter: `detected` = a fresh detection this frame; `predicted` = its Kalman prediction.
+     */
+    source: 'detected' | 'predicted';
+    /**
+     * As the top-level conf_lo, for this needle (the curve model puts its per-needle score in both conf_lo and conf_hi).
+     */
+    conf_lo: number | null;
+    /**
+     * As the top-level conf_hi, for this needle.
+     */
+    conf_hi: number | null;
+    /**
+     * Wall-clock time (Unix seconds) this needle was last detected. null if it has none.
+     */
+    lastDetectionTimestamp: number | null;
+    /**
+     * OPTIONAL. The needle's 3D points from the entry to the tip, as many as the model outputs (not the tracker page's 8). These are the model's raw points: tipX/entryX are filtered and surface-snapped, so the curve's ends need not equal them and can differ by a few mm.
+     *
+     * @minItems 2
+     */
+    curve?: [[number, number, number], [number, number, number], ...[number, number, number][]];
     [k: string]: unknown;
 }
 /**
@@ -426,6 +518,10 @@ export interface TrackerHello {
      * OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ, entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the phantom's own frame, its gel box corner (what every tracker sent before this field existed). 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and axes are the phantom's nominal place in the rig: the phantom is located inside it and a re-seated phantom does not move the positions (needle-simulator docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's frame omits it. Additive: protocol_version is not bumped.
      */
     world?: 'phantom' | 'rig';
+    /**
+     * OPTIONAL. An opaque value the tracker makes at random each time it starts. Needle ids (the needle frame's `needles[].id`) mean something only within one run: a client that sees a different `run` forgets every id it knew (needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md). An older tracker omits it. Additive: protocol_version is not bumped.
+     */
+    run?: string;
     [k: string]: unknown;
 }
 export {};

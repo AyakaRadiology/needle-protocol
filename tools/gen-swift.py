@@ -26,7 +26,11 @@ Decisions worth knowing before reading the output:
   verified on decode, written on encode, and exposed as a static.
 * **Nested objects** (``hello.phantom``) become nested structs named after their owner and
   property (``TrackerHelloPhantom``); they must say ``additionalProperties: true`` for the
-  same reason as the top level.
+  same reason as the top level. An array of objects (``frame-needle.needles``) is an array
+  of such a struct, named with an ``Item`` suffix (``TrackerFrameNeedleNeedlesItem``).
+* **Arrays** may hold string enums, objects, or fixed-shape arrays of numbers
+  (``needles[].curve``, ``[[Double]]``); ``minItems``/``maxItems`` are checked on decode,
+  on the outer array and on the inner one.
 * **Unsupported schema keywords fail generation** rather than being dropped, so
   a schema edit that this generator cannot express is a red build, not a
   contract the Swift types quietly do not enforce.
@@ -67,8 +71,10 @@ BANNER = """\
 
 PROPERTY_KEYS = {
     "type", "description", "enum", "const", "minimum", "exclusiveMinimum", "minLength", "items",
-    "properties", "required", "additionalProperties",
+    "properties", "required", "additionalProperties", "minItems", "maxItems",
 }
+# What the inner array of an array of number arrays may say (`needles[].curve`'s points).
+INNER_ARRAY_KEYS = {"type", "description", "items", "minItems", "maxItems"}
 SCHEMA_KEYS = {
     "$id", "$schema", "title", "description", "x-version", "type", "$comment",
     "additionalProperties", "properties", "required",
@@ -147,6 +153,11 @@ class Field:
         self.minimum = spec.get("minimum")
         self.exclusive_minimum = spec.get("exclusiveMinimum")
         self.min_length = spec.get("minLength")
+        self.min_items = spec.get("minItems")
+        self.max_items = spec.get("maxItems")
+        # Bounds on each inner array of a `[[Double]]` field.
+        self.inner_min_items: int | None = None
+        self.inner_max_items: int | None = None
         self.nested_schema: dict | None = None
         self.nested_type: str | None = None
         self.enum_type: str | None = None
@@ -168,12 +179,34 @@ class Field:
             raise GenerationError(f"{where}.{wire}: unsupported type {types!r}")
         kind = kinds[0]
         if kind == "array":
-            item = spec.get("items")
-            if not item or item.get("type") != "string" or "enum" not in item:
-                raise GenerationError(f"{where}.{wire}: only arrays of string enums are supported")
-            self.enum_type = owner + camel_pascal(wire)
-            self.enum_values = item["enum"]
-            self.swift = f"[{self.enum_type}]"
+            item = spec.get("items") or {}
+            if item.get("type") == "string" and "enum" in item:
+                self.enum_type = owner + camel_pascal(wire)
+                self.enum_values = item["enum"]
+                self.swift = f"[{self.enum_type}]"
+            elif item.get("type") == "object":
+                if item.get("additionalProperties") is not True or "properties" not in item:
+                    raise GenerationError(
+                        f"{where}.{wire}: an array's object needs `properties` and "
+                        "`additionalProperties: true`"
+                    )
+                self.nested_schema = item
+                self.nested_type = owner + camel_pascal(wire) + "Item"
+                self.swift = f"[{self.nested_type}]"
+            elif item.get("type") == "array" and item.get("items") == {"type": "number"}:
+                unknown_inner = set(item) - INNER_ARRAY_KEYS
+                if unknown_inner:
+                    raise GenerationError(
+                        f"{where}.{wire}.items: unsupported schema keyword(s) {sorted(unknown_inner)}"
+                    )
+                self.inner_min_items = item.get("minItems")
+                self.inner_max_items = item.get("maxItems")
+                self.swift = "[[Double]]"
+            else:
+                raise GenerationError(
+                    f"{where}.{wire}: only arrays of string enums, of objects and of number "
+                    "arrays are supported"
+                )
         elif kind == "object":
             if spec.get("additionalProperties") is not True or "properties" not in spec:
                 raise GenerationError(
@@ -198,6 +231,8 @@ class Field:
             raise GenerationError(f"{where}.{wire}: exclusiveMinimum is only supported on numbers")
         if self.min_length is not None and kind != "string":
             raise GenerationError(f"{where}.{wire}: minLength is only supported on strings")
+        if (self.min_items is not None or self.max_items is not None) and kind != "array":
+            raise GenerationError(f"{where}.{wire}: minItems/maxItems are only supported on arrays")
 
     @property
     def optional(self) -> bool:
@@ -350,6 +385,42 @@ def render_object(schema: dict, name: str, where: str, header: list[str]) -> lis
                 "            throw DecodingError.dataCorruptedError(",
                 f"                forKey: .{f.name}, in: container,",
                 f"                debugDescription: \"{f.wire} must have at least {f.min_length} character(s)\")",
+                "        }",
+            ]
+        for bound, op, words in (
+            (f.min_items, "<", "at least"),
+            (f.max_items, ">", "at most"),
+        ):
+            if bound is None:
+                continue
+            check = (
+                f"if let value = self.{f.name}, value.count {op} {bound}"
+                if f.optional
+                else f"if self.{f.name}.count {op} {bound}"
+            )
+            out += [
+                f"        {check} {{",
+                "            throw DecodingError.dataCorruptedError(",
+                f"                forKey: .{f.name}, in: container,",
+                f"                debugDescription: \"{f.wire} must have {words} {bound} item(s)\")",
+                "        }",
+            ]
+        for bound, op, words in (
+            (f.inner_min_items, "<", "at least"),
+            (f.inner_max_items, ">", "at most"),
+        ):
+            if bound is None:
+                continue
+            check = (
+                f"if let value = self.{f.name}, value.contains(where: {{ $0.count {op} {bound} }})"
+                if f.optional
+                else f"if self.{f.name}.contains(where: {{ $0.count {op} {bound} }})"
+            )
+            out += [
+                f"        {check} {{",
+                "            throw DecodingError.dataCorruptedError(",
+                f"                forKey: .{f.name}, in: container,",
+                f"                debugDescription: \"each element of {f.wire} must have {words} {bound} number(s)\")",
                 "        }",
             ]
         if f.minimum is not None:

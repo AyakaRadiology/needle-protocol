@@ -2,6 +2,7 @@
 
 import ast
 import json
+import re
 from pathlib import Path
 import runpy
 import shutil
@@ -129,6 +130,60 @@ def test_swift_generator_refuses_what_it_cannot_express(tmp_path):
     )
     assert any(line.startswith("public struct") and "Codable" in line for line in nested)
     assert any("b must be > 0" in line for line in nested)
+    # Arrays: string enums, open objects, and arrays of numbers -- with their bounds.
+    with pytest.raises(error, match="only arrays of"):
+        render_struct(schema(properties={"a": {"type": "array", "items": {"type": "integer"}}}))
+    with pytest.raises(error, match="array's object"):
+        render_struct(
+            schema(properties={"a": {"type": "array", "items": {"type": "object", "properties": {}}}})
+        )
+    with pytest.raises(error, match="unsupported schema keyword"):
+        render_struct(
+            schema(
+                properties={
+                    "a": {
+                        "type": "array",
+                        "items": {"type": "array", "uniqueItems": True, "items": {"type": "number"}},
+                    }
+                }
+            )
+        )
+    with pytest.raises(error, match="only supported on arrays"):
+        render_struct(schema(properties={"a": {"type": "string", "minItems": 1}}))
+    listed = render_struct(
+        schema(
+            properties={
+                "a": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": True,
+                        "properties": {
+                            "p": {
+                                "type": "array",
+                                "items": {
+                                    "type": "array",
+                                    "minItems": 3,
+                                    "maxItems": 3,
+                                    "items": {"type": "number"},
+                                },
+                            }
+                        },
+                    },
+                }
+            }
+        )
+    )
+    text = "\n".join(listed)
+    item = re.search(r"public struct (\w+AItem): Codable", text)
+    assert item, text
+    assert f"public var a: [{item[1]}]" in text
+    assert "a must have at least 1 item(s)" in text and "a must have at most 4 item(s)" in text
+    assert "public var p: [[Double]]?" in text
+    assert "each element of p must have at least 3 number(s)" in text
+    assert "each element of p must have at most 3 number(s)" in text
 
 
 def test_swift_generator_preserves_output_on_schema_error(tmp_path, capsys):

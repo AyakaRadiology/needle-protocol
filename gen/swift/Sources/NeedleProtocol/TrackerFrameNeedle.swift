@@ -11,6 +11,202 @@ public enum TrackerFrameNeedleSource: String, Codable, Sendable, Equatable, Case
     case predicted
 }
 
+/// Values of `source` on the wire, in schema order.
+public enum TrackerFrameNeedleNeedlesItemSource: String, Codable, Sendable, Equatable, CaseIterable {
+    case detected
+    case predicted
+}
+
+/// OPTIONAL. Every numbered needle the tracker is following this frame: at most the follower's
+/// slots (v1.0 handles 3; the format carries up to 4). A reader that understands `needles` uses
+/// only this array; a frame without it (the YOLO path, an older tracker) is one needle with no id,
+/// read from the top-level fields, which a tracker that sends `needles` still fills with the one
+/// needle it sent before. Candidates with no number are never listed. Additive: protocol_version is
+/// not bumped.
+public struct TrackerFrameNeedleNeedlesItem: Codable, Sendable, Equatable {
+    /// The tracker's number for this needle. It stays the same while the tracker follows this needle
+    /// and is never reused within one tracker run (hello `run`); across runs it means nothing.
+    public var id: Int
+
+    /// Needle tip X, tracker mm.
+    public var tipX: Double
+
+    /// Needle tip Y, tracker mm.
+    public var tipY: Double
+
+    /// Needle tip Z, tracker mm.
+    public var tipZ: Double
+
+    /// Surface-snapped entry point X, tracker mm.
+    public var entryX: Double
+
+    /// Surface-snapped entry point Y, tracker mm.
+    public var entryY: Double
+
+    /// Surface-snapped entry point Z, tracker mm.
+    public var entryZ: Double
+
+    /// Skin-surface entry point X, tracker mm. null when this needle's line does not cross the top
+    /// face.
+    public var skinEntryX: Double?
+
+    /// Skin-surface entry point Y, tracker mm. null together with skin_entry_x.
+    public var skinEntryY: Double?
+
+    /// Skin-surface entry point Z, tracker mm. null together with skin_entry_x.
+    public var skinEntryZ: Double?
+
+    /// Insertion length: skin-surface point to tip, mm. null when skin_entry_* is null.
+    public var surfaceToTipMm: Double?
+
+    /// Length from the surface-snapped entry point to the tip, mm. Never null.
+    public var entryToTipMm: Double
+
+    /// This needle's own filter: `detected` = a fresh detection this frame; `predicted` = its Kalman
+    /// prediction.
+    public var source: TrackerFrameNeedleNeedlesItemSource
+
+    /// As the top-level conf_lo, for this needle (the curve model puts its per-needle score in both
+    /// conf_lo and conf_hi).
+    public var confLo: Double?
+
+    /// As the top-level conf_hi, for this needle.
+    public var confHi: Double?
+
+    /// Wall-clock time (Unix seconds) this needle was last detected. null if it has none.
+    public var lastDetectionTimestamp: Double?
+
+    /// OPTIONAL. The needle's 3D points from the entry to the tip, as many as the model outputs (not
+    /// the tracker page's 8). These are the model's raw points: tipX/entryX are filtered and
+    /// surface-snapped, so the curve's ends need not equal them and can differ by a few mm.
+    public var curve: [[Double]]?
+
+    public init(
+        id: Int,
+        tipX: Double,
+        tipY: Double,
+        tipZ: Double,
+        entryX: Double,
+        entryY: Double,
+        entryZ: Double,
+        skinEntryX: Double?,
+        skinEntryY: Double?,
+        skinEntryZ: Double?,
+        surfaceToTipMm: Double?,
+        entryToTipMm: Double,
+        source: TrackerFrameNeedleNeedlesItemSource,
+        confLo: Double?,
+        confHi: Double?,
+        lastDetectionTimestamp: Double?,
+        curve: [[Double]]? = nil
+    ) {
+        self.id = id
+        self.tipX = tipX
+        self.tipY = tipY
+        self.tipZ = tipZ
+        self.entryX = entryX
+        self.entryY = entryY
+        self.entryZ = entryZ
+        self.skinEntryX = skinEntryX
+        self.skinEntryY = skinEntryY
+        self.skinEntryZ = skinEntryZ
+        self.surfaceToTipMm = surfaceToTipMm
+        self.entryToTipMm = entryToTipMm
+        self.source = source
+        self.confLo = confLo
+        self.confHi = confHi
+        self.lastDetectionTimestamp = lastDetectionTimestamp
+        self.curve = curve
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case tipX
+        case tipY
+        case tipZ
+        case entryX
+        case entryY
+        case entryZ
+        case skinEntryX = "skin_entry_x"
+        case skinEntryY = "skin_entry_y"
+        case skinEntryZ = "skin_entry_z"
+        case surfaceToTipMm = "surface_to_tip_mm"
+        case entryToTipMm = "entry_to_tip_mm"
+        case source
+        case confLo = "conf_lo"
+        case confHi = "conf_hi"
+        case lastDetectionTimestamp
+        case curve
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int.self, forKey: .id)
+        if self.id < 0 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .id, in: container,
+                debugDescription: "id must be >= 0")
+        }
+        self.tipX = try container.decode(Double.self, forKey: .tipX)
+        self.tipY = try container.decode(Double.self, forKey: .tipY)
+        self.tipZ = try container.decode(Double.self, forKey: .tipZ)
+        self.entryX = try container.decode(Double.self, forKey: .entryX)
+        self.entryY = try container.decode(Double.self, forKey: .entryY)
+        self.entryZ = try container.decode(Double.self, forKey: .entryZ)
+        self.skinEntryX = try container.decode(Double?.self, forKey: .skinEntryX)
+        self.skinEntryY = try container.decode(Double?.self, forKey: .skinEntryY)
+        self.skinEntryZ = try container.decode(Double?.self, forKey: .skinEntryZ)
+        self.surfaceToTipMm = try container.decode(Double?.self, forKey: .surfaceToTipMm)
+        self.entryToTipMm = try container.decode(Double.self, forKey: .entryToTipMm)
+        self.source = try container.decode(TrackerFrameNeedleNeedlesItemSource.self, forKey: .source)
+        self.confLo = try container.decode(Double?.self, forKey: .confLo)
+        self.confHi = try container.decode(Double?.self, forKey: .confHi)
+        self.lastDetectionTimestamp = try container.decode(Double?.self, forKey: .lastDetectionTimestamp)
+        if container.contains(.curve), try container.decodeNil(forKey: .curve) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .curve, in: container,
+                debugDescription: "curve must not be null")
+        }
+        self.curve = try container.decodeIfPresent([[Double]].self, forKey: .curve)
+        if let value = self.curve, value.count < 2 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .curve, in: container,
+                debugDescription: "curve must have at least 2 item(s)")
+        }
+        if let value = self.curve, value.contains(where: { $0.count < 3 }) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .curve, in: container,
+                debugDescription: "each element of curve must have at least 3 number(s)")
+        }
+        if let value = self.curve, value.contains(where: { $0.count > 3 }) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .curve, in: container,
+                debugDescription: "each element of curve must have at most 3 number(s)")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.tipX, forKey: .tipX)
+        try container.encode(self.tipY, forKey: .tipY)
+        try container.encode(self.tipZ, forKey: .tipZ)
+        try container.encode(self.entryX, forKey: .entryX)
+        try container.encode(self.entryY, forKey: .entryY)
+        try container.encode(self.entryZ, forKey: .entryZ)
+        try container.encode(self.skinEntryX, forKey: .skinEntryX)
+        try container.encode(self.skinEntryY, forKey: .skinEntryY)
+        try container.encode(self.skinEntryZ, forKey: .skinEntryZ)
+        try container.encode(self.surfaceToTipMm, forKey: .surfaceToTipMm)
+        try container.encode(self.entryToTipMm, forKey: .entryToTipMm)
+        try container.encode(self.source, forKey: .source)
+        try container.encode(self.confLo, forKey: .confLo)
+        try container.encode(self.confHi, forKey: .confHi)
+        try container.encode(self.lastDetectionTimestamp, forKey: .lastDetectionTimestamp)
+        try container.encodeIfPresent(self.curve, forKey: .curve)
+    }
+}
+
 /// The per-frame needle position the Jetson tracker broadcasts on its WebSocket after `hello`, wire
 /// protocol v2 (needle-simulator packages/needle-jetson/.../tracker/engine.py,
 /// _triangulate_and_broadcast(), with the two length fields from
@@ -23,8 +219,11 @@ public enum TrackerFrameNeedleSource: String, Codable, Sendable, Equatable, Case
 /// (needle-simulator packages/needle-pipeline/.../utils/coords.py): X depth into the phantom, Y up,
 /// Z right. Only v2 names are described here; the v1 spellings (confA/confB, surfaceX/Y/Z,
 /// lenSurfaceTip, lenEntryTip) are a consumer-side compatibility concern and are deliberately not
-/// part of this contract.
-/// Schema `x-version` 1.0.0; source `schemas/tracker/frame-needle.json`.
+/// part of this contract. Since 1.1.0 a frame may also carry `needles`, the numbered list of every
+/// needle the tracker is following (needle-simulator
+/// docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md); the top-level fields stay
+/// the one needle the tracker sent before.
+/// Schema `x-version` 1.1.0; source `schemas/tracker/frame-needle.json`.
 public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
     /// Needle tip X, tracker mm (depth into the phantom).
     public var tipX: Double
@@ -89,6 +288,14 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
     /// the phantom's frame): no such flag. Additive: protocol_version is not bumped.
     public var geometrySettling: Bool?
 
+    /// OPTIONAL. Every numbered needle the tracker is following this frame: at most the follower's
+    /// slots (v1.0 handles 3; the format carries up to 4). A reader that understands `needles` uses
+    /// only this array; a frame without it (the YOLO path, an older tracker) is one needle with no id,
+    /// read from the top-level fields, which a tracker that sends `needles` still fills with the one
+    /// needle it sent before. Candidates with no number are never listed. Additive: protocol_version is
+    /// not bumped.
+    public var needles: [TrackerFrameNeedleNeedlesItem]?
+
     public init(
         tipX: Double,
         tipY: Double,
@@ -107,7 +314,8 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         frameId: Int,
         surfaceToTipMm: Double?,
         entryToTipMm: Double,
-        geometrySettling: Bool? = nil
+        geometrySettling: Bool? = nil,
+        needles: [TrackerFrameNeedleNeedlesItem]? = nil
     ) {
         self.tipX = tipX
         self.tipY = tipY
@@ -127,6 +335,7 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         self.surfaceToTipMm = surfaceToTipMm
         self.entryToTipMm = entryToTipMm
         self.geometrySettling = geometrySettling
+        self.needles = needles
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -148,6 +357,7 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         case surfaceToTipMm = "surface_to_tip_mm"
         case entryToTipMm = "entry_to_tip_mm"
         case geometrySettling = "geometry_settling"
+        case needles
     }
 
     public init(from decoder: Decoder) throws {
@@ -180,6 +390,22 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
                 debugDescription: "geometry_settling must not be null")
         }
         self.geometrySettling = try container.decodeIfPresent(Bool.self, forKey: .geometrySettling)
+        if container.contains(.needles), try container.decodeNil(forKey: .needles) {
+            throw DecodingError.dataCorruptedError(
+                forKey: .needles, in: container,
+                debugDescription: "needles must not be null")
+        }
+        self.needles = try container.decodeIfPresent([TrackerFrameNeedleNeedlesItem].self, forKey: .needles)
+        if let value = self.needles, value.count < 1 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .needles, in: container,
+                debugDescription: "needles must have at least 1 item(s)")
+        }
+        if let value = self.needles, value.count > 4 {
+            throw DecodingError.dataCorruptedError(
+                forKey: .needles, in: container,
+                debugDescription: "needles must have at most 4 item(s)")
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -202,5 +428,6 @@ public struct TrackerFrameNeedle: Codable, Sendable, Equatable {
         try container.encode(self.surfaceToTipMm, forKey: .surfaceToTipMm)
         try container.encode(self.entryToTipMm, forKey: .entryToTipMm)
         try container.encodeIfPresent(self.geometrySettling, forKey: .geometrySettling)
+        try container.encodeIfPresent(self.needles, forKey: .needles)
     }
 }
