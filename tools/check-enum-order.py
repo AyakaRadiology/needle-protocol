@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail when an enum array is reordered or an element removed since the last tag.
+"""Require a schema major bump for breaking enum changes since the last tag.
 
 Why this is a gate and not a review habit
 -----------------------------------------
@@ -11,9 +11,8 @@ tidying, and that every JSON linter will call equivalent -- silently changes wha
 renumbers everything after it, which is the same failure with a wider blast
 radius.
 
-Neither is forbidden forever. Both are MAJOR changes: bump the schema's
-`x-version` major, note it, and the tag you compare against moves on. What is
-forbidden is doing it by accident.
+Both are MAJOR changes. Bump the schema's `x-version` major above the released
+schema's major and note the change in the commit.
 
 Compares against the highest-version `v*` tag reachable from HEAD. If no such tag
 is reachable, the check reports that it has no baseline and passes.
@@ -22,6 +21,7 @@ is reachable, the check reports that it has no baseline and passes.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -79,6 +79,14 @@ def at_tag(tag: str, relative: str) -> object | None:
     return json.loads(result.stdout)
 
 
+def schema_major(schema: object) -> int | None:
+    """Return the major of a numeric x-version, if the schema declares one."""
+    version = schema.get("x-version") if isinstance(schema, dict) else None
+    if isinstance(version, str) and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        return int(version.split(".", 1)[0])
+    return None
+
+
 def main() -> int:
     tag = newest_tag()
     if tag is None:
@@ -94,8 +102,14 @@ def main() -> int:
         before = at_tag(tag, relative)
         if before is None:
             continue  # A new schema has no prior ordering to violate.
+        after = json.loads(file.read_text())
+        old_major = schema_major(before)
+        new_major = schema_major(after)
+        if old_major is not None and new_major is not None and new_major > old_major:
+            continue
+
         old = enums_of(before)
-        new = enums_of(json.loads(file.read_text()))
+        new = enums_of(after)
         for pointer, old_values in old.items():
             new_values = new.get(pointer)
             if new_values is None:
@@ -123,7 +137,7 @@ def main() -> int:
         )
         return 1
 
-    print(f"[check-enum-order] enum ordering unchanged since {tag}.")
+    print(f"[check-enum-order] enum order check passed against {tag}.")
     return 0
 
 
