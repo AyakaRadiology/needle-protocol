@@ -26,10 +26,16 @@ def test_zod_consumer(version, tmp_path):
     (package / "package.json").write_text(json.dumps(PACKAGE))
     shutil.copytree(ROOT / "dist", package / "dist")
     shutil.copytree(ROOT / "gen/ts", package / "gen/ts")
+    (package / "tests").mkdir()
+    shutil.copyfile(ROOT / "tests/samples.json", package / "tests/samples.json")
     source = """
 import { z } from 'zod';
 import * as validators from 'needle-protocol/zod';
 import { AngleStreamFrameHeartbeatSchema, TrackerHelloSchema } from 'needle-protocol/zod';
+import type { TrackerFrameNeedleNeedlesItem } from 'needle-protocol/types';
+import samples = require('needle-protocol/tests/samples.json');
+const frame = samples.valid.find(sample => sample.name === 'tracker-frame-needle-three-needles')!.frame;
+const needle: TrackerFrameNeedleNeedlesItem = validators.TrackerFrameNeedleSchema.parse(frame).needles![1];
 type Hello = z.infer<typeof TrackerHelloSchema>;
 declare const hello: Hello;
 const protocolVersion: number = hello.protocol_version;
@@ -75,7 +81,7 @@ const state: 'init' | 'ready' | 'running' | 'degraded' | 'lost' | 'stopping' | '
     (tmp_path / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {
             "module": "NodeNext", "target": "ES2022", "strict": True,
-            "skipLibCheck": False, "noEmit": True, "types": [],
+            "skipLibCheck": False, "noEmit": True, "types": [], "resolveJsonModule": True,
         },
         "include": ["consumer.mts", "consumer.cts"],
     }))

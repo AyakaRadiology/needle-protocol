@@ -147,6 +147,23 @@ async function writeTypes(bundles, idToSlug) {
     writeFileSync(join(OUT, 'types.ts'), `${parts.join('\n')}\n`);
 }
 
+// Array length checks do not narrow Zod's inferred type. For plain numeric
+// arrays, required tuple entries express the length in both Zod and TypeScript.
+function zodNumericTuple(node) {
+    if (node?.type !== 'array') return;
+    const { type, items, minItems, maxItems, ...other } = node;
+    if (!Number.isSafeInteger(minItems) || minItems < 1 ||
+        (maxItems !== undefined && maxItems !== minItems) || Object.keys(other).length > 0) return;
+
+    const item = items?.type === 'number' && Object.keys(items).length === 1
+        ? 'z.number()'
+        : zodNumericTuple(items);
+    if (item === undefined) return;
+
+    const tuple = `z.tuple([${Array(minItems).fill(item).join(', ')}])`;
+    return maxItems === undefined ? `${tuple}.rest(${item})` : tuple;
+}
+
 function zodFor(schema, unknownExtras = false) {
     const input = stripDescriptions(structuredClone(schema));
     // The parser override only receives objects. Use an empty schema for true.
@@ -159,6 +176,7 @@ function zodFor(schema, unknownExtras = false) {
         type: false,
         parserOverride(node) {
             if (node === unconstrained) return 'z.unknown()';
+            return zodNumericTuple(node);
         },
     });
 }

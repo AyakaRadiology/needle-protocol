@@ -293,7 +293,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, "strip", z.ZodAny, z.objectOutputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -311,7 +311,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">, z.objectInputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -329,7 +329,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">>, "many">>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     tipX: z.ZodNumber;
@@ -367,7 +367,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, "strip", z.ZodAny, z.objectOutputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -385,7 +385,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">, z.objectInputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -403,7 +403,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">>, "many">>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     tipX: z.ZodNumber;
@@ -441,7 +441,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, "strip", z.ZodAny, z.objectOutputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -459,7 +459,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">, z.objectInputType<{
         id: z.ZodNumber;
         tipX: z.ZodNumber;
@@ -477,7 +477,7 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
         conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
         lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
-        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+        curve: z.ZodOptional<z.ZodTuple<[z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>, z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>], z.ZodTuple<[z.ZodNumber, z.ZodNumber, z.ZodNumber], null>>>;
     }, z.ZodAny, "strip">>, "many">>;
 }, z.ZodAny, "strip">>;
 /** `schemas/tracker/frame-status.json` */
