@@ -146,6 +146,25 @@ final class SamplesTests: XCTestCase {
         XCTAssertEqual(hello.protocolVersion, 2)
     }
 
+    func testNeedlesListAndRun() throws {
+        let frame = try JSONDecoder().decode(TrackerFrameNeedle.self, from: sample("tracker-frame-needle-three-needles"))
+        let needles = try XCTUnwrap(frame.needles)
+        XCTAssertEqual(needles.map(\.id), [3, 5, 9])
+        XCTAssertNil(needles[0].curve)
+        XCTAssertEqual(needles[1].curve?.count, 3)
+        XCTAssertEqual(needles[1].curve?.last, [12, 4, -10])
+        XCTAssertEqual(needles[2].source, .predicted)
+        XCTAssertNil(needles[2].confLo)
+        // The top level is still the one needle a reader without `needles` draws.
+        XCTAssertEqual(frame.tipX, needles[0].tipX)
+        let legacy = try JSONDecoder().decode(TrackerFrameNeedle.self, from: sample("tracker-frame-needle-detected"))
+        XCTAssertNil(legacy.needles)
+
+        let hello = try JSONDecoder().decode(TrackerHello.self, from: sample("tracker-hello-run"))
+        XCTAssertEqual(hello.run, "6f1c2a9e4b7d")
+        XCTAssertNil(try JSONDecoder().decode(TrackerHello.self, from: sample("tracker-hello-v2")).run)
+    }
+
     func testHelloFields() throws {
         let hello = try JSONDecoder().decode(TrackerHello.self, from: sample("tracker-hello-v2"))
         XCTAssertEqual(hello.protocolVersion, 2)

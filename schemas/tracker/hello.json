@@ -3,7 +3,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Tracker Hello",
     "description": "First frame the Jetson tracker's WebSocket sends to every client on connect (needle-simulator packages/needle-jetson/.../server/websocket.py). The client checks `protocol_version` against the set it understands and reports PROTOCOL_MISMATCH when the server speaks none of them (apps/desktop/src-tauri/src/ws_client.rs, SUPPORTED_PROTOCOL_VERSIONS).",
-    "x-version": "1.0.0",
+    "x-version": "1.1.0",
     "type": "object",
     "$comment": "additionalProperties is true and MUST stay true: the tracker's stated rule is that additive optional fields do NOT bump protocol_version, so a strict schema here would reject a server that is, by its own contract, compatible.",
     "additionalProperties": true,
@@ -50,6 +50,11 @@
             "type": "string",
             "enum": ["phantom", "rig"],
             "description": "OPTIONAL. The frame every position this tracker sends is in (the needle frames' tipX/tipY/tipZ, entryX/entryY/entryZ and skin_entry_*; the axes and units are the same in both). 'phantom' = the phantom's own frame, its gel box corner (what every tracker sent before this field existed). 'rig' = the rig's frame (needle-simulator config/rig/rig_tags/floor-v4.json), whose origin and axes are the phantom's nominal place in the rig: the phantom is located inside it and a re-seated phantom does not move the positions (needle-simulator docs/decisions/0050-world-is-the-rig.md). ABSENT MEANS 'phantom': a tracker in the phantom's frame omits it. Additive: protocol_version is not bumped."
+        },
+        "run": {
+            "type": "string",
+            "minLength": 1,
+            "description": "OPTIONAL. An opaque value the tracker makes at random each time it starts. Needle ids (the needle frame's `needles[].id`) mean something only within one run: a client that sees a different `run` forgets every id it knew (needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md). An older tracker omits it. Additive: protocol_version is not bumped."
         }
     },
     "required": ["type", "protocol_version"]

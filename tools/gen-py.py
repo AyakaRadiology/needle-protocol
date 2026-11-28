@@ -8,8 +8,8 @@ no iteration over an unordered set.
 
 This adds wire semantics that a bare ``datamodel-codegen`` invocation misses:
 
-1. **Stable nested class names.** Left alone, the generator names nested objects
-   and enums ``Link``, ``Link1``, ``Type``, ``Type1`` -- numbered by the order it
+1. **Stable nested class names.** Left alone, the generator names nested objects,
+   array elements and enums ``Link``, ``Link1``, ``Type``, ``Type1`` -- numbered by the order it
    happens to meet them. Adding a schema whose name sorts earlier would then
    silently rename a class a consumer imports. Every nested object and enum is
    given an explicit ``title`` derived from its own path, so the name depends on
@@ -135,6 +135,12 @@ def prepare_schema(node: object, prefix: str) -> None:
                 if isinstance(sub, dict):
                     if "properties" in sub or "enum" in sub:
                         sub.setdefault("title", prefix + pascal(prop))
+                    # An array's element is named after its path too: left
+                    # alone it would be `Needle` or `CurveItem`, and the next
+                    # schema with a `needles` array would rename it `Needle1`.
+                    items = sub.get("items")
+                    if isinstance(items, dict) and ("properties" in items or "items" in items):
+                        items.setdefault("title", prefix + pascal(prop) + "Item")
                     # datamodel-codegen needs an explicit marker even with
                     # --strict-nullable when a field is optional with no default.
                     if (

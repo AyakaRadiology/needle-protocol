@@ -276,6 +276,61 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
     geometry_settling: z.ZodOptional<z.ZodBoolean>;
+    needles: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">>, "many">>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     tipX: z.ZodNumber;
     tipY: z.ZodNumber;
@@ -295,6 +350,61 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
     geometry_settling: z.ZodOptional<z.ZodBoolean>;
+    needles: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">>, "many">>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     tipX: z.ZodNumber;
     tipY: z.ZodNumber;
@@ -314,6 +424,61 @@ export declare const TrackerFrameNeedleSchema: z.ZodObject<{
     surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
     entry_to_tip_mm: z.ZodNumber;
     geometry_settling: z.ZodOptional<z.ZodBoolean>;
+    needles: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, "strip", z.ZodAny, z.objectOutputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">, z.objectInputType<{
+        id: z.ZodNumber;
+        tipX: z.ZodNumber;
+        tipY: z.ZodNumber;
+        tipZ: z.ZodNumber;
+        entryX: z.ZodNumber;
+        entryY: z.ZodNumber;
+        entryZ: z.ZodNumber;
+        skin_entry_x: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_y: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        skin_entry_z: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        surface_to_tip_mm: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        entry_to_tip_mm: z.ZodNumber;
+        source: z.ZodEnum<["detected", "predicted"]>;
+        conf_lo: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        conf_hi: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        lastDetectionTimestamp: z.ZodUnion<[z.ZodNumber, z.ZodNull]>;
+        curve: z.ZodOptional<z.ZodArray<z.ZodArray<z.ZodNumber, "many">, "many">>;
+    }, z.ZodAny, "strip">>, "many">>;
 }, z.ZodAny, "strip">>;
 /** `schemas/tracker/frame-status.json` */
 export declare const TrackerFrameStatusSchema: z.ZodObject<{
@@ -385,6 +550,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
     world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
+    run: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodAny, z.objectOutputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
@@ -437,6 +603,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
     world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
+    run: z.ZodOptional<z.ZodString>;
 }, z.ZodAny, "strip">, z.objectInputType<{
     type: z.ZodLiteral<"hello">;
     protocol_version: z.ZodNumber;
@@ -489,6 +656,7 @@ export declare const TrackerHelloSchema: z.ZodObject<{
         }, z.ZodAny, "strip">>;
     }, z.ZodAny, "strip">>>;
     world: z.ZodOptional<z.ZodEnum<["phantom", "rig"]>>;
+    run: z.ZodOptional<z.ZodString>;
 }, z.ZodAny, "strip">>;
 /**
  * `schemas/angle-stream/envelope.json`

@@ -36,6 +36,35 @@
             }
         },
         {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-frame-needle-three-needles",
+            "from": "needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md: the curve path's `needles` list; no emitter yet, so this is the shape the tracker must be written to. The top level is needle 3, the one the tracker sent before",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [
+                    { "id": 3, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": -1, "entryY": 60, "entryZ": 3,
+                      "skin_entry_x": -1, "skin_entry_y": 61, "skin_entry_z": 3, "surface_to_tip_mm": 30.5, "entry_to_tip_mm": 31,
+                      "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 },
+                    { "id": 5, "tipX": 12, "tipY": 4, "tipZ": -10, "entryX": 10, "entryY": 60, "entryZ": -10,
+                      "skin_entry_x": 10, "skin_entry_y": 61, "skin_entry_z": -10, "surface_to_tip_mm": 30.5, "entry_to_tip_mm": 31,
+                      "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000,
+                      "curve": [[10, 60, -10], [11, 32, -10], [12, 4, -10]] },
+                    { "id": 9, "tipX": 25, "tipY": 8, "tipZ": 20, "entryX": 23, "entryY": 60, "entryZ": 20,
+                      "skin_entry_x": 23, "skin_entry_y": 61, "skin_entry_z": 20, "surface_to_tip_mm": 30.5, "entry_to_tip_mm": 31,
+                      "source": "predicted", "conf_lo": null, "conf_hi": null, "lastDetectionTimestamp": 1761799999.5 }
+                ]
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-run",
+            "from": "needle-simulator docs/decisions/0051-several-needles-numbered-list-plan-per-needle.md: the hello's per-run value; no emitter yet",
+            "frame": { "type": "hello", "protocol_version": 2, "server_bind": "0.0.0.0:8765", "client_addr": "10.0.0.42", "run": "6f1c2a9e4b7d" }
+        },
+        {
             "contract": "PlanChannelEnvelope",
             "name": "plan-channel-ack-whole-number-tokens",
             "from": "plan-channel-plan-ack-applied with integral decimal revisions",
@@ -907,6 +936,102 @@
                 "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
                 "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "geometry_settling": "false"
             }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-five",
+            "why": "The list carries at most 4 needles; a fifth is a tracker that lost count, not a needle to draw.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [
+                    { "id": 1, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 },
+                    { "id": 2, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 },
+                    { "id": 3, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 },
+                    { "id": 4, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 },
+                    { "id": 5, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 }
+                ]
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-empty",
+            "why": "A needle frame exists because a needle does; an empty list would tell a reader that understands `needles` there is none while the top level says there is one.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": []
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-no-id",
+            "why": "The id is what ties a needle to its plan; a listed needle without one cannot be bound.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [{ "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 }]
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-negative-id",
+            "why": "Ids count up from 0.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [{ "id": -1, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000 }]
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-curve-point-2d",
+            "why": "A curve point is [x, y, z]; two numbers would be read as a point in the wrong axes.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [{ "id": 1, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000, "curve": [[0, 2, 3], [1, 2]] }]
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-curve-one-point",
+            "why": "A curve runs from the entry to the tip, so it has at least 2 points.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": [{ "id": 1, "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null, "surface_to_tip_mm": null, "entry_to_tip_mm": 1, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.9, "lastDetectionTimestamp": 1761800000, "curve": [[1, 2, 3]] }]
+            }
+        },
+        {
+            "contract": "TrackerFrameNeedle",
+            "name": "tracker-needles-null",
+            "why": "When present, needles is a list; null is not an empty frame.",
+            "frame": {
+                "tipX": 1, "tipY": 2, "tipZ": 3, "entryX": 0, "entryY": 2, "entryZ": 3,
+                "timestamp": 1761800000, "source": "detected", "conf_lo": 0.9, "conf_hi": 0.8,
+                "lastDetectionTimestamp": 1761800000, "skin_entry_x": null, "skin_entry_y": null, "skin_entry_z": null,
+                "frame_id": 7, "surface_to_tip_mm": null, "entry_to_tip_mm": 1,
+                "needles": null
+            }
+        },
+        {
+            "contract": "TrackerHello",
+            "name": "tracker-hello-empty-run",
+            "why": "An empty run would make every restart look like the same run, so ids from before the restart would be taken for the new needles.",
+            "frame": { "type": "hello", "protocol_version": 2, "run": "" }
         },
         {
             "contract": "TrackerHello",
