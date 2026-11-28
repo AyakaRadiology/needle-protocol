@@ -189,43 +189,77 @@ def test_the_enum_order_gate_sees_every_schema_directory() -> None:
     ] == ["applied", "pending_confirm", "rejected"]
 
 
-def test_enum_order_gate_uses_latest_tag_reachable_from_head(tmp_path: Path) -> None:
-    def git(*args: str) -> None:
-        subprocess.run(
-            [
-                "git",
-                "-c", "user.name=Enum Gate Test",
-                "-c", "user.email=enum-gate@example.test",
-                "-c", "commit.gpgsign=false",
-                "-c", "tag.gpgsign=false",
-                "-c", "core.hooksPath=.git/no-hooks",
-                *args,
-            ],
-            cwd=tmp_path,
-            check=True,
-        )
+def git_for_enum_gate(repo: Path, *args: str) -> None:
+    subprocess.run(
+        [
+            "git",
+            "-c", "user.name=Enum Gate Test",
+            "-c", "user.email=enum-gate@example.test",
+            "-c", "commit.gpgsign=false",
+            "-c", "tag.gpgsign=false",
+            "-c", "core.hooksPath=.git/no-hooks",
+            *args,
+        ],
+        cwd=repo,
+        check=True,
+    )
 
-    git("init", "--quiet")
+
+def run_enum_gate(repo: Path) -> subprocess.CompletedProcess[str]:
+    gate = repo / "tools" / "check-enum-order.py"
+    gate.parent.mkdir()
+    shutil.copyfile(ROOT / "tools" / gate.name, gate)
+    return subprocess.run(
+        [sys.executable, str(gate)], cwd=repo, capture_output=True, text=True
+    )
+
+
+def test_enum_order_gate_uses_latest_tag_reachable_from_head(tmp_path: Path) -> None:
+    git_for_enum_gate(tmp_path, "init", "--quiet")
     schema = tmp_path / "schemas" / "example.json"
     schema.parent.mkdir()
     schema.write_text(json.dumps({"enum": ["a", "b"]}))
-    git("add", "schemas/example.json")
-    git("commit", "--quiet", "-m", "Initial enum")
-    git("tag", "v0.1.0")
+    git_for_enum_gate(tmp_path, "add", "schemas/example.json")
+    git_for_enum_gate(tmp_path, "commit", "--quiet", "-m", "Initial enum")
+    git_for_enum_gate(tmp_path, "tag", "v0.1.0")
 
     schema.write_text(json.dumps({"enum": ["a", "b", "c"]}))
-    git("commit", "--quiet", "-am", "Append enum value")
-    git("tag", "v0.2.0")
-    git("checkout", "--quiet", "--detach", "v0.1.0")
+    git_for_enum_gate(tmp_path, "commit", "--quiet", "-am", "Append enum value")
+    git_for_enum_gate(tmp_path, "tag", "v0.2.0")
+    git_for_enum_gate(tmp_path, "checkout", "--quiet", "--detach", "v0.1.0")
 
-    gate = tmp_path / "tools" / "check-enum-order.py"
-    gate.parent.mkdir()
-    shutil.copyfile(ROOT / "tools" / gate.name, gate)
-    result = subprocess.run(
-        [sys.executable, str(gate)], cwd=tmp_path, capture_output=True, text=True
-    )
+    result = run_enum_gate(tmp_path)
     assert result.returncode == 0, result.stderr
-    assert "enum ordering unchanged since v0.1.0" in result.stdout
+    assert "enum order check passed against v0.1.0" in result.stdout
+
+
+@pytest.mark.parametrize(
+    "states", [["ready", "init", "running"], ["init", "running"]], ids=["reorder", "remove"]
+)
+@pytest.mark.parametrize(
+    ("version", "expected_exit"), [("2.0.0", 0), ("1.1.0", 1), ("1.2.0", 1), ("1.1.1", 1)]
+)
+def test_enum_order_gate_requires_a_major_bump(
+    tmp_path: Path, states: list[str], version: str, expected_exit: int
+) -> None:
+    relative = "schemas/device/payload-status.json"
+    schema = tmp_path / relative
+    schema.parent.mkdir(parents=True)
+    status = {"x-version": "1.1.0", "properties": {"state": {"enum": ["init", "ready", "running"]}}}
+    schema.write_text(json.dumps(status))
+    git_for_enum_gate(tmp_path, "init", "--quiet")
+    git_for_enum_gate(tmp_path, "add", relative)
+    git_for_enum_gate(tmp_path, "commit", "--quiet", "-m", "Release device status enum")
+    git_for_enum_gate(tmp_path, "tag", "v0.6.0")
+
+    status["x-version"] = version
+    status["properties"]["state"]["enum"] = states
+    schema.write_text(json.dumps(status))
+
+    result = run_enum_gate(tmp_path)
+    assert result.returncode == expected_exit, result.stderr
+    if expected_exit:
+        assert f"{relative}/properties/state: order changed or an element was removed" in result.stderr
 
 
 def test_generated_artifacts_exist() -> None:

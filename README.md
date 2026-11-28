@@ -363,7 +363,7 @@ Rules that are enforced, not remembered:
 |---|---|---|
 | Adding an optional field | minor | — |
 | Adding an enum value at the END of the array | minor | `tools/check-enum-order.py` allows it |
-| **Reordering an enum, or removing an element** | **MAJOR** | `tools/check-enum-order.py` fails the build |
+| **Reordering an enum, or removing an element** | **MAJOR** | `tools/check-enum-order.py` requires a schema major bump |
 | Renaming or removing a required field | MAJOR | review; the samples in `tests/samples.json` will fail |
 | Editing anything under `gen/` or `dist/` by hand | rejected | `git diff --exit-code gen/ dist/` in CI |
 
