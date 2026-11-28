@@ -47,6 +47,17 @@ describe('generated zod validators', () => {
             expect(schemaFor(sample.contract).safeParse(sample.frame).success).toBe(false);
         });
     }
+
+    it('requires at least two curve points with three numeric coordinates each', () => {
+        const frame = samples.valid.find(sample => sample.name === 'tracker-frame-needle-three-needles')!.frame;
+        const schema = validators.TrackerFrameNeedleSchema;
+        const point = [10, 60, -10];
+        const withCurve = (curve: unknown) => ({ ...frame, needles: [{ ...frame.needles![1], curve }] });
+        expect(schema.parse(withCurve([point, point])).needles?.[0]?.curve).toEqual([point, point]);
+        for (const curve of [[point], [point, [10, 60]], [point, [10, 60, -10, 0]], [point, point, [10, 60, 'x']]]) {
+            expect(schema.safeParse(withCurve(curve)).success).toBe(false);
+        }
+    });
 });
 
 describe('the parse hot path stays free of zod', () => {

@@ -16,8 +16,8 @@
 #     `files` excludes; the tarball is what a consumer's `bun install` of the
 #     git dependency actually materialises, so a dist/ missing from `files`
 #     fails here and passes under a symlink.
-#   * Values, not types. A type-only import survives type stripping, which is
-#     what made the original breakage look like a packaging nit.
+#   * Runtime values and a strict type-check of the packed Zod declarations.
+#     A type-only import would miss the original runtime breakage.
 #   * `import()` AND `require()`, because needle-guide compiles its main process
 #     to ESM and its preload to CommonJS and both graphs reach the files that
 #     import this package.
@@ -197,5 +197,18 @@ expect() {
 
 expect "import() from an ESM consumer" ./esm-probe.mjs
 expect "require() from a CommonJS consumer" ./cjs-probe.cjs
+
+echo "==> type-checking parsed needle curves in ESM and CommonJS"
+cat >"$CONSUMER/curve.cts" <<'TS'
+import type { TrackerFrameNeedleNeedlesItem } from 'needle-protocol/types';
+import { TrackerFrameNeedleSchema } from 'needle-protocol/zod';
+import samples = require('needle-protocol/tests/samples.json');
+
+const frame = samples.valid.find(sample => sample.name === 'tracker-frame-needle-three-needles')!.frame;
+const needle: TrackerFrameNeedleNeedlesItem = TrackerFrameNeedleSchema.parse(frame).needles![1];
+TS
+cp "$CONSUMER/curve.cts" "$CONSUMER/curve.mts"
+(cd "$CONSUMER" && node "$ROOT/node_modules/typescript/bin/tsc" --strict --noEmit \
+    --module NodeNext --target ES2022 --resolveJsonModule curve.cts curve.mts)
 
 echo "==> unbundled Node loads needle-protocol from the packed tarball"
